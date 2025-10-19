@@ -1,8 +1,11 @@
+// API 함수들 import
+import { login } from '../../api/loginRequest.js';
+
 // DOMContentLoaded 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
     
     // 폼 제출 처리
-    document.getElementById('loginForm').onsubmit = function(event) {
+    document.getElementById('loginForm').onsubmit = async function(event) {
         event.preventDefault();
 
         const email = document.getElementById('email').value;
@@ -23,12 +26,28 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // 로그인 처리
-        console.log('로그인 시도:', { email, password, rememberMe });
+        // 로딩 상태 표시
+        const submitButton = document.querySelector('.btn-primary');
+        submitButton.disabled = true;
+        submitButton.textContent = '로그인 중...';
         
-        // 성공 메시지
-        alert('로그인되었습니다!');
-        window.location.href = '/';
+        try {
+            // API 호출로 로그인 처리 (서버에 데이터 전송)
+            console.log('로그인 시도:', { email, password, rememberMe });
+            const response = await login({ email, password, rememberMe });
+            
+            console.log('로그인 성공:', response);
+            alert('로그인되었습니다!');
+            window.location.href = '/';
+            
+        } catch (error) {
+            console.error('로그인 실패:', error);
+            alert('로그인에 실패했습니다: ' + error.message);
+        } finally {
+            // 로딩 상태 해제
+            submitButton.disabled = false;
+            submitButton.textContent = '로그인';
+        }
     };
     
     // 실시간 유효성 검사
