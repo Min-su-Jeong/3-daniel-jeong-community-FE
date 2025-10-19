@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <link rel="stylesheet" href="signup.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <button class="back-btn" onclick="history.back()">←</button>
+        <h1 class="logo">아무말 대잔치</h1>
+        <div class="header-spacer"></div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <div class="container">
+            <h2 class="page-title">회원가입</h2>
+            
+            <!-- 프로필 사진 -->
+            <div class="profile-section">
+                <label class="profile-label">프로필 사진</label>
+                <p class="helper-text">프로필 사진을 등록해주세요 (선택)</p>
+                <div class="profile-upload">
+                    <div class="profile-img" id="profileImage">
+                        <span class="plus-icon">+</span>
+                    </div>
+                    <input type="file" id="profileInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+
+            <!-- 회원가입 폼 -->
+            <form class="signup-form" id="signupForm">
+                <!-- 이메일 -->
+                <div class="form-group">
+                    <label class="form-label">이메일 *</label>
+                    <input type="email" class="form-input" id="email" placeholder="이메일을 입력하세요" required>
+                    <p class="helper-text">이메일 주소를 정확히 입력해주세요</p>
+                </div>
+
+                <!-- 비밀번호 -->
+                <div class="form-group">
+                    <label class="form-label">비밀번호 *</label>
+                    <input type="password" class="form-input" id="password" placeholder="비밀번호를 입력하세요" required>
+                    <p class="helper-text">영문, 숫자, 특수문자를 포함하여 8자 이상 입력해주세요</p>
+                </div>
+
+                <!-- 비밀번호 확인 -->
+                <div class="form-group">
+                    <label class="form-label">비밀번호 확인 *</label>
+                    <input type="password" class="form-input" id="confirmPassword" placeholder="비밀번호를 한번 더 입력하세요" required>
+                    <p class="helper-text">비밀번호를 다시 한번 입력해주세요</p>
+                </div>
+
+                <!-- 닉네임 -->
+                <div class="form-group">
+                    <label class="form-label">닉네임 *</label>
+                    <input type="text" class="form-input" id="nickname" placeholder="닉네임을 입력하세요" required>
+                    <p class="helper-text">2-10자 사이로 입력해주세요</p>
+                </div>
+
+                <!-- 버튼 그룹 -->
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">회원가입</button>
+                    <button type="button" class="btn-secondary" onclick="location.href='/login'">로그인하러 가기</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script type="module" src="signup.js"></script>
+</body>
+</html>
