@@ -1,0 +1,240 @@
+/* 회원가입 페이지 스타일 */
+
+/* 기본 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* 헤더 */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.back-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    flex: 1;
+    text-align: center;
+}
+
+.header-spacer {
+    width: 36px;
+}
+
+/* 메인 컨텐츠 */
+.main {
+    padding: 24px 20px;
+    min-height: calc(100vh - 73px);
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    background-color: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+/* 프로필 섹션 */
+.profile-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.helper-text {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.profile-upload {
+    display: flex;
+    justify-content: center;
+}
+
+.profile-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    border: 2px dashed #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.profile-img:hover {
+    border-color: #FEE500;
+    background-color: #fff;
+}
+
+.plus-icon {
+    font-size: 28px;
+    color: #999;
+    font-weight: bold;
+    transition: color 0.2s ease;
+}
+
+.profile-img:hover .plus-icon {
+    color: #FEE500;
+}
+
+.profile-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* 폼 스타일 */
+.signup-form {
+    margin-top: 8px;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid #f0f0f0;
+    border-radius: 12px;
+    font-size: 16px;
+    background-color: #fafafa;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: #FEE500;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(254, 229, 0, 0.1);
+}
+
+.form-group .helper-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+    margin-left: 4px;
+}
+
+/* 버튼 스타일 */
+.button-group {
+    margin-top: 32px;
+}
+
+.btn-primary, .btn-secondary {
+    width: 100%;
+    padding: 16px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+}
+
+.btn-primary {
+    background-color: #FEE500;
+    color: #3C1E1E;
+}
+
+.btn-primary:hover {
+    background-color: #FDD835;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(254, 229, 0, 0.3);
+}
+
+.btn-secondary {
+    background-color: #f8f9fa;
+    color: #666;
+    border: 1px solid #e9ecef;
+}
+
+.btn-secondary:hover {
+    background-color: #e9ecef;
+    transform: translateY(-1px);
+}
+
+/* 반응형 */
+@media (max-width: 480px) {
+    .main {
+        padding: 16px;
+    }
+    
+    .container {
+        padding: 24px;
+    }
+    
+    .page-title {
+        font-size: 20px;
+    }
+}

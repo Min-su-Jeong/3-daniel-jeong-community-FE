@@ -1,0 +1,78 @@
+// API 함수들 import
+import { login } from '../../api/loginRequest.js';
+
+// DOMContentLoaded 이벤트 리스너
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 폼 제출 처리
+    document.getElementById('loginForm').onsubmit = async function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const rememberMe = document.getElementById('rememberMe').checked;
+
+        // 유효성 검사
+        if (!email) {
+            alert('이메일을 입력해주세요.');
+            return;
+        }
+        if (!password) {
+            alert('비밀번호를 입력해주세요.');
+            return;
+        }
+        if (!isValidEmail(email)) {
+            alert('이메일 주소를 정확히 입력해주세요.');
+            return;
+        }
+        
+        // 로딩 상태 표시
+        const submitButton = document.querySelector('.btn-primary');
+        submitButton.disabled = true;
+        submitButton.textContent = '로그인 중...';
+        
+        try {
+            // API 호출로 로그인 처리 (서버에 데이터 전송)
+            console.log('로그인 시도:', { email, password, rememberMe });
+            const response = await login({ email, password, rememberMe });
+            
+            console.log('로그인 성공:', response);
+            alert('로그인되었습니다!');
+            window.location.href = '/';
+            
+        } catch (error) {
+            console.error('로그인 실패:', error);
+            alert('로그인에 실패했습니다: ' + error.message);
+        } finally {
+            // 로딩 상태 해제
+            submitButton.disabled = false;
+            submitButton.textContent = '로그인';
+        }
+    };
+    
+    // 실시간 유효성 검사
+    document.getElementById('email').onblur = function() {
+        const email = this.value;
+        if (email && !isValidEmail(email)) {
+            this.style.borderColor = 'red';
+        } else {
+            this.style.borderColor = '#f0f0f0';
+        }
+    };
+
+    document.getElementById('password').oninput = function() {
+        const password = this.value;
+        if (password && password.length < 6) {
+            this.style.borderColor = 'red';
+        } else {
+            this.style.borderColor = '#f0f0f0';
+        }
+    };
+});
+
+
+// 유효성 검사 함수들
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
