@@ -1,3 +1,6 @@
+// API 함수들 import
+import { signup } from '../../api/signupRequest.js';
+
 // DOMContentLoaded 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -20,15 +23,16 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // 폼 제출 처리
-    document.getElementById('signupForm').onsubmit = function(event) {
+    document.getElementById('signupForm').onsubmit = async function(event) {
         event.preventDefault(); // 기본 제출 막기
 
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         const nickname = document.getElementById('nickname').value;
+        const profileImage = document.getElementById('profileInput').files[0];
 
-        // 간단한 유효성 검사
+        // 클라이언트 사이드 유효성 검사
         if (!isValidEmail(email)) {
             alert('이메일 주소를 정확히 입력해주세요.');
             return;
@@ -46,9 +50,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // 성공 메시지
-        alert('회원가입이 완료되었습니다!');
-        window.location.href = '/login';
+        // 로딩 상태 표시
+        const submitButton = document.querySelector('.btn-primary');
+        submitButton.disabled = true;
+        submitButton.textContent = '처리중...';
+
+        try {
+            // API 호출로 회원가입 처리 (서버에 데이터 전송)
+            console.log('회원가입 시도:', { email, password, nickname, profileImage });
+            const response = await signup({ email, password, nickname, profileImage });
+            
+            console.log('회원가입 성공:', response);
+            alert('회원가입이 완료되었습니다!');
+            window.location.href = '/login';
+            
+        } catch (error) {
+            // 에러 처리
+            console.error('회원가입 실패:', error);
+            alert('회원가입에 실패했습니다: ' + error.message);
+        } finally {
+            // 로딩 상태 해제
+            submitButton.disabled = false;
+            submitButton.textContent = '회원가입';
+        }
     };
     
     // 실시간 유효성 검사
