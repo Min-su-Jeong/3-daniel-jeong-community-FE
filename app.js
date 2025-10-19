@@ -13,12 +13,18 @@ const port = process.env.PORT;
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 회원가입 페이지 - 정적 파일 서빙 (Issue #1)
-app.use('/signup', express.static(path.join(__dirname, 'public', 'pages', 'signup')));
+// 동적 라우팅 설정
+const pages = ['signup', 'login'];
 
-// 회원가입 페이지
-app.get('/signup', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'pages', 'signup', 'signup.html'));
+// 각 페이지에 대해 정적 파일 서빙과 HTML 라우팅 설정
+pages.forEach(page => {
+  // 정적 파일 서빙 (CSS, JS 파일)
+  app.use(`/${page}`, express.static(path.join(__dirname, 'public', 'pages', page)));
+  
+  // HTML 페이지 라우팅
+  app.get(`/${page}`, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', page, `${page}.html`));
+  });
 });
 
 app.listen(port, () => {
