@@ -1,0 +1,66 @@
+/* 말풍선 컨테이너 */
+.bubbles-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 개별 말풍선 */
+.bubble {
+    position: absolute;
+    background: white;
+    border-radius: 30px;
+    padding: 12px 24px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    font-size: 1.1rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    max-width: 280px;
+    text-align: center;
+}
+
+/* 말풍선 호버 효과 */
+.bubble:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* 말풍선 떠오르기 애니메이션 */
+@keyframes floatUp {
+    0% {
+        opacity: 0;
+        bottom: 0px;
+        transform: scale(0.9);
+    }
+    10%, 90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        bottom: 100vh;
+        transform: scale(1.3);
+    }
+}
+
+/* 말풍선 팝 애니메이션 */
+@keyframes bubblePop {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
