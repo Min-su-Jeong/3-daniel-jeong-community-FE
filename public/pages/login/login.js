@@ -1,8 +1,12 @@
-// API 함수들 import
 import { login } from '../../api/loginRequest.js';
 
 // DOMContentLoaded 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // 말풍선 애니메이션 초기화
+    if (window.BubbleAnimation) {
+        window.bubbleAnimation = new window.BubbleAnimation('body');
+    }
     
     // 폼 제출 처리
     document.getElementById('loginForm').onsubmit = async function(event) {
@@ -69,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 });
-
 
 // 유효성 검사 함수들
 function isValidEmail(email) {

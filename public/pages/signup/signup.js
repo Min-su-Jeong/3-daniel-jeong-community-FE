@@ -4,6 +4,11 @@ import { signup } from '../../api/signupRequest.js';
 // DOMContentLoaded 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
     
+    // 말풍선 애니메이션 초기화
+    if (window.BubbleAnimation) {
+        window.bubbleAnimation = new window.BubbleAnimation('body');
+    }
+    
     // 프로필 이미지 클릭하면 파일 선택
     document.getElementById('profileImage').onclick = function() {
         document.getElementById('profileInput').click();

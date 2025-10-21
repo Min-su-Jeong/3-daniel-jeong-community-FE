@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>로그인</title>
+    <!-- 말풍선 애니메이션 스크립트 -->
+    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
+    <!-- 로그인 페이지 스타일 -->
     <link rel="stylesheet" href="login.css">
 </head>
 <body>
     <!-- 헤더 -->
     <header class="header">
         <button class="back-btn" onclick="history.back()">←</button>
-        <h1 class="logo">아무말 대잔치</h1>
+        <h1 class="logo">아무 말 대잔치</h1>
         <div class="header-spacer"></div>
     </header>
 
@@ -49,13 +52,16 @@
                 </div>
             </form>
 
-            <!-- 추가 링크 -->
+            <!-- TODO: 비밀번호 찾기 기능 구현 -->
             <div class="additional-links">
                 <a href="#" class="link">비밀번호를 잊으셨나요?</a>
             </div>
         </div>
     </main>
 
+    <!-- 말풍선 애니메이션 스크립트 -->
+    <script src="../../assets/animations/bubble-animation.js"></script>
+    <!-- 로그인 페이지 스크립트 -->
     <script type="module" src="login.js"></script>
 </body>
 </html>
