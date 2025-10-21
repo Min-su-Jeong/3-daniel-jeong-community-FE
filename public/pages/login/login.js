@@ -25,10 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('비밀번호를 입력해주세요.');
             return;
         }
-        if (!isValidEmail(email)) {
-            alert('이메일 주소를 정확히 입력해주세요.');
-            return;
-        }
         
         // 로딩 상태 표시
         const submitButton = document.querySelector('.btn-primary');
@@ -53,29 +49,4 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.textContent = '로그인';
         }
     };
-    
-    // 실시간 유효성 검사
-    document.getElementById('email').onblur = function() {
-        const email = this.value;
-        if (email && !isValidEmail(email)) {
-            this.style.borderColor = 'red';
-        } else {
-            this.style.borderColor = '#f0f0f0';
-        }
-    };
-
-    document.getElementById('password').oninput = function() {
-        const password = this.value;
-        if (password && password.length < 6) {
-            this.style.borderColor = 'red';
-        } else {
-            this.style.borderColor = '#f0f0f0';
-        }
-    };
 });
-
-// 유효성 검사 함수들
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
