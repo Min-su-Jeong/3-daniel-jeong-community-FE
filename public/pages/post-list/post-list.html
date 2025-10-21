@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 목록</title>
+    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
+    <!-- 게시글 목록 페이지 스타일 -->
+    <link rel="stylesheet" href="post-list.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-spacer"></div>
+        <div class="header-center">
+            <h1 class="logo">아무 말 대잔치</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-profile">
+                <div class="profile-icon">👤</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <!-- 인사말 및 게시글 작성 버튼 -->
+        <div class="welcome-section">
+            <div class="welcome-text">
+                <h2>안녕하세요, 아무 말 대잔치 게시판 입니다.</h2>
+            </div>
+            <button class="btn-write-post" id="writePostBtn">게시글 작성</button>
+        </div>
+
+        <!-- 게시글 목록 -->
+        <div class="posts-container" id="postsContainer">
+            <!-- 게시글 카드들이 동적으로 추가되는 부분 -->
+        </div>
+
+        <!-- 로딩 인디케이터 -->
+        <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+            <div class="spinner"></div>
+            <p>게시글을 불러오는 중...</p>
+        </div>
+    </main>
+
+    <!-- 말풍선 애니메이션 스크립트 -->
+    <script src="../../assets/animations/bubble-animation.js"></script>
+    <!-- 게시글 목록 페이지 스크립트 -->
+    <script type="module" src="post-list.js"></script>
+</body>
+</html>
