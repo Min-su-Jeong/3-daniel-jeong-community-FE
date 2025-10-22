@@ -42,9 +42,9 @@ class BubbleAnimation {
         
         this.options = {
             // 기본 설정
-            bubbleCount: 8, 
+            bubbleCount: 20, 
             animationDuration: { min: 15, max: 20 }, // 애니메이션 시간
-            delayRange: { min: 1, max: 8 }, // 지연 시간 범위
+            delayRange: { min: 1, max: 12 }, // 지연 시간 범위
             positionRange: { min: 5, max: 95 }, // 위치 범위
             
             // 말풍선 텍스트
