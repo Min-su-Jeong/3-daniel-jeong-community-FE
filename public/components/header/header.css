@@ -1,0 +1,70 @@
+/* 공용 헤더 컴포넌트 */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    padding: 0 16px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 2px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.header-left { 
+    position: absolute; 
+    left: calc(50% - 350px + 16px);
+    display: flex; 
+    align-items: center; 
+}
+
+.header-center { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.header-right { 
+    position: absolute; 
+    right: calc(50% - 350px + 16px);
+    display: flex; 
+    align-items: center; 
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: #111827;
+}
+
+.back-btn {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #111827;
+    cursor: pointer;
+    padding: 8px;
+    width: 48px;
+    height: 48px;
+}
+
+.user-profile { display: flex; align-items: center; }
+.profile-icon { 
+    width: 28px; 
+    height: 28px; 
+    border-radius: 50%; 
+    background: #f3f4f6; 
+    display: grid; 
+    place-items: center; 
+    font-size: 14px; 
+    color: #6b7280; 
+}
+
+@media (max-width: 480px) { .logo { font-size: 18px; } }

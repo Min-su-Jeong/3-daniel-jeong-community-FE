@@ -11,11 +11,7 @@
 </head>
 <body>
     <!-- 헤더 -->
-    <header class="header">
-        <button class="back-btn" onclick="history.back()">←</button>
-        <h1 class="logo">아무 말 대잔치</h1>
-        <div class="header-spacer"></div>
-    </header>
+    <app-header show-back></app-header>
 
     <!-- 메인 컨텐츠 -->
     <main class="main">
@@ -75,6 +71,8 @@
 
     <!-- 말풍선 애니메이션 스크립트 -->
     <script src="../../assets/animations/bubble-animation.js"></script>
+    <!-- 공용 헤더 스크립트 -->
+    <script src="/components/header/header.js"></script>
     <!-- 회원가입 페이지 스크립트 -->
     <script type="module" src="signup.js"></script>
 </body>

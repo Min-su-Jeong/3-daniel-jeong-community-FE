@@ -68,85 +68,10 @@ body {
     overflow-x: hidden;
 }
 
-/* 헤더 */
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-xl) var(--spacing-2xl);
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(20px);
-    border-bottom: 2px solid var(--border-primary);
-    box-shadow: var(--shadow-sm);
-    position: sticky;
-    top: 0;
-    z-index: var(--z-header);
-    transition: var(--transition-normal);
-}
-
-.header-spacer {
-    width: 48px;
-}
-
-.header-center {
-    flex: 1;
-    text-align: center;
-}
-
-.header-right {
-    width: 48px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.user-profile {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: absolute;
-    right: calc(50% - 350px + var(--spacing-lg));
-    top: 50%;
-    transform: translateY(-50%);
-    padding: var(--spacing-xs);
-    border-radius: var(--border-radius-full);
-}
-
-.logo {
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -0.5px;
-}
-
-.user-profile:hover {
-    transform: translateY(-50%) scale(1.05);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.user-profile:active {
-    transform: translateY(-50%) scale(1.02);
-    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.profile-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--background-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: var(--text-muted);
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 /* 메인 컨텐츠 */
 .main {
     padding: var(--spacing-4xl) var(--spacing-2xl);
+    padding-top: calc(56px + var(--spacing-4xl));
     min-height: calc(100vh - 88px);
     position: relative;
     z-index: var(--z-main);
