@@ -103,11 +103,13 @@ body {
     display: flex;
     align-items: center;
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: absolute;
     right: calc(50% - 350px + var(--spacing-lg));
     top: 50%;
     transform: translateY(-50%);
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-full);
 }
 
 .logo {
@@ -119,6 +121,12 @@ body {
 
 .user-profile:hover {
     transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.user-profile:active {
+    transform: translateY(-50%) scale(1.02);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-icon {
@@ -132,6 +140,8 @@ body {
     font-size: 14px;
     color: var(--text-muted);
     font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 메인 컨텐츠 */
@@ -334,6 +344,19 @@ body {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
+}
+
+.meta-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    transition: var(--transition-fast);
+}
+
+.meta-item:hover .meta-icon {
+    color: var(--primary-color);
+    transform: scale(1.1);
 }
 
 /* 게시글 작성자 */
