@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         init() {
             this.bindEvents();
+            this.initHandwritingEffect();
             this.loadPosts();
         }
         
@@ -36,6 +37,32 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        initHandwritingEffect() {
+            const handwritingText = document.querySelector('.handwriting-text');
+            if (!handwritingText) return;
+            
+            const originalText = handwritingText.textContent;
+            handwritingText.textContent = '';
+            
+            let index = 0;
+            const typeWriter = () => {
+                if (index < originalText.length) {
+                    handwritingText.textContent += originalText.charAt(index);
+                    index++;
+                    
+                    // 타이핑머신 느낌의 딜레이 (80-120ms)
+                    const typewriterDelay = Math.random() * 40 + 80;
+                    setTimeout(typeWriter, typewriterDelay);
+                } else {
+                    // 타이핑 완료 후 커서 제거
+                    handwritingText.classList.add('typing-complete');
+                }
+            };
+            
+            // 1초 후 타이핑 시작
+            setTimeout(typeWriter, 1000);
+        }
+        
         handleScroll() {
             if (this.isLoading || !this.hasMorePosts) return;
             
@@ -43,9 +70,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const windowHeight = window.innerHeight;
             const documentHeight = document.documentElement.scrollHeight;
             
-            // 스크롤이 하단 근처에 도달했을 때 (디버깅 로그 추가)
+            // 스크롤이 하단 근처에 도달했을 때
             if (scrollTop + windowHeight >= documentHeight - 200) {
-                console.log('스크롤 하단 도달 - 게시글 로딩 시작');
                 this.loadPosts();
             }
         }
@@ -110,8 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     views: Math.floor(Math.random() * 5000)
                 });
             }
-            
-            console.log(`페이지 ${page} 로딩 완료 - ${posts.length}개 게시글`);
             return posts;
         }
         
@@ -175,15 +199,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="post-meta">
                     <div class="meta-item">
-                        <span>❤️</span>
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
                         <span>좋아요 ${formattedLikes}</span>
                     </div>
                     <div class="meta-item">
-                        <span>💬</span>
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
                         <span>댓글 ${formattedComments}</span>
                     </div>
                     <div class="meta-item">
-                        <span>👁️</span>
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
                         <span>조회수 ${formattedViews}</span>
                     </div>
                 </div>
