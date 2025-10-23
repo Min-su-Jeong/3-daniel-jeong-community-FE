@@ -101,7 +101,7 @@ class BubbleAnimation {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 1;
+            z-index: var(--z-background);
         `;
         
         this.container.appendChild(this.bubblesContainer);
