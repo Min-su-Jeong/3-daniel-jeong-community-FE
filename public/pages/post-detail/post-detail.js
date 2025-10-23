@@ -1,59 +1,53 @@
+import { Button } from '../../components/button/button.js';
+import { Modal } from '../../components/modal/modal.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { formatNumber, formatDate } from '../../utils/common/format.js';
+import { initializeElements, getElementValue, setElementValue, navigateTo, getUrlParam } from '../../utils/common/dom.js';
+
 // 전역 변수
 let isLiked = false;
 let editingCommentId = null;
 let comments = [];
 
-// DOM 요소들
-const elements = {
-    // 게시글 관련
-    postTitle: document.getElementById('postTitle'),
-    authorName: document.getElementById('authorName'),
-    postDate: document.getElementById('postDate'),
-    postImage: document.getElementById('postImage'),
-    postContent: document.getElementById('postContent'),
-    likeBtn: document.getElementById('likeBtn'),
-    likeCount: document.getElementById('likeCount'),
-    viewCount: document.getElementById('viewCount'),
-    commentCount: document.getElementById('commentCount'),
-    
-    // 버튼들
-    editBtn: document.getElementById('editBtn'),
-    deleteBtn: document.getElementById('deleteBtn'),
-    
-    // 댓글 관련
-    commentInput: document.getElementById('commentInput'),
-    commentSubmitBtn: document.getElementById('commentSubmitBtn'),
-    commentsList: document.getElementById('commentsList'),
-    
-    // 모달들
-    deleteModal: document.getElementById('deleteModal'),
-    commentDeleteModal: document.getElementById('commentDeleteModal'),
-    cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
-    confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
-    cancelCommentDeleteBtn: document.getElementById('cancelCommentDeleteBtn'),
-    confirmCommentDeleteBtn: document.getElementById('confirmCommentDeleteBtn')
-};
+// DOM 요소들 초기화
+let elements = {};
 
-// 숫자 포맷팅 함수 (1k, 10k, 100k)
-function formatNumber(num) {
-    if (num >= 100000) {
-        return Math.floor(num / 1000) + 'k';
-    } else if (num >= 10000) {
-        return Math.floor(num / 1000) + 'k';
-    } else if (num >= 1000) {
-        return Math.floor(num / 1000) + 'k';
-    }
-    return num.toString();
+/**
+ * DOM 요소 초기화
+ */
+function initializePageElements() {
+    const elementIds = {
+        // 게시글 관련 요소
+        postTitle: 'postTitle',
+        authorName: 'authorName',
+        postDate: 'postDate',
+        postImage: 'postImage',
+        postContent: 'postContent',
+        likeBtn: 'likeBtn',
+        likeCount: 'likeCount',
+        viewCount: 'viewCount',
+        commentCount: 'commentCount',
+        
+        // 컨테이너
+        postActions: 'postActions',
+        commentSubmitBtnContainer: 'commentSubmitBtn',
+        commentsList: 'commentsList',
+        commentInput: 'commentInput'
+    };
+    
+    elements = initializeElements(elementIds);
+    elements.commentSubmitBtn = null; // 동적으로 생성되므로 별도 설정
 }
 
-// 게시글 데이터 초기화
+/**
+ * 게시글 데이터 로드
+ */
 function initializePostData() {
-    // URL에서 게시글 ID 가져오기 (실제 구현에서는 URL 파라미터 사용)
-    const postId = new URLSearchParams(window.location.search).get('id') || '1';
+    // URL에서 게시글 ID 가져오기
+    const postId = getUrlParam('id', '1');
     
     // TODO: API 호출 - 게시글 상세 정보 조회
     // GET /api/posts/{postId}
-    // 더미 데이터 (실제 구현에서는 API 호출)
     const postData = {
         id: postId,
         title: '제목 1',
@@ -73,7 +67,9 @@ function initializePostData() {
     elements.postContent.textContent = postData.content;
     elements.likeCount.textContent = formatNumber(postData.likes);
     elements.viewCount.textContent = formatNumber(postData.views);
-    elements.commentCount.textContent = formatNumber(postData.comments);
+    
+    // 공통 Button 컴포넌트로 액션 버튼 생성
+    createActionButtons();
     
     // TODO: API 호출 - 댓글 목록 조회
     // GET /api/posts/{postId}/comments
@@ -96,6 +92,34 @@ function initializePostData() {
     ];
     
     renderComments();
+}
+
+// 공통 버튼 생성 함수
+function createButtons(buttonConfigs, container, cssClass = '') {
+    buttonConfigs.forEach(buttonConfig => {
+        const button = new Button({
+            ...buttonConfig,
+            size: 'small'
+        });
+        button.appendTo(container);
+    });
+    
+    if (cssClass) {
+        const buttons = container.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            button.classList.add(cssClass);
+        });
+    }
+}
+
+// 공통 Button 컴포넌트로 액션 버튼 생성
+function createActionButtons() {
+    const buttons = [
+        { text: '수정', variant: 'primary', onClick: editPost },
+        { text: '삭제', variant: 'danger', onClick: deletePost }
+    ];
+    
+    createButtons(buttons, elements.postActions, 'btn-post-action');
 }
 
 // 댓글 렌더링
@@ -126,15 +150,26 @@ function createCommentElement(comment) {
             <div class="comment-meta">
                 <span class="comment-date">${comment.date}</span>
                 ${comment.isEditable ? `
-                    <div class="comment-actions">
-                        <button class="btn-comment-edit" onclick="editComment(${comment.id})">수정</button>
-                        <button class="btn-comment-delete" onclick="deleteComment(${comment.id})">삭제</button>
+                    <div class="comment-actions" id="commentActions-${comment.id}">
+                        <!-- 동적으로 버튼이 추가됩니다 -->
                     </div>
                 ` : ''}
             </div>
         </div>
         <div class="comment-content">${comment.content}</div>
     `;
+    
+    // 댓글 액션 버튼 생성
+    if (comment.isEditable) {
+        const actionsContainer = commentDiv.querySelector(`#commentActions-${comment.id}`);
+        
+        const buttons = [
+            { text: '수정', variant: 'primary', onClick: () => editComment(comment.id) },
+            { text: '삭제', variant: 'danger', onClick: () => deleteComment(comment.id) }
+        ];
+        
+        createButtons(buttons, actionsContainer, 'btn-comment-action');
+    }
     
     return commentDiv;
 }
@@ -144,7 +179,13 @@ function toggleLike() {
     // TODO: API 호출 - 좋아요 토글
     // POST /api/posts/{postId}/like 또는 DELETE /api/posts/{postId}/like
     isLiked = !isLiked;
-    const currentCount = parseInt(elements.likeCount.textContent.replace('k', '000'));
+    
+    // 현재 카운트를 숫자로 변환 (K, M 단위 고려)
+    const currentText = elements.likeCount.textContent;
+    let currentCount = parseInt(currentText.replace(/[kM]/g, ''));
+    if (currentText.includes('K')) currentCount *= 1000;
+    if (currentText.includes('M')) currentCount *= 1000000;
+    
     const newCount = isLiked ? currentCount + 1 : currentCount - 1;
     
     elements.likeCount.textContent = formatNumber(newCount);
@@ -159,13 +200,15 @@ function toggleLike() {
 
 // 댓글 입력 처리
 function handleCommentInput() {
-    const hasText = elements.commentInput.value.trim().length > 0;
-    elements.commentSubmitBtn.disabled = !hasText;
+    const hasText = getElementValue(elements.commentInput).trim().length > 0;
+    if (elements.commentSubmitBtn && elements.commentSubmitBtn.setDisabled) {
+        elements.commentSubmitBtn.setDisabled(!hasText);
+    }
 }
 
 // 댓글 등록
 function submitComment() {
-    const content = elements.commentInput.value.trim();
+    const content = getElementValue(elements.commentInput).trim();
     if (!content) return;
     
     // TODO: API 호출 - 댓글 등록
@@ -174,14 +217,16 @@ function submitComment() {
     const newComment = {
         id: Date.now(),
         author: '현재 사용자',
-        date: new Date().toLocaleString('ko-KR'),
+        date: formatDate(new Date()),
         content: content,
         isEditable: true
     };
     comments.push(newComment);
     
-    elements.commentInput.value = '';
-    elements.commentSubmitBtn.disabled = true;
+    setElementValue(elements.commentInput, '');
+    if (elements.commentSubmitBtn && elements.commentSubmitBtn.setDisabled) {
+        elements.commentSubmitBtn.setDisabled(true);
+    }
     
     renderComments();
 }
@@ -190,9 +235,6 @@ function submitComment() {
 function editComment(commentId) {
     const comment = comments.find(c => c.id === commentId);
     if (!comment) return;
-    
-    // 이미 수정 모드인지 확인
-    if (editingCommentId === commentId) return;
     
     editingCommentId = commentId;
     
@@ -207,12 +249,21 @@ function editComment(commentId) {
     contentElement.innerHTML = `
         <div class="comment-edit-form">
             <textarea class="comment-edit-input" placeholder="댓글을 입력하세요...">${currentContent}</textarea>
-            <div class="comment-edit-actions">
-                <button class="btn-comment-save" onclick="saveCommentEdit(${commentId})">저장</button>
-                <button class="btn-comment-cancel" onclick="cancelCommentEdit(${commentId})">취소</button>
+            <div class="comment-edit-actions" id="editActions-${commentId}">
+                <!-- 동적으로 버튼이 추가됩니다 -->
             </div>
         </div>
     `;
+    
+    // 수정 폼 버튼 생성
+    const editActionsContainer = contentElement.querySelector(`#editActions-${commentId}`);
+    
+    const buttons = [
+        { text: '저장', variant: 'primary', onClick: () => saveCommentEdit(commentId) },
+        { text: '취소', variant: 'secondary', onClick: () => cancelCommentEdit(commentId) }
+    ];
+    
+    createButtons(buttons, editActionsContainer, 'btn-comment-action');
     
     // 입력창에 포커스
     const textarea = contentElement.querySelector('.comment-edit-input');
@@ -225,44 +276,54 @@ function deleteComment(commentId) {
     const comment = comments.find(c => c.id === commentId);
     if (!comment) return;
     
-    // 삭제 확인 모달 표시
-    showModal(elements.commentDeleteModal);
-    
-    // 확인 버튼에 이벤트 리스너 추가
-    const confirmBtn = elements.confirmCommentDeleteBtn;
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    
-    newConfirmBtn.addEventListener('click', () => {
-        // TODO: API 호출 - 댓글 삭제
-        // DELETE /api/comments/{commentId}
-        comments = comments.filter(c => c.id !== commentId);
-        renderComments();
-        hideModal(elements.commentDeleteModal);
+    // 공통 Modal 컴포넌트로 삭제 확인
+    Modal.confirmDelete({
+        title: '댓글 삭제',
+        subtitle: '댓글을 삭제하시겠습니까?'
+    }).then(confirmed => {
+        if (confirmed) {
+            // TODO: API 호출 - 댓글 삭제
+            // DELETE /api/comments/{commentId}
+            comments = comments.filter(c => c.id !== commentId);
+            renderComments();
+        }
     });
 }
 
 // 게시글 수정
 function editPost() {
     // 게시글 수정 페이지로 이동 (실제 구현에서는 라우팅 사용)
-    window.location.href = `/post-edit?id=${new URLSearchParams(window.location.search).get('id') || '1'}`;
+    navigateTo('/post-edit', { id: getUrlParam('id', '1') });
 }
 
 // 게시글 삭제
 function deletePost() {
-    showModal(elements.deleteModal);
+    // 공통 Modal 컴포넌트로 삭제 확인
+    Modal.confirmDelete({
+        title: '게시글 삭제',
+        subtitle: '게시글을 삭제하시겠습니까? 삭제한 내용은 복구할 수 없습니다.'
+    }).then(confirmed => {
+        if (confirmed) {
+            // TODO: API 호출 - 게시글 삭제
+            // DELETE /api/posts/{postId}
+            // 게시글 목록으로 이동
+            navigateTo('/post-list');
+        }
+    });
 }
 
-// 모달 표시
-function showModal(modal) {
-    modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-}
-
-// 모달 숨기기
-function hideModal(modal) {
-    modal.classList.remove('show');
-    document.body.style.overflow = '';
+// 댓글 등록 버튼 생성
+function createCommentSubmitButton() {
+    const submitButton = new Button({
+        text: '댓글 등록',
+        variant: 'primary',
+        size: 'medium',
+        disabled: true, // 초기에는 비활성화
+        onClick: submitComment
+    });
+    submitButton.appendTo(elements.commentSubmitBtnContainer);
+    
+    elements.commentSubmitBtn = submitButton;
 }
 
 // 이벤트 리스너 등록
@@ -272,52 +333,15 @@ function setupEventListeners() {
     
     // 댓글 입력
     elements.commentInput.addEventListener('input', handleCommentInput);
-    elements.commentSubmitBtn.addEventListener('click', submitComment);
     
-    // 게시글 액션 버튼들
-    elements.editBtn.addEventListener('click', editPost);
-    elements.deleteBtn.addEventListener('click', deletePost);
-    
-    // 모달 관련
-    elements.cancelDeleteBtn.addEventListener('click', () => hideModal(elements.deleteModal));
-    elements.confirmDeleteBtn.addEventListener('click', () => {
-        // TODO: API 호출 - 게시글 삭제
-        // DELETE /api/posts/{postId}
-        hideModal(elements.deleteModal);
-        // 게시글 목록으로 이동
-        window.location.href = '/post-list';
-    });
-    
-    elements.cancelCommentDeleteBtn.addEventListener('click', () => hideModal(elements.commentDeleteModal));
-    
-    // 모달 배경 클릭 시 닫기
-    elements.deleteModal.addEventListener('click', (e) => {
-        if (e.target === elements.deleteModal) {
-            hideModal(elements.deleteModal);
-        }
-    });
-    
-    elements.commentDeleteModal.addEventListener('click', (e) => {
-        if (e.target === elements.commentDeleteModal) {
-            hideModal(elements.commentDeleteModal);
-        }
-    });
-    
-    // ESC 키로 모달 닫기
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (elements.deleteModal.classList.contains('show')) {
-                hideModal(elements.deleteModal);
-            }
-            if (elements.commentDeleteModal.classList.contains('show')) {
-                hideModal(elements.commentDeleteModal);
-            }
-        }
-    });
+    // 댓글 제출 버튼 생성
+    createCommentSubmitButton();
 }
 
 // 페이지 초기화
 function initializePage() {
+    PageLayout.initializePage();
+    initializePageElements();
     initializePostData();
     setupEventListeners();
 }
@@ -334,7 +358,10 @@ function saveCommentEdit(commentId) {
     const newContent = textarea.value.trim();
     
     if (!newContent) {
-        alert('댓글 내용을 입력해주세요.');
+        Modal.alert({
+            title: '입력 오류',
+            subtitle: '댓글 내용을 입력해주세요.'
+        });
         return;
     }
     
@@ -361,9 +388,3 @@ function cancelCommentEdit(commentId) {
     // 댓글 목록 다시 렌더링
     renderComments();
 }
-
-// 전역 함수로 노출
-window.editComment = editComment;
-window.deleteComment = deleteComment;
-window.saveCommentEdit = saveCommentEdit;
-window.cancelCommentEdit = cancelCommentEdit;

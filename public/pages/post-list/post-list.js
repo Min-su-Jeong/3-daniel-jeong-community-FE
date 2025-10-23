@@ -1,17 +1,21 @@
+import { Button } from '../../components/button/button.js';
+import { formatNumber, formatDate } from '../../utils/common/format.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { initializeElements, navigateTo } from '../../utils/common/dom.js';
+
 // DOMContentLoaded 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
     
-    // 말풍선 애니메이션 초기화
-    if (window.BubbleAnimation) {
-        window.bubbleAnimation = new window.BubbleAnimation('body');
-    }
+    PageLayout.initializePage();
     
-    // 게시글 목록 관리 클래스
+    /**
+     * 게시글 목록 관리 클래스
+     * 무한 스크롤, 게시글 작성 버튼 생성, 타이핑 효과 포함
+     */
     class PostListManager {
         constructor() {
-            this.postsContainer = document.getElementById('postsContainer');
-            this.loadingIndicator = document.getElementById('loadingIndicator');
-            this.writePostBtn = document.getElementById('writePostBtn');
+            this.elements = this.initializeElements();
+            this.writePostBtn = null;
             this.currentPage = 1;
             this.isLoading = false;
             this.hasMorePosts = true;
@@ -19,50 +23,98 @@ document.addEventListener('DOMContentLoaded', function() {
             this.init();
         }
         
+        initializeElements() {
+            const elementIds = {
+                postsContainer: 'postsContainer',
+                loadingIndicator: 'loadingIndicator',
+                writePostBtn: 'writePostBtn',
+                welcomeSection: 'welcomeSection',
+                handwritingText: 'handwritingText'
+            };
+            
+            return initializeElements(elementIds);
+        }
+        
         init() {
+            this.createWritePostButton();
             this.bindEvents();
             this.initHandwritingEffect();
             this.loadPosts();
         }
         
-        bindEvents() {
-            // 게시글 작성 버튼 클릭
-            this.writePostBtn.addEventListener('click', () => {
-                window.location.href = '/post-create';
+        createWritePostButton() {
+            if (this.elements.writePostBtn) {
+                this.elements.writePostBtn.remove();
+            }
+            
+            const writePostButton = new Button({
+                text: '게시글 작성',
+                variant: 'primary',
+                size: 'medium',
+                onClick: () => {
+                    navigateTo('/post-create');
+                }
             });
             
-            // 인피니티 스크롤링
+            if (this.elements.welcomeSection) {
+                this.writePostBtn = writePostButton.appendTo(this.elements.welcomeSection);
+            }
+        }
+        
+        bindEvents() {
+            // 게시글 작성 버튼 클릭 이벤트 설정
+            if (this.writePostBtn) {
+                this.writePostBtn.addEventListener('click', () => {
+                    navigateTo('/post-create');
+                });
+            }
+            
+            // 무한 스크롤 이벤트 설정
             window.addEventListener('scroll', () => {
                 this.handleScroll();
             });
+            
+            document.addEventListener('click', (e) => {
+                const postElement = e.target.closest('.post-item');
+                if (postElement) {
+                    const postId = postElement.dataset.postId;
+                    if (postId) {
+                        navigateTo('/post-detail', { id: postId });
+                    }
+                }
+            });
         }
         
+        /**
+         * 타이핑 효과 초기화
+         * 인사말 텍스트에 타이핑 효과 적용
+         */
         initHandwritingEffect() {
-            const handwritingText = document.querySelector('.handwriting-text');
-            if (!handwritingText) return;
+            if (!this.elements.handwritingText) return;
             
-            const originalText = handwritingText.textContent;
-            handwritingText.textContent = '';
+            const originalText = this.elements.handwritingText.textContent;
+            this.elements.handwritingText.textContent = '';
             
             let index = 0;
             const typeWriter = () => {
                 if (index < originalText.length) {
-                    handwritingText.textContent += originalText.charAt(index);
+                    this.elements.handwritingText.textContent += originalText.charAt(index);
                     index++;
                     
-                    // 타이핑머신 느낌의 딜레이 (80-120ms)
                     const typewriterDelay = Math.random() * 40 + 80;
                     setTimeout(typeWriter, typewriterDelay);
                 } else {
-                    // 타이핑 완료 후 커서 제거
-                    handwritingText.classList.add('typing-complete');
+                    this.elements.handwritingText.classList.add('typing-complete');
                 }
             };
             
-            // 1초 후 타이핑 시작
+            // 1초 후 타이핑 효과 시작
             setTimeout(typeWriter, 1000);
         }
         
+        /**
+         * 무한 스크롤 처리
+         */
         handleScroll() {
             if (this.isLoading || !this.hasMorePosts) return;
             
@@ -94,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 게시글 카드 생성 및 추가
                 posts.forEach(post => {
                     const postCard = this.createPostCard(post);
-                    this.postsContainer.appendChild(postCard);
+                    this.elements.postsContainer.appendChild(postCard);
                 });
                 
                 this.currentPage++;
@@ -116,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const posts = [];
             const startIndex = (page - 1) * 10;
             
-            // 마지막 페이지인지 확인 (총 50개 게시글)
+            // 마지막 페이지인지 확인
             if (startIndex >= 50) {
                 return [];
             }
@@ -185,12 +237,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 : post.title;
             
             // 날짜 포맷팅 (YYYY-MM-DD HH:mm:ss)
-            const formattedDate = this.formatDate(post.createdAt);
+            const formattedDate = formatDate(post.createdAt);
             
             // 숫자 포맷팅 (1k, 10k, 100k)
-            const formattedLikes = this.formatNumber(post.likes);
-            const formattedComments = this.formatNumber(post.comments);
-            const formattedViews = this.formatNumber(post.views);
+            const formattedLikes = formatNumber(post.likes);
+            const formattedComments = formatNumber(post.comments);
+            const formattedViews = formatNumber(post.views);
             
             card.innerHTML = `
                 <div class="post-header">
@@ -226,40 +278,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 카드 클릭 이벤트
             card.addEventListener('click', () => {
-                window.location.href = `/post-detail?id=${post.id}`;
+                navigateTo('/post-detail', { id: post.id });
             });
             
             return card;
         }
         
-        formatDate(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        }
-        
-        formatNumber(num) {
-            if (num >= 100000) {
-                return Math.floor(num / 1000) + 'k';
-            } else if (num >= 10000) {
-                return Math.floor(num / 1000) + 'k';
-            } else if (num >= 1000) {
-                return Math.floor(num / 1000) + 'k';
-            }
-            return num.toString();
-        }
-        
         showLoading() {
-            this.loadingIndicator.style.display = 'flex';
+            if (this.elements.loadingIndicator) {
+                this.elements.loadingIndicator.style.display = 'flex';
+            }
         }
         
         hideLoading() {
-            this.loadingIndicator.style.display = 'none';
+            if (this.elements.loadingIndicator) {
+                this.elements.loadingIndicator.style.display = 'none';
+            }
         }
     }
     

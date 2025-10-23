@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>로그인</title>
-    <!-- 말풍선 애니메이션 스크립트 -->
     <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
-    <!-- 로그인 페이지 스타일 -->
+    <link rel="stylesheet" href="../../styles/z-index.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
     <link rel="stylesheet" href="login.css">
 </head>
 <body>
@@ -42,10 +42,7 @@
                 </div>
 
                 <!-- 버튼 그룹 -->
-                <div class="button-group">
-                    <button type="submit" class="btn-primary">로그인</button>
-                    <button type="button" class="btn-secondary" onclick="location.href='/signup'">회원가입</button>
-                </div>
+                <div class="button-group" id="buttonGroup"></div>
             </form>
 
             <!-- TODO: 비밀번호 찾기 기능 구현 -->
@@ -55,11 +52,8 @@
         </div>
     </main>
 
-    <!-- 말풍선 애니메이션 스크립트 -->
     <script src="../../assets/animations/bubble-animation.js"></script>
-    <!-- 공용 헤더 스크립트 -->
     <script src="/components/header/header.js"></script>
-    <!-- 로그인 페이지 스크립트 -->
     <script type="module" src="login.js"></script>
 </body>
 </html>

@@ -42,13 +42,6 @@
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* z-index 계층 */
-    --z-header: 100;
-    --z-modal: 50;
-    --z-container: 20;
-    --z-main: 10;
-    --z-card: 1;
 }
 
 /* 기본 스타일 */
@@ -74,7 +67,7 @@ body {
     padding-top: calc(56px + var(--spacing-4xl));
     min-height: calc(100vh - 88px);
     position: relative;
-    z-index: var(--z-main);
+    z-index: var(--z-content);
 }
 
 /* 인사말 섹션 */
@@ -129,7 +122,7 @@ body {
     }
 }
 
-/* 타이핑머신 효과 */
+/* 타이핑 효과 */
 .handwriting-text {
     position: relative;
     font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -157,34 +150,6 @@ body {
     51%, 100% {
         border-right-color: transparent;
     }
-}
-
-/* 버튼 스타일 */
-.btn-write-post {
-    background: var(--primary-color);
-    color: var(--white);
-    border: none;
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg) var(--spacing-2xl);
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: var(--transition-normal);
-    box-shadow: var(--shadow-md);
-    letter-spacing: -0.3px;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-write-post:hover {
-    background: var(--primary-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-}
-
-.btn-write-post:active {
-    transform: translateY(0);
-    box-shadow: var(--shadow-md);
 }
 
 /* 게시글 컨테이너 */
@@ -386,11 +351,6 @@ body {
     
     .decorative-left {
         font-size: 24px;
-    }
-    
-    .btn-write-post {
-        width: 100%;
-        padding: var(--spacing-lg) var(--spacing-2xl);
     }
     
     .post-card {

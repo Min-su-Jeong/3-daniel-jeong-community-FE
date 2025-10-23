@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>게시글 상세조회</title>
-    <!-- 말풍선 애니메이션 스크립트 -->
+    <link rel="stylesheet" href="../../styles/z-index.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/modal/modal.css">
     <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
-    <!-- 게시글 상세조회 페이지 스타일 -->
     <link rel="stylesheet" href="post-detail.css">
 </head>
 <body>
@@ -21,10 +22,7 @@
                 <!-- 게시글 헤더 -->
                 <div class="post-header">
                     <h2 class="post-title" id="postTitle">제목 1</h2>
-                    <div class="post-actions">
-                        <button class="btn-edit" id="editBtn">수정</button>
-                        <button class="btn-delete" id="deleteBtn">삭제</button>
-                    </div>
+                    <div class="post-actions" id="postActions"></div>
                 </div>
 
                 <!-- 게시글 메타 정보 -->
@@ -35,6 +33,7 @@
                     </div>
                     <span class="post-date" id="postDate">2021-01-01 00:00:00</span>
                 </div>
+
 
                 <!-- 게시글 이미지 -->
                 <div class="post-image" id="postImage">
@@ -85,66 +84,17 @@
                         placeholder="댓글을 남겨주세요!"
                         rows="3"
                     ></textarea>
-                    <button class="btn-comment-submit" id="commentSubmitBtn" disabled>댓글 등록</button>
+                    <div id="commentSubmitBtn"></div>
                 </div>
 
                 <!-- 댓글 목록 -->
-                <div class="comments-list" id="commentsList">
-                    <!-- 댓글들이 동적으로 추가되는 부분 -->
-                    <div class="comment-item">
-                        <div class="comment-header">
-                            <div class="comment-author">
-                                <div class="author-avatar">👤</div>
-                                <span class="author-name">더미 작성자 1</span>
-                            </div>
-                            <div class="comment-meta">
-                                <span class="comment-date">2021-01-01 00:00:00</span>
-                                <div class="comment-actions">
-                                    <button class="btn-comment-edit">수정</button>
-                                    <button class="btn-comment-delete">삭제</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="comment-content">댓글 내용</div>
-                    </div>
-                </div>
+                <div class="comments-list" id="commentsList"></div>
             </section>
         </div>
     </main>
 
-    <!-- 삭제 확인 모달 -->
-    <div class="modal-overlay" id="deleteModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">게시글을 삭제하시겠습니까?</h3>
-                <p class="modal-subtitle">삭제한 내용은 복구 할 수 없습니다.</p>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-cancel" id="cancelDeleteBtn">취소</button>
-                <button class="btn-confirm" id="confirmDeleteBtn">확인</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 댓글 삭제 확인 모달 -->
-    <div class="modal-overlay" id="commentDeleteModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">댓글을 삭제하시겠습니까?</h3>
-                <p class="modal-subtitle">삭제한 내용은 복구 할 수 없습니다.</p>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-cancel" id="cancelCommentDeleteBtn">취소</button>
-                <button class="btn-confirm" id="confirmCommentDeleteBtn">확인</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 말풍선 애니메이션 스크립트 -->
     <script src="../../assets/animations/bubble-animation.js"></script>
-    <!-- 공용 헤더 스크립트 -->
     <script src="/components/header/header.js"></script>
-    <!-- 게시글 상세조회 페이지 스크립트 -->
     <script type="module" src="post-detail.js"></script>
 </body>
 </html>

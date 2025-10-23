@@ -40,13 +40,6 @@
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* z-index 계층 */
-    --z-header: 100;
-    --z-modal: 50;
-    --z-container: 20;
-    --z-main: 10;
-    --z-card: 1;
 }
 
 /* 기본 스타일 */
@@ -75,7 +68,7 @@ body {
     justify-content: center;
     align-items: flex-start;
     position: relative;
-    z-index: var(--z-main);
+    z-index: var(--z-content);
 }
 
 .container {
@@ -90,7 +83,7 @@ body {
     animation: slideUp var(--transition-slow);
     position: relative;
     overflow: hidden;
-    z-index: var(--z-container);
+    z-index: var(--z-card);
 }
 
 .container::before {
@@ -113,7 +106,7 @@ body {
     font-weight: 800;
     color: var(--text-primary);
     text-align: center;
-    margin-bottom: var(--spacing-4xl);
+    margin-bottom: var(--spacing-2xl);
     letter-spacing: -0.5px;
     animation: fadeIn 0.8s ease-out 0.2s both;
 }
