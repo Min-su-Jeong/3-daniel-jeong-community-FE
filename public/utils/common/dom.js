@@ -64,3 +64,27 @@ export function toggleElementClass(element, className, add) {
         element.classList.remove(className);
     }
 }
+
+/**
+ * URL 파라미터에서 값을 가져오기
+ * @param {string} paramName - 파라미터명
+ * @param {string} defaultValue - 기본값
+ * @returns {string} 파라미터 값 또는 기본값
+ */
+export function getUrlParam(paramName, defaultValue = '') {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(paramName) || defaultValue;
+}
+
+/**
+ * 페이지 이동 (파라미터 포함)
+ * @param {string} path - 이동할 경로
+ * @param {Object} params - URL 파라미터 객체
+ */
+export function navigateTo(path, params = {}) {
+    const url = new URL(path, window.location.origin);
+    Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.set(key, value);
+    });
+    window.location.href = url.toString();
+}
