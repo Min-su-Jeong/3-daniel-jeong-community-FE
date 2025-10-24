@@ -49,6 +49,15 @@ export function validateNickname(nickname) {
     return { isValid: true, message: '' };
 }
 
+export function validateTitle(title) {
+    if (title.length === 0) return { isValid: true, message: '' };
+    
+    if (title.length > 26) return { isValid: false, message: '제목은 26자 이하여야 합니다' };
+    
+    return { isValid: true, message: '' };
+}
+
+
 // UI 업데이트 함수 
 export function updateFieldValidation(input, helperText, isValid, errorMessage, successMessage) {
     input.classList.remove('success', 'error', 'warning');
