@@ -136,7 +136,7 @@ export function setupFormValidation(formId, fields) {
     
     // 폼 유효성 체크
     function checkFormValidity() {
-        const allValid = fields.every(field => {
+        let allValid = fields.every(field => {
             const input = document.getElementById(field.id);
             if (!input) return false;
             const validation = field.validation(input.value);
