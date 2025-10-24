@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 variant: 'primary',
                 size: 'medium',
                 onClick: () => {
-                    navigateTo('/post-create');
+                    navigateTo('/post-write');
                 }
             });
             
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 게시글 작성 버튼 클릭 이벤트 설정
             if (this.writePostBtn) {
                 this.writePostBtn.addEventListener('click', () => {
-                    navigateTo('/post-create');
+                    navigateTo('/post-write');
                 });
             }
             
