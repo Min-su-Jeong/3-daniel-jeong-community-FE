@@ -120,10 +120,20 @@
     border: none;
     text-align: left;
     cursor: pointer;
+    border-radius: 0;
+}
+
+.dropdown-item:first-child {
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
 }
 
 .dropdown-item:last-child {
     border-bottom: none;
+    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+}
+
+.dropdown-item:only-child {
+    border-radius: var(--border-radius-lg);
 }
 
 .dropdown-item:hover {
