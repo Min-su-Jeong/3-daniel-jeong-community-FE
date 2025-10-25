@@ -11,7 +11,13 @@ class AppHeader extends HTMLElement {
 
     connectedCallback() { this._render(); }
     attributeChangedCallback() { this._render(); }
-    _onBack() { history.back(); }
+    _onBack() {
+        if (window.handleBackNavigation) {
+            window.handleBackNavigation();
+        } else {
+            history.back();
+        }
+    }
     _render() {
         const showBack = this.hasAttribute('show-back');
         const showProfile = this.hasAttribute('show-profile');
