@@ -43,7 +43,7 @@ export class PageLayout {
                 <!-- 말풍선 애니메이션 스크립트 -->
                 <script src="../../assets/animations/bubble-animation.js"></script>
                 <!-- 공용 헤더 스크립트 -->
-                <script src="/components/header/header.js"></script>
+                <script type="module" src="/components/header/header.js"></script>
             </body>
             </html>
         `;
