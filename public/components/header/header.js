@@ -57,6 +57,53 @@ class AppHeader extends HTMLElement {
             icon.className = 'profile-icon';
             icon.textContent = '👤';
             userProfile.appendChild(icon);
+            
+            // 드롭다운 메뉴
+            const dropdown = document.createElement('div');
+            dropdown.className = 'profile-dropdown';
+            dropdown.innerHTML = `
+                <button class="dropdown-item" data-action="user-edit">회원정보수정</button>
+                <button class="dropdown-item" data-action="password-edit">비밀번호수정</button>
+                <button class="dropdown-item logout-item" data-action="logout">로그아웃</button>
+            `;
+            userProfile.appendChild(dropdown);
+            
+            // 드롭다운 토글
+            userProfile.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('active');
+            });
+            
+            // 드롭다운 아이템 클릭 이벤트
+            dropdown.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                if (action) {
+                    e.preventDefault();
+                    dropdown.classList.remove('active');
+                    
+                    switch (action) {
+                        case 'user-edit':
+                            window.location.href = '/user-edit';
+                            break;
+                        case 'password-edit':
+                            window.location.href = '/password-edit';
+                            break;
+                        case 'logout':
+                            if (confirm('로그아웃 하시겠습니까?')) {
+                                // TODO: 로그아웃 API 호출
+                                console.log('로그아웃 처리');
+                                window.location.href = '/login';
+                            }
+                            break;
+                    }
+                }
+            });
+            
+            // 외부 클릭 시 드롭다운 닫기
+            document.addEventListener('click', () => {
+                dropdown.classList.remove('active');
+            });
+            
             right.appendChild(userProfile);
         }
 
