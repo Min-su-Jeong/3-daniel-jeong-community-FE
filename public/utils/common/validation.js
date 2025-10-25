@@ -38,7 +38,7 @@ export function validatePassword(password) {
 }
 
 export function validateNickname(nickname) {
-    if (nickname.length === 0) return { isValid: true, message: '' };
+    if (nickname.length === 0) return { isValid: false, message: '닉네임을 입력해주세요' };
     
     if (nickname.length < 2) return { isValid: false, message: '닉네임은 2자 이상이어야 합니다' };
     if (nickname.length > 10) return { isValid: false, message: '닉네임은 10자 이하여야 합니다' };
@@ -50,6 +50,9 @@ export function validateNickname(nickname) {
     
     return { isValid: true, message: '' };
 }
+
+// TODO: API 연결 시 닉네임 중복 검사 함수 생성 필요
+// TODO: API 연결 시 현재 비밀번호 검증 함수 생성 필요
 
 export function validateTitle(title) {
     if (title.length === 0) return { isValid: true, message: '' };
