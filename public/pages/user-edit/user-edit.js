@@ -114,19 +114,30 @@ function setupWithdrawal() {
     elements.withdrawalLink.addEventListener('click', (event) => {
         event.preventDefault();
         
-        const modal = new Modal({
+        // 첫 번째 확인 모달
+        const firstModal = new Modal({
             title: '회원 탈퇴',
-            content: '정말로 회원 탈퇴를 하시겠습니까?<br>탈퇴 후에는 복구할 수 없습니다.',
-            confirmText: '탈퇴하기',
+            content: '회원 탈퇴를 진행하시겠습니까?<br>탈퇴된 계정은 복구할 수 없습니다.',
+            confirmText: '탈퇴',
             confirmType: 'danger',
             onConfirm: () => {
-                // TODO: 회원 탈퇴 API 호출
-                console.log('회원 탈퇴 처리');
-                ToastUtils.success('회원 탈퇴가 완료되었습니다.');
-                navigateTo('/post-list');
+                // 두 번째 최종 확인 모달
+                const finalModal = new Modal({
+                    title: '회원 탈퇴 확인',
+                    content: '정말로 회원 탈퇴를 진행하시겠습니까?<br><strong>계정과 관련된 모든 정보가 영구적으로 삭제됩니다.</strong>',
+                    confirmText: '탈퇴',
+                    confirmType: 'danger',
+                    cancelText: '취소',
+                    onConfirm: () => {
+                        // TODO: 회원 탈퇴 API 호출
+                        ToastUtils.success('회원 탈퇴가 완료되었습니다.');
+                        navigateTo('/post-list');
+                    }
+                });
+                finalModal.show();
             }
         });
-        modal.show();
+        firstModal.show();
     });
 }
 
