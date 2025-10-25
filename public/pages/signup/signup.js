@@ -4,6 +4,7 @@ import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { validateEmail, validatePassword, validateNickname, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, setElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
+import { ToastUtils } from '../../components/toast/toast.js';
 
 // 회원가입 버튼 컴포넌트 생성
 function createSignupButtons() {
@@ -172,12 +173,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await signup({ email, password, nickname, profileImage });
             
             console.log('회원가입 성공:', response);
-            PageLayout.showSuccess('회원가입이 완료되었습니다!');
+            ToastUtils.success('회원가입이 완료되었습니다!');
             navigateTo('/login');
             
         } catch (error) {
             // 에러 처리 (회원가입 실패 시 처리)
-            PageLayout.handleError(error, '회원가입에 실패했습니다.');
+            ToastUtils.error('회원가입에 실패했습니다.');
         } finally {
             // 로딩 상태 해제 (회원가입 버튼)
             PageLayout.hideLoading(submitButton, '회원가입');

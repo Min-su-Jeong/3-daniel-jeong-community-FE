@@ -3,6 +3,7 @@ import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
+import { ToastUtils } from '../../components/toast/toast.js';
 
 // DOM 요소들 초기화
 let elements = {};
@@ -99,11 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await login({ email, password, rememberMe });
             
             console.log('로그인 성공:', response);
-            PageLayout.showSuccess('로그인되었습니다!');
+            ToastUtils.success('로그인되었습니다!');
             navigateTo('/');
             
         } catch (error) {
-            PageLayout.handleError(error, '로그인에 실패했습니다.');
+            ToastUtils.error('로그인에 실패했습니다.');
         } finally {
             // 로딩 상태 해제
             PageLayout.hideLoading(submitButton, '로그인');
