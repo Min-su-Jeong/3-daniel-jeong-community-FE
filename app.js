@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 });
 
 // 동적 라우팅 설정
-const pages = ['signup', 'login', 'post-list', 'post-detail', 'post-write', 'post-edit', 'user-edit', 'password-edit'];
+const pages = ['signup', 'login', 'post-list', 'post-detail', 'post-write', 'post-edit', 'user-edit', 'password-edit', 'password-reset'];
 
 // 각 페이지에 대해 정적 파일 서빙과 HTML 라우팅 설정
 pages.forEach(page => {
