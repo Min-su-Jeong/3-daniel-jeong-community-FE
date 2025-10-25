@@ -19,48 +19,56 @@
     font-size: 1.1rem;
     font-weight: 500;
     white-space: nowrap;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    pointer-events: auto;
     max-width: 280px;
     text-align: center;
+    transform: scale(1.6);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+    transition: transform 0.8s ease-in-out;
 }
 
-/* 말풍선 호버 효과 */
-.bubble:hover {
-    transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+/* 말풍선 꼬리 */
+.bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 12px solid white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-/* 말풍선 떠오르기 애니메이션 */
-@keyframes floatUp {
+/* 말풍선 애니메이션 */
+@keyframes bubbleFloat {
     0% {
         opacity: 0;
-        bottom: 0px;
-        transform: scale(0.9);
+        bottom: -100px;
+        transform: translateX(0px) scale(1.4);
     }
-    10%, 90% {
-        opacity: 1;
+    10% {
+        opacity: 0.9;
+        transform: translateX(0px) scale(1.4);
+    }
+    15% {
+        transform: translateX(10px) scale(1.4);
+    }
+    30% {
+        transform: translateX(-8px) scale(1.4);
+    }
+    45% {
+        transform: translateX(6px) scale(1.4);
+    }
+    55% {
+        opacity: 0.9;
+        transform: translateX(0px) scale(1.4);
     }
     100% {
         opacity: 0;
-        bottom: 100vh;
-        transform: scale(1.3);
-    }
-}
-
-/* 말풍선 팝 애니메이션 */
-@keyframes bubblePop {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.5);
-        opacity: 0.8;
-    }
-    100% {
-        transform: scale(0);
-        opacity: 0;
+        bottom: 120vh;
+        transform: translateX(0px) scale(1.4);
     }
 }

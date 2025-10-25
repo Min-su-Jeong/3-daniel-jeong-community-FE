@@ -1,87 +1,38 @@
 /**
  * 떠오르는 말풍선 애니메이션
- * 
- * 기능:
- * - 화면 하단에서 위로 떠오르는 말풍선 애니메이션
- * - 커뮤니티 키워드들이 랜덤하게 표시됨
- * - 호버 시 팝 애니메이션 효과
- * - 화면 전체에 균등 분포로 배치
  */
 
-// 기본 말풍선 텍스트 상수
-const BUBBLE_TEXTS = {
-    COMMUNITY: [
-        '#아무말대잔치',
-        '#오늘의이야기',
-        '#자유게시판',
-        '#댓글달기',
-        '#함께나눠요',
-        '#소소한일상',
-        '#질문있어요',
-        '#정보공유',
-        '#같이이야기해요',
-        '#우리들의공간',
-        '#일상톡톡',
-        '#맛집후기',
-        '#여행후기',
-        '#영화추천',
-        '#책추천',
-        '#음악추천',
-        '#운동후기',
-        '#요리후기',
-        '#반려동물후기',
-        '#취미공유'
-    ]
-};
+// 기본 말풍선 텍스트
+const BUBBLE_TEXTS = [
+    '#아무말대잔치', '#해외여행', '#맛집후기', '#함께해요', '#영화추천',
+    '#심심해', '#바다여행', '#같이해요', '#책추천', '#나가서놀고싶다',
+    '#우리들의공간', '#등산', '#음악추천', '#그냥말해봐', '#캠핑',
+    '#질문있어요', '#게임추천', '#소소한일상', '#피크닉', '#대잔치',
+    '#일상톡톡', '#드라마추천', '#정보공유', '#자전거', '#모르겠어',
+    '#웹툰추천', '#같이이야기해요', '#여행후기', '#점심뭐먹지', '#만화추천',
+    '#애니메이션', '#함께나눠요', '#오늘뭐하지', '#공연후기', '#전시회후기',
+    '#카페추천', '#오늘도야근', '#디저트추천', '#옷브랜드추천', '#오운완',
+    '#운동후기', '#요리후기', '#취미공유', '#다이어트', '#저메추',
+    '#공유해요', '#소통해요', '#댓글달기', '#오늘의이야기', '#자유게시판',
+    '#심심풀이', '#시간때우기', '#아무노래나일단틀어', '#아무말', '#대화해요'
+];
 
 class BubbleAnimation {
-    constructor(container = 'body', options = {}) {
+    constructor(container = 'body') {
         this.container = typeof container === 'string' 
             ? document.querySelector(container) 
             : container;
         
-        this.options = {
-            // 기본 설정
-            bubbleCount: 20, 
-            animationDuration: { min: 15, max: 20 }, // 애니메이션 시간
-            delayRange: { min: 1, max: 12 }, // 지연 시간 범위
-            positionRange: { min: 5, max: 95 }, // 위치 범위
-            
-            // 말풍선 텍스트
-            bubbleTexts: BUBBLE_TEXTS.COMMUNITY,
-            
-            // 스타일 옵션
-            bubbleStyle: {
-                background: 'white'
-            },
-            
-            // 애니메이션 옵션
-            animationOptions: {
-                startOpacity: 0,
-                endOpacity: 0,
-                visibleOpacity: 1,
-                startScale: 0.9,
-                endScale: 1.3,
-                startBottom: 0,
-                endBottom: '100vh'
-            },
-            
-            // 이벤트 옵션
-            enableHover: true,
-            hoverAnimation: 'bubblePop',
-            
-            ...options
-        };
-        
-        this.bubbles = [];
         this.isRunning = false;
+        this.usedTexts = new Set(); // 사용된 텍스트 저장
+        this.usedPositions = new Set(); // 사용된 위치 저장
+        this.animationFrameId = null;
         this.init();
     }
     
     init() {
         this.createBubblesContainer();
-        this.generateBubbles();
-        this.startAnimation();
+        this.startContinuousAnimation();
     }
     
     createBubblesContainer() {
@@ -94,180 +45,127 @@ class BubbleAnimation {
         // 새 컨테이너 생성
         this.bubblesContainer = document.createElement('div');
         this.bubblesContainer.className = 'bubbles-container';
-        this.bubblesContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: var(--z-background);
-        `;
-        
         this.container.appendChild(this.bubblesContainer);
     }
     
-    generateBubbles() {
-        this.bubbles = [];
-        this.usedPositions = [];
+    startContinuousAnimation() {
+        if (this.isRunning) return;
+        this.isRunning = true;
         
-        for (let i = 0; i < this.options.bubbleCount; i++) {
-            const bubble = this.createBubble(i);
-            this.bubbles.push(bubble);
-            this.bubblesContainer.appendChild(bubble);
-        }
+        let lastTime = 0;
+        let nextInterval = 1500 + Math.random() * 2500;
+        
+        const animate = (currentTime) => {
+            if (this.isRunning) {
+                if (currentTime - lastTime >= nextInterval) {
+                    // 말풍선 생성
+                    this.createBubble();
+                    lastTime = currentTime;
+                    nextInterval = 1500 + Math.random() * 2500; // 다음 간격 랜덤 설정
+                }
+                this.animationFrameId = requestAnimationFrame(animate);
+            }
+        };
+        
+        this.animationFrameId = requestAnimationFrame(animate);
     }
     
-    createBubble(index) {
+    createBubble() {
+        // 왼쪽 말풍선 생성
+        this.createSingleBubble('left');
+        // 오른쪽 말풍선 생성
+        this.createSingleBubble('right');
+    }
+    
+    createSingleBubble(side = null) {
         const bubble = document.createElement('div');
-        bubble.className = `bubble bubble-${index + 1}`;
-        
-        // 텍스트 설정 
-        const textIndex = index % this.options.bubbleTexts.length;
-        bubble.textContent = this.options.bubbleTexts[textIndex];
-        
-        // CSS 클래스 적용
         bubble.className = 'bubble';
         
-        // JavaScript에서만 필요한 동적 스타일만 적용
-        Object.assign(bubble.style, {
-            opacity: this.options.animationOptions.startOpacity,
-            bottom: `${this.options.animationOptions.startBottom}px`,
-            transform: `scale(${this.options.animationOptions.startScale})`,
-            cursor: this.options.enableHover ? 'pointer' : 'default'
-        });
-        
-        // 위치 설정
-        const leftPosition = this.getRandomPosition();
-        bubble.style.left = `${leftPosition}%`;
-        
-        // 애니메이션 설정
-        const duration = this.getRandomDuration();
-        const delay = this.getRandomDelay();
-        
-        bubble.style.animation = `floatUp ${duration}s linear infinite ${delay}s`;
-        
-        // 호버 이벤트
-        if (this.options.enableHover) {
-            bubble.addEventListener('mouseenter', () => {
-                bubble.style.animation = `${this.options.hoverAnimation} 0.6s ease-out forwards`;
-                bubble.style.pointerEvents = 'none'; // 중복 클릭 방지
-            });
-        }
-        
-        // 말풍선 꼬리 추가
-        this.addBubbleTail(bubble);
-        
-        return bubble;
-    }
-    
-    addBubbleTail(bubble) {
-        const tail = document.createElement('div');
-        tail.className = 'bubble-tail';
-        
-        // CSS 삼각형을 이용한 말풍선 꼬리 생성
-        tail.style.cssText = `
-            position: absolute;
-            bottom: -10px;
-            left: 20px;
-            border-width: 10px 10px 0; /* 위쪽 화살표 모양 */
-            border-style: solid;
-            border-color: ${this.options.bubbleStyle.background} transparent transparent transparent;
-        `;
-        bubble.appendChild(tail);
-    }
-    
-    getRandomPosition() {
-        const { min, max } = this.options.positionRange;
-        let position;
-        let attempts = 0;
-        const maxAttempts = 20;
+        // 중복되지 않는 텍스트 선택
+        let randomText;
+        let textAttempts = 0;
+        const maxTextAttempts = 20;
         
         do {
-            // 화면을 4개 구역으로 나누어 균등 분포 (겹침 방지)
-            const section = this.bubbles.length % 4; // 0, 1, 2, 3 순환
-            const sectionWidth = (max - min) / 4; // 각 구역의 너비
-            const sectionStart = min + section * sectionWidth; // 구역 시작점
-            
-            // 해당 구역 내에서 랜덤 위치 선택
-            position = sectionStart + Math.random() * sectionWidth;
-            attempts++;
-        } while (this.isPositionTooClose(position) && attempts < maxAttempts);
+            randomText = BUBBLE_TEXTS[Math.floor(Math.random() * BUBBLE_TEXTS.length)];
+            textAttempts++;
+        } while (this.usedTexts.has(randomText) && textAttempts < maxTextAttempts);
         
-        // 위치를 기록하여 겹침 방지
-        this.usedPositions.push(position);
+        this.usedTexts.add(randomText);
+        bubble.textContent = randomText;
         
-        return Math.max(min, Math.min(max, position));
-    }
-    
-    isPositionTooClose(newPosition) {
-        const minDistance = 12; // 최소 거리 (겹침 방지)
+        // 랜덤 위치 설정
+        let randomPosition;
+        let positionAttempts = 0;
+        const maxPositionAttempts = 20;
         
-        // 기존 위치들과 너무 가까운지 확인
-        return this.usedPositions.some(pos => {
-            return Math.abs(pos - newPosition) < minDistance;
-        });
-    }
-    
-    getRandomDuration() {
-        const { min, max } = this.options.animationDuration;
-        return Math.random() * (max - min) + min;
-    }
-    
-    getRandomDelay() {
-        const { min, max } = this.options.delayRange;
+        // 위치 범위 정의
+        const leftRange = { min: 5, max: 30 };
+        const rightRange = { min: 65, max: 90 };
         
-        // 균등한 간격을 위해 인덱스 기반 계산
-        const totalRange = max - min; // 전체 지연 시간 범위
-        const step = totalRange / Math.max(1, this.options.bubbleCount - 1); // 각 말풍선 간 간격
-        const baseDelay = min + (this.bubbles.length * step); // 기본 지연 시간
-        const randomOffset = Math.random() * (step * 0.3); // 30% 범위 내 랜덤 오프셋
-        
-        return Math.min(baseDelay + randomOffset, max);
-    }
-    
-    startAnimation() {
-        if (this.isRunning) return;
-        
-        this.isRunning = true;
-        this.addAnimationStyles();
-    }
-    
-    addAnimationStyles() {
-        // 기존 스타일이 있으면 제거 (중복 방지)
-        const existingStyle = document.querySelector('#bubble-animation-styles');
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-        
-        // CSS 애니메이션 스타일을 동적으로 생성
-        const style = document.createElement('style');
-        style.id = 'bubble-animation-styles';
-        const { startOpacity, endOpacity, visibleOpacity, startScale, endScale, startBottom, endBottom } = this.options.animationOptions;
-        
-        // 말풍선이 아래에서 위로 떠오르는 애니메이션
-        style.textContent = `
-            @keyframes floatUp {
-                0% { opacity: ${startOpacity}; bottom: ${startBottom}px; transform: scale(${startScale}); }
-                10%, 90% { opacity: ${visibleOpacity}; }
-                100% { opacity: ${endOpacity}; bottom: ${endBottom}; transform: scale(${endScale}); }
+        do {
+            // 지정된 쪽 또는 랜덤 선택
+            if (side === 'left') {
+                randomPosition = Math.random() * (leftRange.max - leftRange.min) + leftRange.min;
+            } else if (side === 'right') {
+                randomPosition = Math.random() * (rightRange.max - rightRange.min) + rightRange.min;
+            } else {
+                const isLeft = Math.random() < 0.5;
+                const range = isLeft ? leftRange : rightRange;
+                randomPosition = Math.random() * (range.max - range.min) + range.min;
             }
-            
-            @keyframes bubblePop {
-                0% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.5); opacity: 0.8; }
-                100% { transform: scale(0); opacity: 0; }
-            }
-        `;
+            positionAttempts++;
+        } while (Array.from(this.usedPositions).some(pos => Math.abs(pos - randomPosition) < 15) && positionAttempts < maxPositionAttempts);
         
-        document.head.appendChild(style);
+        this.usedPositions.add(randomPosition);
+        bubble.style.left = `${randomPosition}%`;
+        
+        // 초기 위치 설정
+        bubble.style.bottom = '-100px';
+        bubble.style.opacity = '0';
+        
+        // 애니메이션 설정
+        const duration = 22;
+        
+        bubble.style.animation = `bubbleFloat ${duration}s linear forwards`;
+        
+        this.bubblesContainer.appendChild(bubble);
+        
+        // 메모리 누수 방지를 위한 timeout ID 저장
+        const timeoutId = setTimeout(() => {
+            if (bubble.parentNode) {
+                bubble.remove();
+                this.usedTexts.delete(randomText);
+                this.usedPositions.delete(randomPosition);
+            }
+        }, duration * 1000);
+        
+        bubble.timeoutId = timeoutId;
     }
     
     stopAnimation() {
         this.isRunning = false;
-        this.bubbles.forEach(bubble => {
-            bubble.style.animation = 'none';
+        
+        // requestAnimationFrame 정리
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        
+        // 모든 timeout 정리
+        const bubbles = this.bubblesContainer.querySelectorAll('.bubble');
+        bubbles.forEach(bubble => {
+            if (bubble.timeoutId) {
+                clearTimeout(bubble.timeoutId);
+            }
         });
+        
+        // 기존 말풍선 제거
+        this.bubblesContainer.innerHTML = '';
+        
+        // Set 초기화
+        this.usedTexts.clear();
+        this.usedPositions.clear();
     }
     
     destroy() {
@@ -275,23 +173,6 @@ class BubbleAnimation {
         if (this.bubblesContainer) {
             this.bubblesContainer.remove();
         }
-        this.bubbles = [];
-    }
-    
-    // 설정 업데이트
-    updateOptions(newOptions) {
-        this.options = { ...this.options, ...newOptions };
-        this.destroy();
-        this.init();
-    }
-    
-    // 말풍선 텍스트 업데이트
-    updateBubbleTexts(newTexts) {
-        this.options.bubbleTexts = newTexts;
-        this.bubbles.forEach((bubble, index) => {
-            const textIndex = index % this.options.bubbleTexts.length;
-            bubble.textContent = this.options.bubbleTexts[textIndex];
-        });
     }
 }
 
@@ -299,6 +180,6 @@ class BubbleAnimation {
 window.BubbleAnimation = BubbleAnimation;
 
 // 기본 인스턴스 생성 함수
-window.createBubbleAnimation = (container = 'body', options = {}) => {
-    return new BubbleAnimation(container, options);
+window.createBubbleAnimation = (container = 'body') => {
+    return new BubbleAnimation(container);
 };
