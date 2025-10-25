@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원정보 수정</title>
+    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="../../components/modal/modal.css">
+    <link rel="stylesheet" href="user-edit.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <app-header show-back show-profile></app-header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <div class="container">
+            <h2 class="page-title">회원정보 수정</h2>
+            
+            <!-- 회원정보 수정 폼 -->
+            <form class="user-edit-form" id="userEditForm">
+                <!-- 프로필 사진 -->
+                <div class="form-group profile-section">
+                    <label class="form-label">프로필 사진</label>
+                    <div class="profile-image-container">
+                        <div class="profile-image" id="profileImage">
+                            <div class="profile-placeholder">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                        </div>
+                        <button type="button" class="change-image-btn" id="changeImageBtn">변경</button>
+                        <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- 이메일 -->
+                <div class="form-group">
+                    <label class="form-label">이메일</label>
+                    <input type="email" class="form-input" value="startupcode@gmail.com" readonly>
+                    <div class="helper-text">이메일은 변경할 수 없습니다</div>
+                </div>
+
+                <!-- 닉네임 -->
+                <div class="form-group">
+                    <label class="form-label">닉네임 *</label>
+                    <input type="text" class="form-input" id="nickname" value="스타트업코드" placeholder="닉네임을 입력하세요" required>
+                    <div class="helper-text"></div>
+                </div>
+
+                <!-- 버튼 그룹 -->
+                <div class="button-group" id="buttonGroup"></div>
+            </form>
+
+            <!-- 회원 탈퇴 링크 -->
+            <div class="additional-links">
+                <a href="#" class="link withdrawal-link" id="withdrawalLink">회원 탈퇴</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../assets/animations/bubble-animation.js"></script>
+    <script src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/toast/toast.js"></script>
+    <script type="module" src="../../components/modal/modal.js"></script>
+    <script type="module" src="user-edit.js"></script>
+</body>
+</html>
