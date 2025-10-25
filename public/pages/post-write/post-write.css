@@ -167,7 +167,7 @@
     font-weight: 400;
 }
 
-/* Helper Text - Primary 색상 스타일 */
+/* Helper Text */
 .form-group .helper-text {
     font-size: 13px;
     color: var(--primary-color);
@@ -503,5 +503,3 @@
         font-size: 15px;
     }
 }
-
-

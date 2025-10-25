@@ -296,7 +296,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    
-    // 게시글 목록 매니저 초기화
-    const postListManager = new PostListManager();
 });
