@@ -1,6 +1,7 @@
 import { initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
+import { Modal } from '../../components/modal/modal.js';
 import { IMAGE_CONSTANTS } from '../../utils/constants.js';
 import { 
     validateImageFiles,
@@ -288,7 +289,19 @@ const hideLoading = () => {
 // 뒤로가기 처리
 const handleBackNavigation = () => {
     const hasContent = postTitle.value.trim() || postContent.value.trim() || selectedImages.length > 0;
-    if (hasContent && !confirm('작성 중인 내용이 있습니다. 정말 나가시겠습니까?')) return;
+    if (hasContent) {
+        new Modal({
+            title: '확인',
+            subtitle: '작성 중인 내용이 있습니다.<br>정말 나가시겠습니까?',
+            confirmText: '나가기',
+            cancelText: '취소',
+            confirmType: 'danger',
+            onConfirm: () => {
+                window.history.back();
+            }
+        }).show();
+        return;
+    }
     window.history.back();
 };
 

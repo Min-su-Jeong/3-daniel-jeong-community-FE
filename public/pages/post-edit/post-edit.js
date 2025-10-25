@@ -1,6 +1,7 @@
 import { initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
+import { Modal } from '../../components/modal/modal.js';
 import { IMAGE_CONSTANTS } from '../../utils/constants.js';
 import { 
     validateImageFiles,
@@ -366,6 +367,28 @@ async function initializePage() {
         ToastUtils.error('페이지를 불러오는데 실패했습니다.');
     }
 }
+
+// 뒤로가기 처리
+const handleBackNavigation = () => {
+    const hasContent = postTitle.value.trim() || postContent.value.trim() || selectedImages.length > 0;
+    if (hasContent) {
+        new Modal({
+            title: '확인',
+            subtitle: '작성 중인 내용이 있습니다.<br>정말 나가시겠습니까?',
+            confirmText: '나가기',
+            cancelText: '취소',
+            confirmType: 'danger',
+            onConfirm: () => {
+                window.history.back();
+            }
+        }).show();
+        return;
+    }
+    window.history.back();
+};
+
+// 뒤로가기 버튼 이벤트
+window.handleBackNavigation = handleBackNavigation;
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', initializePage);

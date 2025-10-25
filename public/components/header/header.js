@@ -1,3 +1,5 @@
+import { Modal } from '../modal/modal.js';
+
 class AppHeader extends HTMLElement {
     static get observedAttributes() { return ['show-back', 'show-profile']; }
 
@@ -89,11 +91,17 @@ class AppHeader extends HTMLElement {
                             window.location.href = '/password-edit';
                             break;
                         case 'logout':
-                            if (confirm('로그아웃 하시겠습니까?')) {
-                                // TODO: 로그아웃 API 호출
-                                console.log('로그아웃 처리');
-                                window.location.href = '/login';
-                            }
+                            new Modal({
+                                title: '로그아웃',
+                                subtitle: '로그아웃 하시겠습니까?',
+                                confirmText: '로그아웃',
+                                cancelText: '취소',
+                                onConfirm: () => {
+                                    // TODO: 로그아웃 API 호출
+                                    console.log('로그아웃 처리');
+                                    window.location.href = '/login';
+                                }
+                            }).show();
                             break;
                     }
                 }
