@@ -1,10 +1,12 @@
 /**
  * 공통 유효성 검사 유틸리티
  */
+
 export function validateEmail(email) {
     if (email.length === 0) return { isValid: true, message: '' };
     
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}$/;
+
     const isValid = emailRegex.test(email);
     
     return {
@@ -51,18 +53,16 @@ export function validateNickname(nickname) {
 
 export function validateTitle(title) {
     if (title.length === 0) return { isValid: true, message: '' };
-    
     if (title.length > 26) return { isValid: false, message: '제목은 26자 이하여야 합니다' };
-    
+
     return { isValid: true, message: '' };
 }
 
 
-// UI 업데이트 함수 
 export function updateFieldValidation(input, helperText, isValid, errorMessage, successMessage) {
     input.classList.remove('success', 'error', 'warning');
     helperText.classList.remove('success', 'error', 'warning');
-    
+
     if (input.value.trim() === '') {
         input.style.borderColor = '';
         input.style.background = '';

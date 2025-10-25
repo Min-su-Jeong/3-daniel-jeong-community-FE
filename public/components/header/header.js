@@ -7,16 +7,9 @@ class AppHeader extends HTMLElement {
         this._shadow = this.attachShadow({ mode: 'open' });
     }
 
-    connectedCallback() {
-        this._render();
-    }
-
-    attributeChangedCallback() {
-        this._render();
-    }
-
+    connectedCallback() { this._render(); }
+    attributeChangedCallback() { this._render(); }
     _onBack() { history.back(); }
-
     _render() {
         const showBack = this.hasAttribute('show-back');
         const showProfile = this.hasAttribute('show-profile');
