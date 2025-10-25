@@ -44,7 +44,7 @@ function initializePageElements() {
  */
 function initializePostData() {
     // URL에서 게시글 ID 가져오기
-    const postId = getUrlParam('id', '1');
+    const postId = getUrlParam('id');
     
     // TODO: API 호출 - 게시글 상세 정보 조회
     // GET /api/posts/{postId}
@@ -292,8 +292,32 @@ function deleteComment(commentId) {
 
 // 게시글 수정
 function editPost() {
-    // 게시글 수정 페이지로 이동 (실제 구현에서는 라우팅 사용)
-    navigateTo('/post-edit', { id: getUrlParam('id', '1') });
+    // 현재 게시글 ID 가져오기
+    const postId = getUrlParam('id');
+    
+    // 현재 페이지의 게시글 데이터를 가져와서 수정 페이지로 전달
+    const currentPostData = {
+        id: postId,
+        title: elements.postTitle.textContent,
+        content: elements.postContent.textContent,
+        images: getCurrentPostImages()
+    };
+    
+    // 세션 스토리지에 데이터 저장 (임시)
+    sessionStorage.setItem('editPostData', JSON.stringify(currentPostData));
+    
+    // 게시글 수정 페이지로 이동
+    navigateTo(`/post-edit?id=${postId}`);
+}
+
+// 현재 게시글의 이미지 데이터 가져오기
+function getCurrentPostImages() {
+    const imageElements = elements.postImage.querySelectorAll('img');
+    return Array.from(imageElements).map((img, index) => ({
+        id: index + 1,
+        url: img.src,
+        alt: img.alt
+    }));
 }
 
 // 게시글 삭제
