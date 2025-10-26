@@ -38,8 +38,12 @@ export class PageLayout {
                     </div>
                 </main>
 
+                <!-- Footer -->
+                <app-footer></app-footer>
+
                 <script src="../../assets/animations/bubble-animation.js"></script>
                 <script type="module" src="/components/header/header.js"></script>
+                <script type="module" src="/components/footer/footer.js"></script>
             </body>
             </html>
         `;
