@@ -13,10 +13,10 @@ export async function login(credentials) {
         const response = await fetch(`${API_SERVER_URI}/users/login`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json', // JSON 형태로 데이터 전송
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(credentials), // 객체를 JSON 문자열로 변환
-            credentials: 'include', // 쿠키 포함하여 요청 (세션 유지)
+            body: JSON.stringify(credentials), 
+            credentials: 'include',
         });
 
         // 2. 서버 응답을 JSON으로 파싱

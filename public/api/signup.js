@@ -14,19 +14,19 @@ export async function signup(userData) {
         const requestData = {
             email: userData.email,
             password: userData.password,
-            confirmPassword: userData.password, // 비밀번호 확인
+            confirmPassword: userData.password,
             nickname: userData.nickname,
-            profileImageUrl: userData.profileImageUrl || null // 프로필 이미지 URL (선택사항)
+            profileImageUrl: userData.profileImageUrl || null
         };
 
         // 2. 서버에 POST 요청으로 회원가입 데이터 전송
         const response = await fetch(`${API_SERVER_URI}/users`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json', // JSON 형태로 데이터 전송
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(requestData), // 객체를 JSON 문자열로 변환
-            credentials: 'include', // 쿠키 포함하여 요청
+            body: JSON.stringify(requestData),
+            credentials: 'include',
         });
 
         // 3. 서버 응답을 JSON으로 파싱

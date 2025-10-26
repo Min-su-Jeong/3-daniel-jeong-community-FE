@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 상세조회</title>
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/modal/modal.css">
+    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
+    <link rel="stylesheet" href="post-detail.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <app-header show-back show-profile></app-header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <div class="container">
+            <!-- 게시글 상세 정보 -->
+            <article class="post-detail">
+                <!-- 게시글 헤더 -->
+                <div class="post-header">
+                    <h2 class="post-title" id="postTitle">제목 1</h2>
+                    <div class="post-actions" id="postActions"></div>
+                </div>
+
+                <!-- 게시글 메타 정보 -->
+                <div class="post-meta">
+                    <div class="author-info">
+                        <div class="author-avatar">👤</div>
+                        <span class="author-name" id="authorName">더미 작성자 1</span>
+                    </div>
+                    <span class="post-date" id="postDate">2021-01-01 00:00:00</span>
+                </div>
+
+
+                <!-- 게시글 이미지 -->
+                <div class="post-image" id="postImage">
+                    <div class="image-placeholder">이미지</div>
+                </div>
+
+                <!-- 게시글 내용 -->
+                <div class="post-content" id="postContent">
+                    게시글 내용이 여기에 표시됩니다.
+                </div>
+
+                <!-- 게시글 통계 -->
+                <div class="post-stats">
+                    <button class="like-btn" id="likeBtn">
+                        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                        <span class="like-count" id="likeCount">123</span>
+                        <span class="stat-label">좋아요</span>
+                    </button>
+                    <div class="stat-item">
+                        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span class="view-count" id="viewCount">123</span>
+                        <span class="stat-label">조회수</span>
+                    </div>
+                    <div class="stat-item">
+                        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span class="comment-count" id="commentCount">123</span>
+                        <span class="stat-label">댓글</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 댓글 섹션 -->
+            <section class="comments-section">
+                <h3 class="comments-title">댓글</h3>
+                
+                <!-- 댓글 입력 -->
+                <div class="comment-input-section">
+                    <textarea 
+                        class="comment-input" 
+                        id="commentInput" 
+                        placeholder="댓글을 남겨주세요!"
+                        rows="3"
+                    ></textarea>
+                    <div id="commentSubmitBtn"></div>
+                </div>
+
+                <!-- 댓글 목록 -->
+                <div class="comments-list" id="commentsList"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <app-footer></app-footer>
+
+    <script src="../../assets/animations/bubble-animation.js"></script>
+    <script type="module" src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/footer/footer.js"></script>
+    <script type="module" src="post-detail.js"></script>
+</body>
+</html>
