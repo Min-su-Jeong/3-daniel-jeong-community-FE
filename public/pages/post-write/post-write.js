@@ -310,14 +310,3 @@ document.addEventListener('DOMContentLoaded', init);
 
 // 뒤로가기 버튼 이벤트
 window.handleBackNavigation = handleBackNavigation;
-
-// 페이지 언로드 시 경고
-window.addEventListener('beforeunload', (e) => {
-    if (isPostSubmitted) return;
-    
-    const hasContent = postTitle.value.trim() || postContent.value.trim() || selectedImages.length > 0;
-    if (hasContent) {
-        e.preventDefault();
-        e.returnValue = '작성 중인 내용이 있습니다. 정말 나가시겠습니까?';
-    }
-});
