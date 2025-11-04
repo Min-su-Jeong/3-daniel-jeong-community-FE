@@ -96,6 +96,8 @@ export class Button {
                 this.buttonElement.classList.add('disabled');
             } else {
                 this.buttonElement.classList.remove('disabled');
+                this.buttonElement.style.opacity = '';
+                this.buttonElement.style.background = '';
             }
         }
     }

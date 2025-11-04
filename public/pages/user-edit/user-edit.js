@@ -11,6 +11,10 @@ import { uploadImage } from '../../api/images.js';
 import { logout } from '../../api/auth.js';
 
 let elements = {};
+let originalNickname = '';
+let originalProfileImageKey = null;
+let user = null;
+let editButton = null;
 
 function initializePageElements() {
     const elementIds = {
@@ -27,16 +31,13 @@ function initializePageElements() {
 }
 
 /**
- * 사용자 정보 가져오기 (localStorage와 sessionStorage 둘 다 확인)
+ * 사용자 정보 가져오기
  */
 function getUserFromStorage() {
     try {
-        let userStr = localStorage.getItem('user');
-        if (!userStr) {
-            userStr = sessionStorage.getItem('user');
-        }
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
         return userStr ? JSON.parse(userStr) : null;
-    } catch (error) {
+    } catch {
         return null;
     }
 }
@@ -45,28 +46,19 @@ function getUserFromStorage() {
  * 사용자 정보 저장
  */
 function saveUserToStorage(userData) {
-    const wasInLocalStorage = !!localStorage.getItem('user');
-    const wasInSessionStorage = !!sessionStorage.getItem('user');
-    
-    if (wasInLocalStorage) {
-        localStorage.setItem('user', JSON.stringify(userData));
-    } else if (wasInSessionStorage) {
-        sessionStorage.setItem('user', JSON.stringify(userData));
-    } else {
-        localStorage.setItem('user', JSON.stringify(userData));
-    }
+    const storage = localStorage.getItem('user') ? localStorage : sessionStorage;
+    storage.setItem('user', JSON.stringify(userData));
 }
 
 /**
  * 프로필 이미지 렌더링
  */
-function renderProfileImage(container, imageKey, altText = '프로필 이미지') {
+function renderProfileImage(container, imageKey) {
     if (!container || !imageKey) return;
     
-    const profileImageUrl = `${API_SERVER_URI}/files/${imageKey}`;
     const img = document.createElement('img');
-    img.src = profileImageUrl;
-    img.alt = altText;
+    img.src = `${API_SERVER_URI}/files/${imageKey}`;
+    img.alt = '프로필 이미지';
     
     container.innerHTML = '';
     container.appendChild(img);
@@ -77,15 +69,61 @@ function createUserEditButtons() {
     
     elements.buttonGroup.innerHTML = '';
     
-    // 수정하기 버튼
-    const editButton = new Button({
+    editButton = new Button({
         text: '수정하기',
         type: 'submit',
         variant: 'primary',
-        size: 'medium'
+        size: 'medium',
+        disabled: true
     });
     
     editButton.appendTo(elements.buttonGroup);
+}
+
+/**
+ * helper-text 초기화
+ */
+function resetHelperText() {
+    const helperText = elements.nickname?.nextElementSibling;
+    if (!helperText?.classList.contains('helper-text')) return;
+    
+    elements.nickname.classList.remove('success', 'error', 'warning');
+    helperText.classList.remove('success', 'error', 'warning');
+    helperText.textContent = helperText.dataset.defaultText || '';
+}
+
+/**
+ * 수정하기 버튼 활성화/비활성화 처리
+ */
+function updateSubmitButtonState() {
+    if (!editButton) return;
+    
+    const currentNickname = getElementValue(elements.nickname, '').trim();
+    const nicknameChanged = currentNickname !== originalNickname;
+    const imageChanged = !!elements.profileImageInput?.files[0];
+    
+    // 닉네임이 원래 값으로 되돌아가면 helper-text 초기화
+    if (!nicknameChanged) {
+        resetHelperText();
+    }
+    
+    // 닉네임 유효성 검사: 변경되지 않았으면 기본적으로 유효함
+    const nicknameValid = nicknameChanged ? validateNickname(currentNickname).isValid : true;
+    
+    // 유효한 변경이 있으면 활성화
+    const canSubmit = (nicknameChanged && nicknameValid) || imageChanged;
+    editButton.setDisabled(!canSubmit);
+}
+
+/**
+ * 원본 이미지로 복원
+ */
+function restoreOriginalImage() {
+    if (originalProfileImageKey) {
+        renderProfileImage(elements.profileImage, originalProfileImageKey);
+    }
+    elements.profileImageInput.value = '';
+    updateSubmitButtonState();
 }
 
 /**
@@ -100,7 +138,11 @@ function setupProfileImageChange() {
     
     elements.profileImageInput.addEventListener('change', async () => {
         const files = Array.from(elements.profileImageInput.files);
-        if (files.length === 0) return;
+        
+        if (files.length === 0) {
+            restoreOriginalImage();
+            return;
+        }
         
         const { validFiles, errors } = validateImageFiles(
             files, 
@@ -111,30 +153,30 @@ function setupProfileImageChange() {
         
         if (errors.length > 0) {
             errors.forEach(error => ToastUtils.error(error));
+            restoreOriginalImage();
             return;
         }
-        
-        if (validFiles.length === 0) return;
         
         try {
             const { previews, errors: previewErrors } = await createImagePreviews(validFiles);
             
             if (previewErrors.length > 0) {
                 previewErrors.forEach(({ error }) => ToastUtils.error(error.message));
+                restoreOriginalImage();
                 return;
             }
             
             if (previews.length > 0) {
-                const { url } = previews[0];
                 const img = document.createElement('img');
-                img.src = url;
+                img.src = previews[0].url;
                 img.alt = '프로필 이미지';
-                
                 elements.profileImage.innerHTML = '';
                 elements.profileImage.appendChild(img);
+                updateSubmitButtonState();
             }
-        } catch (error) {
+        } catch {
             ToastUtils.error('이미지 처리 중 오류가 발생했습니다.');
+            restoreOriginalImage();
         }
     });
 }
@@ -152,6 +194,8 @@ function setupFormFields() {
             }
         }
     ]);
+    
+    elements.nickname?.addEventListener('input', updateSubmitButtonState);
 }
 
 /**
@@ -160,27 +204,16 @@ function setupFormFields() {
 async function removeUser(userId) {
     try {
         await deleteUser(userId);
+        await logout();
         
-        // 저장소 정리
         localStorage.removeItem('user');
         sessionStorage.removeItem('user');
-        localStorage.removeItem('profileImageUrl');
         
-        // 로그아웃 처리 (쿠키 삭제)
-        try {
-            await logout();
-        } catch (logoutError) {
-            // 로그아웃 실패해도 무시 (이미 탈퇴 처리됨)
-        }
-        
-        // 헤더 업데이트를 위해 이벤트 발생
         window.dispatchEvent(new CustomEvent('userUpdated'));
-        
         ToastUtils.success('회원 탈퇴가 완료되었습니다.');
         navigateTo('/');
     } catch (error) {
-        const errorMessage = error.message || '회원 탈퇴에 실패했습니다.';
-        ToastUtils.error(errorMessage);
+        ToastUtils.error(error.message || '회원 탈퇴에 실패했습니다.');
     }
 }
 
@@ -190,7 +223,6 @@ function setupWithdrawal() {
     elements.withdrawalLink.addEventListener('click', (event) => {
         event.preventDefault();
         
-        const user = getUserFromStorage();
         if (!user) {
             ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
             return;
@@ -208,9 +240,7 @@ function setupWithdrawal() {
                     confirmText: '탈퇴',
                     confirmType: 'danger',
                     cancelText: '취소',
-                    onConfirm: () => {
-                        removeUser(user.id);
-                    }
+                    onConfirm: () => removeUser(user.id)
                 });
                 finalModal.show();
             }
@@ -223,7 +253,7 @@ function setupWithdrawal() {
  * 사용자 정보 로드
  */
 async function loadUserData() {
-    const user = getUserFromStorage();
+    user = getUserFromStorage();
     
     if (!user) {
         ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
@@ -231,29 +261,34 @@ async function loadUserData() {
         return;
     }
     
-    if (elements.nickname) {
-        setElementValue(elements.nickname, user.nickname || '');
+    originalNickname = user.nickname || '';
+    originalProfileImageKey = user.profileImageKey || null;
+    
+    setElementValue(elements.nickname, originalNickname);
+    
+    if (originalProfileImageKey) {
+        renderProfileImage(elements.profileImage, originalProfileImageKey);
     }
     
-    if (user.profileImageKey) {
-        renderProfileImage(elements.profileImage, user.profileImageKey, user.nickname || '프로필 이미지');
-    }
+    elements.profileImageInput.value = '';
     
     const emailInput = document.querySelector('input[type="email"]');
     if (emailInput) {
         emailInput.value = user.email || '';
     }
+    
+    updateSubmitButtonState();
 }
 
 /**
  * 프로필 이미지 업로드
  */
 async function uploadProfileImage(userId, file) {
-    const uploadResponse = await uploadImage('PROFILE', userId, file);
-    if (!uploadResponse?.data?.objectKey) {
+    const response = await uploadImage('PROFILE', userId, file);
+    if (!response?.data?.objectKey) {
         throw new Error('프로필 이미지 업로드에 실패했습니다.');
     }
-    return uploadResponse.data.objectKey;
+    return response.data.objectKey;
 }
 
 /**
@@ -265,58 +300,64 @@ function setupFormSubmission() {
     elements.userEditForm.onsubmit = async function(event) {
         event.preventDefault();
 
-        const user = getUserFromStorage();
         if (!user) {
             ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
             return;
         }
 
-        const nickname = getElementValue(elements.nickname, '');
+        const nickname = getElementValue(elements.nickname, '').trim();
         const profileImageFile = elements.profileImageInput?.files[0];
-        
         const submitButton = elements.buttonGroup.querySelector('.btn-primary');
+        
         PageLayout.showLoading(submitButton, '수정 중...');
         
         try {
             let profileImageKey = user.profileImageKey || null;
             
             if (profileImageFile) {
-                try {
-                    profileImageKey = await uploadProfileImage(user.id, profileImageFile);
-                } catch (uploadError) {
-                    ToastUtils.error(uploadError.message || '프로필 이미지 업로드에 실패했습니다.');
-                    throw uploadError;
-                }
+                profileImageKey = await uploadProfileImage(user.id, profileImageFile);
             }
             
-            const updateResponse = await updateUser(user.id, {
+            const response = await updateUser(user.id, {
                 nickname: nickname,
                 profileImageKey: profileImageKey
             });
             
-            if (updateResponse?.data) {
-                saveUserToStorage(updateResponse.data);
+            if (response?.data) {
+                user = response.data;
+                saveUserToStorage(user);
                 
-                if (updateResponse.data.profileImageKey) {
-                    const profileImageUrl = `${API_SERVER_URI}/files/${updateResponse.data.profileImageKey}`;
-                    localStorage.setItem('profileImageUrl', profileImageUrl);
-                } else {
-                    localStorage.removeItem('profileImageUrl');
+                originalNickname = nickname;
+                originalProfileImageKey = profileImageKey;
+                
+                if (profileImageKey) {
+                    renderProfileImage(elements.profileImage, profileImageKey);
                 }
-            }
-            
+                
+                elements.profileImageInput.value = '';
+                updateSubmitButtonState();
+                window.dispatchEvent(new CustomEvent('userUpdated'));
             ToastUtils.success('회원정보가 수정되었습니다!');
-            window.dispatchEvent(new CustomEvent('userUpdated'));
-            
-            setTimeout(() => {
-                history.back();
-            }, 2000);
-            
+            }
         } catch (error) {
-            const errorMessage = error.message || '회원정보 수정에 실패했습니다.';
-            ToastUtils.error(errorMessage);
+            ToastUtils.error(error.message || '회원정보 수정에 실패했습니다.');
         } finally {
             PageLayout.hideLoading(submitButton, '수정하기');
+        }
+    };
+}
+
+/**
+ * 뒤로가기 버튼 클릭 시 이전 페이지로 이동하고 새로고침
+ */
+function setupBackNavigation() {
+    window.handleBackNavigation = function() {
+        // document.referrer가 있으면 해당 페이지로 이동하고 새로고침
+        if (document.referrer) {
+            window.location.href = document.referrer;
+        } else {
+            // referrer가 없으면 홈으로 이동
+            window.location.href = '/';
         }
     };
 }
@@ -329,6 +370,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupFormFields();
     setupWithdrawal();
     setupFormSubmission();
+    setupBackNavigation();
     
     // 사용자 정보 로드
     await loadUserData();

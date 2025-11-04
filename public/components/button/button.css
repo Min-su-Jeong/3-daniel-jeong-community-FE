@@ -19,9 +19,11 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.btn:disabled {
-    opacity: 0.6;
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.5;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .btn.loading {
@@ -53,6 +55,14 @@
     color: white;
     border: none;
     box-shadow: 0 2px 8px rgba(0, 100, 255, 0.3);
+}
+
+.btn.btn-primary:disabled,
+.btn.btn-primary.disabled {
+    background: #95a5a6;
+    color: #ffffff;
+    box-shadow: none;
+    opacity: 0.6;
 }
 
 .btn.btn-primary:hover:not(:disabled) {
