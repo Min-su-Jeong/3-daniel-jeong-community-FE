@@ -1,5 +1,5 @@
 // API 함수들 import
-import { signup } from '../../api/signup.js';
+import { signup } from '../../api/auth.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { validateEmail, validatePassword, validateNickname, setupFormValidation } from '../../utils/common/validation.js';
@@ -169,8 +169,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             // API 호출로 회원가입 처리
-            console.log('회원가입 시도:', { email, password, nickname, profileImage });
-            const response = await signup({ email, password, nickname, profileImage });
+            console.log('회원가입 시도:', { email, password, confirmPassword, nickname, profileImage });
+            const response = await signup({ 
+                email, 
+                password, 
+                confirmPassword, 
+                nickname, 
+                profileImageKey: null // TODO: 프로필 이미지 업로드 후 키 전달
+            });
             
             console.log('회원가입 성공:', response);
             ToastUtils.success('회원가입이 완료되었습니다!');
@@ -178,7 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             // 에러 처리 (회원가입 실패 시 처리)
-            ToastUtils.error('회원가입에 실패했습니다.');
+            const errorMessage = error.message || '회원가입에 실패했습니다.';
+            ToastUtils.error(errorMessage);
         } finally {
             // 로딩 상태 해제 (회원가입 버튼)
             PageLayout.hideLoading(submitButton, '회원가입');

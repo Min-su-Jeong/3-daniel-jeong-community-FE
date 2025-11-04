@@ -1,0 +1,35 @@
+import { request, METHOD } from '../utils/common/request.js';
+
+/**
+ * 로그인 (인증 생성)
+ * - 의도: 이메일/비밀번호 검증 후 JWT 토큰 발급 및 쿠키 설정
+ */
+export async function login(credentials) {
+    return await request({
+        method: METHOD.POST,
+        url: '/auth',
+        body: {
+            email: credentials.email,
+            password: credentials.password,
+            rememberMe: credentials.rememberMe || false
+        }
+    });
+}
+
+/**
+ * 회원가입
+ * - 의도: 유효성 검증 후 사용자 생성
+ */
+export async function signup(userData) {
+    return await request({
+        method: METHOD.POST,
+        url: '/users',
+        body: {
+            email: userData.email,
+            password: userData.password,
+            confirmPassword: userData.confirmPassword || userData.password,
+            nickname: userData.nickname,
+            profileImageKey: userData.profileImageKey || null
+        }
+    });
+}

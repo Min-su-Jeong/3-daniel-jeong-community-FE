@@ -1,4 +1,4 @@
-import { login } from '../../api/login.js';
+import { login } from '../../api/auth.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
@@ -104,7 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
             navigateTo('/');
             
         } catch (error) {
-            ToastUtils.error('로그인에 실패했습니다.');
+            const errorMessage = error.message || '로그인에 실패했습니다.';
+            ToastUtils.error(errorMessage);
         } finally {
             // 로딩 상태 해제
             PageLayout.hideLoading(submitButton, '로그인');
