@@ -127,14 +127,12 @@ async function handleImageFiles(files) {
         // 실패한 파일들에 대한 에러 표시
         if (errors.length > 0) {
             errors.forEach(({ file, error }) => {
-                console.error(`${file.name} 처리 실패:`, error);
             });
             ToastUtils.error('일부 이미지 처리에 실패했습니다.');
         }
         
         updateImageGallery();
     } catch (error) {
-        console.error('이미지 미리보기 생성 실패:', error);
         ToastUtils.error('이미지 처리 중 오류가 발생했습니다.');
     }
 }
@@ -229,7 +227,6 @@ async function loadPostData() {
                 // 세션 스토리지 데이터 사용 후 삭제
                 sessionStorage.removeItem('editPostData');
             } catch (error) {
-                console.error('세션 스토리지 데이터 파싱 실패:', error);
             }
         }
         
@@ -260,7 +257,6 @@ async function loadPostData() {
         validateForm();
         
     } catch (error) {
-        console.error('게시글 데이터 로드 실패:', error);
         ToastUtils.error('게시글 데이터를 불러오는데 실패했습니다.');
     }
 }
@@ -327,7 +323,6 @@ async function handleFormSubmit(e) {
         }
         
     } catch (error) {
-        console.error('게시글 수정 실패:', error);
         ToastUtils.error(error.message || '게시글 수정에 실패했습니다.');
     } finally {
         isPostSubmitted = false;
@@ -363,7 +358,6 @@ async function initializePage() {
         loadingToast.hide();
         
     } catch (error) {
-        console.error('페이지 초기화 실패:', error);
         ToastUtils.error('페이지를 불러오는데 실패했습니다.');
     }
 }

@@ -111,12 +111,10 @@ function setupFormSubmission() {
         
         try {
             // TODO: 비밀번호 수정 API 호출
-            console.log('비밀번호 수정 시도:', { currentPassword, newPassword });
             
             // 임시 성공 처리
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            console.log('비밀번호 수정 성공');
             ToastUtils.success('비밀번호가 수정되었습니다!');
             
             // 2초 후 이전 페이지로 이동

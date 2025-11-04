@@ -51,9 +51,6 @@ export function validateNickname(nickname) {
     return { isValid: true, message: '' };
 }
 
-// TODO: API 연결 시 닉네임 중복 검사 함수 생성 필요
-// TODO: API 연결 시 현재 비밀번호 검증 함수 생성 필요
-
 export function validateTitle(title) {
     if (title.length === 0) return { isValid: true, message: '' };
     if (title.length > 26) return { isValid: false, message: '제목은 26자 이하여야 합니다' };

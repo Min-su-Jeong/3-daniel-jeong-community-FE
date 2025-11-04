@@ -58,7 +58,6 @@ export async function request({
 
         return data;
     } catch (error) {
-        console.error('API 요청 실패:', error);
         throw error;
     }
 }

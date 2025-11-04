@@ -123,14 +123,12 @@ async function handleImageFiles(files) {
         // 실패한 파일들에 대한 에러 표시
         if (errors.length > 0) {
             errors.forEach(({ file, error }) => {
-                console.error(`${file.name} 처리 실패:`, error);
             });
             showError('일부 이미지 처리에 실패했습니다.');
         }
         
         updateImageGallery();
     } catch (error) {
-        console.error('이미지 미리보기 생성 실패:', error);
         showError('이미지 처리 중 오류가 발생했습니다.');
     }
 }
@@ -227,7 +225,6 @@ async function handleFormSubmit(e) {
             throw new Error(response.message || '게시글 등록에 실패했습니다.');
         }
     } catch (error) {
-        console.error('게시글 등록 오류:', error);
         showError(error.message || '게시글 등록 중 오류가 발생했습니다.');
     } finally {
         hideLoading();

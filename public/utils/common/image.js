@@ -66,7 +66,6 @@ export async function createImagePreviews(files) {
             });
             return { file, url, success: true };
         } catch (error) {
-            console.error('이미지 미리보기 생성 실패:', error);
             return { file, error, success: false };
         }
     });
