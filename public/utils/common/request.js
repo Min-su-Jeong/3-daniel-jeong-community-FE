@@ -34,30 +34,32 @@ export async function request({
     }
 
     try {
-        // URL에 params 추가 (있을 경우)
         const urlWithParams = params ? `${API_SERVER_URI}${url}?${params}` : `${API_SERVER_URI}${url}`;
         const response = await fetch(urlWithParams, options);
-        const data = await response.json();
+        
+        // JSON 파싱
+        let data = {};
+        try {
+            const text = await response.text();
+            data = text ? JSON.parse(text) : {};
+        } catch {
+            // JSON 파싱 실패 시 빈 객체
+        }
 
-        // ApiResponse 형식 에러 처리
+        // 에러 처리
         if (!response.ok || !data.success) {
-            // data.data가 실제 에러 메시지 (문자열 또는 배열)
-            // data.message는 "Conflict", "Bad Request" 등의 에러 메시지
-            let errorMessage;
-            if (data.data) {
-                if (Array.isArray(data.data)) {
-                    errorMessage = data.data.join(', ');
-                } else {
-                    errorMessage = data.data;
-                }
-            } else {
-                errorMessage = data.message || `HTTP error! status: ${response.status}`;
-            }
-            throw new Error(errorMessage);
+            const errorMessage = Array.isArray(data.data) 
+                ? data.data.join(', ') 
+                : data.data || data.message || `HTTP error! status: ${response.status}`;
+            const error = new Error(errorMessage);
+            error.status = response.status;
+            throw error;
         }
 
         return data;
     } catch (error) {
+        // 네트워크 에러 등 status 없는 경우 처리
+        if (!error.status) error.status = 0;
         throw error;
     }
 }
