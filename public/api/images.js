@@ -1,4 +1,4 @@
-import { API_SERVER_URI } from '../utils/constants.js';
+import { request, METHOD } from '../utils/common/request.js';
 
 /**
  * 이미지 업로드 (Multipart)
@@ -10,31 +10,10 @@ export async function uploadImage(imageType, resourceId, file) {
     formData.append('resourceId', resourceId.toString());
     formData.append('file', file);
 
-    try {
-        const response = await fetch(`${API_SERVER_URI}/images/upload`, {
-            method: 'POST',
+    return await request({
+        method: METHOD.POST,
+        url: '/images/upload',
             body: formData,
-            credentials: 'include',
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            let errorMessage;
-            if (data.data) {
-                if (Array.isArray(data.data)) {
-                    errorMessage = data.data.join(', ');
-                } else {
-                    errorMessage = data.data;
-                }
-            } else {
-                errorMessage = data.message || `HTTP error! status: ${response.status}`;
-            }
-            throw new Error(errorMessage);
-        }
-
-        return data;
-    } catch (error) {
-        throw error;
-    }
+        isFormData: true
+    });
 }
