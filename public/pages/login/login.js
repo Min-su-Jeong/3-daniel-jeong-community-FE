@@ -4,6 +4,7 @@ import { Button } from '../../components/button/button.js';
 import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
+import { API_SERVER_URI } from '../../utils/constants.js';
 
 // DOM 요소들 초기화
 let elements = {};
@@ -96,11 +97,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // API 호출로 로그인 처리
-            console.log('로그인 시도:', { email, password, rememberMe });
             const response = await login({ email, password, rememberMe });
             
-            console.log('로그인 성공:', response);
+            // 사용자 정보를 localStorage에 저장
+            if (response?.data?.user) {
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+            }
+            
             ToastUtils.success('로그인되었습니다!');
+            
+            // 헤더 업데이트를 위해 이벤트 발생
+            window.dispatchEvent(new CustomEvent('userUpdated'));
+            
             navigateTo('/');
             
         } catch (error) {

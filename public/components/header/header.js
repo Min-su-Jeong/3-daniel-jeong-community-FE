@@ -1,4 +1,5 @@
 import { Modal } from '../modal/modal.js';
+import { API_SERVER_URI } from '../../utils/constants.js';
 
 class AppHeader extends HTMLElement {
     static get observedAttributes() { return ['show-back', 'show-profile']; }
@@ -9,7 +10,13 @@ class AppHeader extends HTMLElement {
         this._shadow = this.attachShadow({ mode: 'open' });
     }
 
-    connectedCallback() { this._render(); }
+    connectedCallback() { 
+        this._render();
+        // 사용자 정보 업데이트 이벤트 리스너
+        window.addEventListener('userUpdated', () => {
+            this._render();
+        });
+    }
     attributeChangedCallback() { this._render(); }
     _onBack() {
         if (window.handleBackNavigation) {
@@ -63,7 +70,46 @@ class AppHeader extends HTMLElement {
             userProfile.className = 'user-profile';
             const icon = document.createElement('div');
             icon.className = 'profile-icon';
-            icon.textContent = '👤';
+            
+            // localStorage에서 사용자 정보 가져오기
+            try {
+                const userStr = localStorage.getItem('user');
+                
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    // profileImageKey가 있으면 동적으로 URL 생성
+                    if (user.profileImageKey) {
+                        const profileImageUrl = `${API_SERVER_URI}/files/${user.profileImageKey}`;
+                        const img = document.createElement('img');
+                        img.src = profileImageUrl;
+                        img.alt = user.nickname || '프로필';
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        img.style.borderRadius = '50%';
+                        img.style.display = 'block';
+                        // 이미지 로드 실패 시 기본 아이콘 표시
+                        img.onerror = () => {
+                            icon.innerHTML = '';
+                            icon.textContent = '👤';
+                        };
+                        icon.innerHTML = '';
+                        icon.appendChild(img);
+                    } else {
+                        // 프로필 이미지가 없으면 기본 아이콘
+                        icon.innerHTML = '';
+                        icon.textContent = '👤';
+                    }
+                } else {
+                    // 사용자 정보가 없으면 기본 아이콘
+                    icon.innerHTML = '';
+                    icon.textContent = '👤';
+                }
+            } catch (error) {
+                icon.innerHTML = '';
+                icon.textContent = '👤';
+            }
+            
             userProfile.appendChild(icon);
             
             // 드롭다운 메뉴
@@ -104,7 +150,6 @@ class AppHeader extends HTMLElement {
                                 cancelText: '취소',
                                 onConfirm: () => {
                                     // TODO: 로그아웃 API 호출
-                                    console.log('로그아웃 처리');
                                     window.location.href = '/login';
                                 }
                             }).show();
