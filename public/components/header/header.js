@@ -1,5 +1,201 @@
 import { Modal } from '../modal/modal.js';
 import { API_SERVER_URI } from '../../utils/constants.js';
+import { logout, refresh } from '../../api/auth.js';
+import { ToastUtils } from '../toast/toast.js';
+
+/**
+ * 저장소 정리 유틸리티 함수
+ */
+function clearUserStorage() {
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
+}
+
+/**
+ * 사용자 정보 가져오기
+ * - 저장소에 사용자 정보가 없으면 백엔드 쿠키 상태 확인
+ * - 쿠키 동기화는 한 번만 수행하도록 플래그 사용
+ */
+let isCheckingAuth = false;
+async function getUserFromStorage() {
+    try {
+        // localStorage 확인 (rememberMe = true인 경우)
+        let userStr = localStorage.getItem('user');
+        if (userStr) {
+            return JSON.parse(userStr);
+        }
+        
+        // sessionStorage 확인 (rememberMe = false인 경우)
+        userStr = sessionStorage.getItem('user');
+        if (userStr) {
+            return JSON.parse(userStr);
+        }
+        
+        // 저장소에 사용자 정보가 없으면 백엔드 쿠키 상태 확인
+        // 동시 호출 방지 (중복 API 호출 방지)
+        if (isCheckingAuth) {
+            return null;
+        }
+        
+        isCheckingAuth = true;
+        try {
+            // 세션 쿠키가 남아있을 수 있으므로 동기화
+            await refresh();
+            // 토큰이 유효하면 쿠키가 남아있는 상태
+            // rememberMe = false일 때 탭만 닫으면 sessionStorage는 삭제되지만 쿠키는 남아있을 수 있음
+            // 이 경우 쿠키도 무효화해야 하므로 로그아웃 API 호출
+            try {
+                await logout();
+            } catch (logoutError) {
+                // 로그아웃 실패해도 무시
+            }
+            clearUserStorage();
+            return null;
+        } catch (error) {
+            // 401 등 에러면 토큰이 없거나 만료된 상태
+            clearUserStorage();
+            return null;
+        } finally {
+            isCheckingAuth = false;
+        }
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * 프로필 아이콘 렌더링
+ */
+function renderProfileIcon(icon, user) {
+    icon.innerHTML = '';
+    
+    if (user?.profileImageKey) {
+        const profileImageUrl = `${API_SERVER_URI}/files/${user.profileImageKey}`;
+        const img = document.createElement('img');
+        img.src = profileImageUrl;
+        img.alt = user.nickname || '프로필';
+        img.onerror = () => {
+            icon.innerHTML = '';
+            icon.textContent = '👤';
+        };
+        icon.appendChild(img);
+    } else {
+        icon.textContent = '👤';
+    }
+}
+
+/**
+ * 로그아웃 후 페이지 이동 처리
+ */
+function handlePostLogoutNavigation() {
+    const currentPath = window.location.pathname;
+    const isPostListPage = currentPath === '/' || currentPath === '/post-list';
+    
+    if (isPostListPage) {
+        window.history.replaceState({ loggedOut: true }, '', currentPath);
+    } else {
+        window.history.pushState(null, '', '/');
+        window.location.href = '/';
+    }
+}
+
+/**
+ * 로그아웃 처리
+ */
+async function handleLogout() {
+    try {
+        await logout();
+        clearUserStorage();
+        window.dispatchEvent(new CustomEvent('userUpdated'));
+        ToastUtils.success('로그아웃되었습니다.');
+        handlePostLogoutNavigation();
+    } catch (error) {
+        clearUserStorage();
+        window.dispatchEvent(new CustomEvent('userUpdated'));
+        ToastUtils.error('로그아웃 중 오류가 발생했습니다.');
+        handlePostLogoutNavigation();
+    }
+}
+
+/**
+ * 드롭다운 메뉴 생성
+ */
+function createDropdownMenu(userProfile, isLoggedIn) {
+    const dropdown = document.createElement('div');
+    dropdown.className = 'profile-dropdown';
+    
+    // 로그인 상태에 따라 다른 메뉴 표시
+    if (isLoggedIn) {
+        dropdown.innerHTML = `
+            <button class="dropdown-item" data-action="user-edit">회원정보수정</button>
+            <button class="dropdown-item" data-action="password-edit">비밀번호수정</button>
+            <button class="dropdown-item logout-item" data-action="logout">로그아웃</button>
+        `;
+    } else {
+        dropdown.innerHTML = `
+            <button class="dropdown-item" data-action="login">로그인</button>
+        `;
+    }
+    
+    userProfile.appendChild(dropdown);
+    
+    // 드롭다운 토글
+    userProfile.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('active');
+    });
+    
+    // 드롭다운 아이템 클릭 이벤트
+    dropdown.addEventListener('click', (e) => {
+        const action = e.target.dataset.action;
+        if (!action) return;
+        
+        e.preventDefault();
+        dropdown.classList.remove('active');
+        
+        const actionHandlers = {
+            'login': () => { window.location.href = '/login'; },
+            'user-edit': () => { window.location.href = '/user-edit'; },
+            'password-edit': () => { window.location.href = '/password-edit'; },
+            'logout': () => {
+                new Modal({
+                    title: '로그아웃',
+                    subtitle: '로그아웃 하시겠습니까?',
+                    confirmText: '로그아웃',
+                    cancelText: '취소',
+                    onConfirm: handleLogout
+                }).show();
+            }
+        };
+        
+        const handler = actionHandlers[action];
+        if (handler) handler();
+    });
+    
+
+    // document에 이벤트 리스너 등록
+    if (!document._hasDropdownCloseListener) {
+        document.addEventListener('click', (e) => {
+            // Shadow DOM 내부의 활성 드롭다운 찾기
+            const headers = document.querySelectorAll('app-header');
+            headers.forEach(header => {
+                const shadowRoot = header.shadowRoot;
+                if (shadowRoot) {
+                    const activeDropdown = shadowRoot.querySelector('.profile-dropdown.active');
+                    const userProfile = shadowRoot.querySelector('.user-profile');
+                    if (activeDropdown && userProfile) {
+                        // 클릭이 드롭다운 외부인 경우 닫기
+                        const path = e.composedPath();
+                        if (!path.includes(userProfile)) {
+                            activeDropdown.classList.remove('active');
+                        }
+                    }
+                }
+            });
+        });
+        document._hasDropdownCloseListener = true;
+    }
+}
 
 class AppHeader extends HTMLElement {
     static get observedAttributes() { return ['show-back', 'show-profile']; }
@@ -11,13 +207,13 @@ class AppHeader extends HTMLElement {
     }
 
     connectedCallback() { 
-        this._render();
+        this._renderAsync();
         // 사용자 정보 업데이트 이벤트 리스너
         window.addEventListener('userUpdated', () => {
-            this._render();
+            this._renderAsync();
         });
     }
-    attributeChangedCallback() { this._render(); }
+    attributeChangedCallback() { this._renderAsync(); }
     _onBack() {
         if (window.handleBackNavigation) {
             window.handleBackNavigation();
@@ -25,20 +221,17 @@ class AppHeader extends HTMLElement {
             history.back();
         }
     }
-    _render() {
+    async _renderAsync() {
         const showBack = this.hasAttribute('show-back');
         const showProfile = this.hasAttribute('show-profile');
 
-        // Clear
         this._shadow.innerHTML = '';
 
-        // Styles (isolated)
         const styleLink = document.createElement('link');
         styleLink.rel = 'stylesheet';
         styleLink.href = '/components/header/header.css';
         this._shadow.appendChild(styleLink);
 
-        // Structure: always three zones to keep center fixed
         const header = document.createElement('header');
         header.className = 'header';
 
@@ -55,7 +248,6 @@ class AppHeader extends HTMLElement {
         const right = document.createElement('div');
         right.className = 'header-right';
 
-        // Show/hide elements based on attributes
         if (showBack) {
             const backBtn = document.createElement('button');
             backBtn.className = 'back-btn';
@@ -71,97 +263,14 @@ class AppHeader extends HTMLElement {
             const icon = document.createElement('div');
             icon.className = 'profile-icon';
             
-            // localStorage에서 사용자 정보 가져오기
-            try {
-                const userStr = localStorage.getItem('user');
-                
-                if (userStr) {
-                    const user = JSON.parse(userStr);
-                    // profileImageKey가 있으면 동적으로 URL 생성
-                    if (user.profileImageKey) {
-                        const profileImageUrl = `${API_SERVER_URI}/files/${user.profileImageKey}`;
-                        const img = document.createElement('img');
-                        img.src = profileImageUrl;
-                        img.alt = user.nickname || '프로필';
-                        img.style.width = '100%';
-                        img.style.height = '100%';
-                        img.style.objectFit = 'cover';
-                        img.style.borderRadius = '50%';
-                        img.style.display = 'block';
-                        // 이미지 로드 실패 시 기본 아이콘 표시
-                        img.onerror = () => {
-                            icon.innerHTML = '';
-                            icon.textContent = '👤';
-                        };
-                        icon.innerHTML = '';
-                        icon.appendChild(img);
-                    } else {
-                        // 프로필 이미지가 없으면 기본 아이콘
-                        icon.innerHTML = '';
-                        icon.textContent = '👤';
-                    }
-                } else {
-                    // 사용자 정보가 없으면 기본 아이콘
-                    icon.innerHTML = '';
-                    icon.textContent = '👤';
-                }
-            } catch (error) {
-                icon.innerHTML = '';
-                icon.textContent = '👤';
-            }
+            // 사용자 정보 가져오기
+            const user = await getUserFromStorage();
+            renderProfileIcon(icon, user);
             
             userProfile.appendChild(icon);
             
-            // 드롭다운 메뉴
-            const dropdown = document.createElement('div');
-            dropdown.className = 'profile-dropdown';
-            dropdown.innerHTML = `
-                <button class="dropdown-item" data-action="user-edit">회원정보수정</button>
-                <button class="dropdown-item" data-action="password-edit">비밀번호수정</button>
-                <button class="dropdown-item logout-item" data-action="logout">로그아웃</button>
-            `;
-            userProfile.appendChild(dropdown);
-            
-            // 드롭다운 토글
-            userProfile.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdown.classList.toggle('active');
-            });
-            
-            // 드롭다운 아이템 클릭 이벤트
-            dropdown.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
-                if (action) {
-                    e.preventDefault();
-                    dropdown.classList.remove('active');
-                    
-                    switch (action) {
-                        case 'user-edit':
-                            window.location.href = '/user-edit';
-                            break;
-                        case 'password-edit':
-                            window.location.href = '/password-edit';
-                            break;
-                        case 'logout':
-                            new Modal({
-                                title: '로그아웃',
-                                subtitle: '로그아웃 하시겠습니까?',
-                                confirmText: '로그아웃',
-                                cancelText: '취소',
-                                onConfirm: () => {
-                                    // TODO: 로그아웃 API 호출
-                                    window.location.href = '/login';
-                                }
-                            }).show();
-                            break;
-                    }
-                }
-            });
-            
-            // 외부 클릭 시 드롭다운 닫기
-            document.addEventListener('click', () => {
-                dropdown.classList.remove('active');
-            });
+            // 드롭다운 메뉴 생성
+            createDropdownMenu(userProfile, !!user);
             
             right.appendChild(userProfile);
         }
@@ -171,6 +280,7 @@ class AppHeader extends HTMLElement {
         header.appendChild(right);
         this._shadow.appendChild(header);
     }
+    
 }
 
 customElements.define('app-header', AppHeader);

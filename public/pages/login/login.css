@@ -157,6 +157,21 @@
 .button-group {
     margin-bottom: var(--spacing-2xl);
     animation: fadeIn 0.8s ease-out 0.8s both;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 로그인/회원가입 버튼 */
+.button-group > div:first-child {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+/* 비회원 로그인 버튼 */
+.button-group > .btn:last-child {
+    width: 100%;
 }
 
 /* 추가 링크 */

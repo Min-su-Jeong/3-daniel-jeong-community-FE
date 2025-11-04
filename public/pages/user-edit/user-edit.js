@@ -166,10 +166,6 @@ async function loadUserData() {
             const img = document.createElement('img');
             img.src = profileImageUrl;
             img.alt = user.nickname || '프로필 이미지';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '50%';
             
             elements.profileImage.innerHTML = '';
             elements.profileImage.appendChild(img);

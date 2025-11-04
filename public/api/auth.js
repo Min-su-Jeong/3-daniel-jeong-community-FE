@@ -33,3 +33,25 @@ export async function signup(userData) {
         }
     });
 }
+
+/**
+ * 토큰 갱신 (인증 상태 확인)
+ * - 의도: 쿠키의 refresh token으로 새 access token 발급
+ */
+export async function refresh() {
+    return await request({
+        method: METHOD.POST,
+        url: '/auth/refresh'
+    });
+}
+
+/**
+ * 로그아웃 (인증 삭제)
+ * - 의도: 쿠키를 즉시 만료시키고 DB의 refresh token도 무효화
+ */
+export async function logout() {
+    return await request({
+        method: METHOD.DELETE,
+        url: '/auth'
+    });
+}

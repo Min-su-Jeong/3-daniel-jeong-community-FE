@@ -4,7 +4,6 @@ import { Button } from '../../components/button/button.js';
 import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
-import { API_SERVER_URI } from '../../utils/constants.js';
 
 // DOM 요소들 초기화
 let elements = {};
@@ -48,6 +47,44 @@ function createLoginButtons() {
     
     loginButton.appendTo(elements.buttonGroup);
     signupButton.appendTo(elements.buttonGroup);
+    
+    // 비회원으로 로그인 버튼
+    const guestLoginButton = new Button({
+        text: '비회원으로 로그인',
+        type: 'button',
+        variant: 'secondary',
+        size: 'medium',
+        onClick: () => {
+            handleGuestLogin();
+        }
+    });
+    
+    guestLoginButton.appendTo(elements.buttonGroup);
+    
+    // 로그인/회원가입 버튼을 가로로 배치
+    const authButtons = elements.buttonGroup.querySelectorAll('.btn:nth-child(-n+2)');
+    if (authButtons.length === 2) {
+        const buttonRow = document.createElement('div');
+        authButtons.forEach(btn => {
+            buttonRow.appendChild(btn);
+        });
+        elements.buttonGroup.insertBefore(buttonRow, elements.buttonGroup.firstChild);
+    }
+}
+
+// 비회원으로 로그인 처리
+function handleGuestLogin() {
+    // 모든 저장소에서 사용자 정보 삭제
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
+    
+    // 헤더 업데이트를 위해 이벤트 발생
+    window.dispatchEvent(new CustomEvent('userUpdated'));
+    
+    ToastUtils.success('비회원으로 로그인되었습니다.');
+    
+    // 게시글 목록 페이지로 이동
+    navigateTo('/');
 }
 
 // 폼 유효성 검사 설정
@@ -99,9 +136,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // API 호출로 로그인 처리
             const response = await login({ email, password, rememberMe });
             
-            // 사용자 정보를 localStorage에 저장
+            // 사용자 정보 저장
             if (response?.data?.user) {
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+                if (rememberMe) {
+                    // rememberMe = true: localStorage
+                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                    sessionStorage.removeItem('user');
+                } else {
+                    // rememberMe = false: sessionStorage
+                    sessionStorage.setItem('user', JSON.stringify(response.data.user));
+                    localStorage.removeItem('user');
+                }
             }
             
             ToastUtils.success('로그인되었습니다!');
