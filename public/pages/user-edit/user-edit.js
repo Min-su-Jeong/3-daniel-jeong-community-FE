@@ -6,8 +6,9 @@ import { ToastUtils } from '../../components/toast/toast.js';
 import { Modal } from '../../components/modal/modal.js';
 import { validateImageFiles, createImagePreviews } from '../../utils/common/image.js';
 import { IMAGE_CONSTANTS, API_SERVER_URI } from '../../utils/constants.js';
-import { updateUser } from '../../api/users.js';
+import { updateUser, deleteUser } from '../../api/users.js';
 import { uploadImage } from '../../api/images.js';
+import { logout } from '../../api/auth.js';
 
 let elements = {};
 
@@ -153,20 +154,54 @@ function setupFormFields() {
     ]);
 }
 
+/**
+ * 회원 탈퇴 처리
+ */
+async function removeUser(userId) {
+    try {
+        await deleteUser(userId);
+        
+        // 저장소 정리
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+        localStorage.removeItem('profileImageUrl');
+        
+        // 로그아웃 처리 (쿠키 삭제)
+        try {
+            await logout();
+        } catch (logoutError) {
+            // 로그아웃 실패해도 무시 (이미 탈퇴 처리됨)
+        }
+        
+        // 헤더 업데이트를 위해 이벤트 발생
+        window.dispatchEvent(new CustomEvent('userUpdated'));
+        
+        ToastUtils.success('회원 탈퇴가 완료되었습니다.');
+        navigateTo('/');
+    } catch (error) {
+        const errorMessage = error.message || '회원 탈퇴에 실패했습니다.';
+        ToastUtils.error(errorMessage);
+    }
+}
+
 function setupWithdrawal() {
     if (!elements.withdrawalLink) return;
 
     elements.withdrawalLink.addEventListener('click', (event) => {
         event.preventDefault();
         
-        // 첫 번째 확인 모달
+        const user = getUserFromStorage();
+        if (!user) {
+            ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
+            return;
+        }
+        
         const firstModal = new Modal({
             title: '회원 탈퇴',
             content: '회원 탈퇴를 진행하시겠습니까?<br>탈퇴된 계정은 복구할 수 없습니다.',
             confirmText: '탈퇴',
             confirmType: 'danger',
             onConfirm: () => {
-                // 두 번째 최종 확인 모달
                 const finalModal = new Modal({
                     title: '회원 탈퇴 확인',
                     content: '정말로 회원 탈퇴를 진행하시겠습니까?<br><strong>계정과 관련된 모든 정보가 영구적으로 삭제됩니다.</strong>',
@@ -174,9 +209,7 @@ function setupWithdrawal() {
                     confirmType: 'danger',
                     cancelText: '취소',
                     onConfirm: () => {
-                        // TODO: 회원 탈퇴 API 호출
-                        ToastUtils.success('회원 탈퇴가 완료되었습니다.');
-                        navigateTo('/post-list');
+                        removeUser(user.id);
                     }
                 });
                 finalModal.show();

@@ -50,3 +50,14 @@ export async function checkNickname(nickname) {
     });
 }
 
+/**
+ * 회원 탈퇴
+ * - 의도: deletedAt 설정으로 비활성화
+ */
+export async function deleteUser(id) {
+    return await request({
+        method: METHOD.DELETE,
+        url: `/users/${id}`
+    });
+}
+
