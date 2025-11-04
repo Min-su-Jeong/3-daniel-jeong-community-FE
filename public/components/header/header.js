@@ -1,6 +1,6 @@
 import { Modal } from '../modal/modal.js';
 import { API_SERVER_URI } from '../../utils/constants.js';
-import { logout, refresh } from '../../api/auth.js';
+import { logout } from '../../api/auth.js';
 import { ToastUtils } from '../toast/toast.js';
 
 /**
@@ -13,10 +13,9 @@ function clearUserStorage() {
 
 /**
  * 사용자 정보 가져오기
- * - 저장소에 사용자 정보가 없으면 백엔드 쿠키 상태 확인
- * - 쿠키 동기화는 한 번만 수행하도록 플래그 사용
+ * - 저장소에 사용자 정보가 없으면 null 반환 (비회원 상태)
+ * - 비회원일 때는 API 호출하지 않음
  */
-let isCheckingAuth = false;
 async function getUserFromStorage() {
     try {
         // localStorage 확인 (rememberMe = true인 경우)
@@ -31,33 +30,7 @@ async function getUserFromStorage() {
             return JSON.parse(userStr);
         }
         
-        // 저장소에 사용자 정보가 없으면 백엔드 쿠키 상태 확인
-        // 동시 호출 방지 (중복 API 호출 방지)
-        if (isCheckingAuth) {
-            return null;
-        }
-        
-        isCheckingAuth = true;
-        try {
-            // 세션 쿠키가 남아있을 수 있으므로 동기화
-            await refresh();
-            // 토큰이 유효하면 쿠키가 남아있는 상태
-            // rememberMe = false일 때 탭만 닫으면 sessionStorage는 삭제되지만 쿠키는 남아있을 수 있음
-            // 이 경우 쿠키도 무효화해야 하므로 로그아웃 API 호출
-            try {
-                await logout();
-            } catch (logoutError) {
-                // 로그아웃 실패해도 무시
-            }
-            clearUserStorage();
-            return null;
-        } catch (error) {
-            // 401 등 에러면 토큰이 없거나 만료된 상태
-            clearUserStorage();
-            return null;
-        } finally {
-            isCheckingAuth = false;
-        }
+        return null;
     } catch (error) {
         return null;
     }
