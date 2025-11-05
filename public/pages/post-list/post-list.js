@@ -22,10 +22,21 @@ document.addEventListener('DOMContentLoaded', function() {
             
             this.init();
         }
-        
+
         init() {
             this.createWritePostButton();
             this.bindEvents();
+            this.loadPosts();
+        }
+
+        // 목록 리프레시: 뒤로가기 시 최신 데이터 반영
+        refreshList() {
+            this.cursor = null;
+            this.hasMorePosts = true;
+            this.isLoading = false;
+            if (this.elements.postsContainer) {
+                this.elements.postsContainer.innerHTML = '';
+            }
             this.loadPosts();
         }
         
@@ -42,6 +53,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         bindEvents() {
             window.addEventListener('scroll', () => this.handleScroll());
+            // 브라우저 뒤로가기 시 목록 새로고침
+            window.addEventListener('pageshow', (event) => {
+                const navEntries = performance.getEntriesByType('navigation');
+                const navType = navEntries && navEntries[0] ? navEntries[0].type : undefined;
+                if (event.persisted === true || navType === 'back_forward') {
+                    this.refreshList();
+                }
+            });
         }
         
         handleScroll() {
@@ -95,18 +114,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        createPostCard(post) {
+		createPostCard(post) {
             const card = document.createElement('div');
             card.className = 'post-card';
             const postId = post.id || post.postId;
             card.dataset.postId = postId;
-            
+
             const title = post.title || '';
             const author = post.author?.nickname || post.author?.name || post.author || '작성자';
             const createdAt = post.createdAt ? new Date(post.createdAt) : new Date();
-            const likes = post.likes || post.likeCount || 0;
-            const comments = post.comments || post.commentCount || 0;
-            const views = post.views || post.viewCount || 0;
+            const stats = post?.stats || {};
+            const likes = stats.likeCount || 0;
+            const comments = stats.commentCount || 0;
+            const views = stats.viewCount || 0;
             
             const truncatedTitle = title.length > 26 ? title.substring(0, 26) + '...' : title;
             
