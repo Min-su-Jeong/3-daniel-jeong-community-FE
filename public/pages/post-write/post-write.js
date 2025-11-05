@@ -9,6 +9,8 @@ import {
     updateImageGalleryCount,
     setupImageUploadEvents 
 } from '../../utils/common/image.js';
+import { createPost, updatePost } from '../../api/posts.js';
+import { uploadImage } from '../../api/images.js';
 
 // DOM 요소들 초기화
 const elements = initializeElements({
@@ -32,6 +34,18 @@ const { postForm, postTitle, postContent, postImages, charCount, imageUploadArea
 // 상태 관리
 let selectedImages = [];
 let isPostSubmitted = false; // 게시글 제출 완료 여부
+
+/**
+ * 현재 사용자 정보 가져오기
+ */
+function getCurrentUser() {
+    try {
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        return userStr ? JSON.parse(userStr) : null;
+    } catch {
+        return null;
+    }
+}
 
 /**
  * 페이지 초기화
@@ -215,16 +229,61 @@ async function handleFormSubmit(e) {
         return;
     }
     
+    if (isPostSubmitted) return;
+    isPostSubmitted = true;
+    
     try {
-        showLoading();
-        const response = await submitPost(createFormData());
-        
-        if (response.success) {
-            showSuccess('게시글이 성공적으로 등록되었습니다!');
-        } else {
-            throw new Error(response.message || '게시글 등록에 실패했습니다.');
+        // 현재 사용자 확인
+        const user = getCurrentUser();
+        if (!user || !user.id) {
+            showError('로그인이 필요합니다.');
+            isPostSubmitted = false;
+            return;
         }
+        
+        showLoading();
+        
+        const title = postTitle.value.trim();
+        const content = postContent.value.trim();
+        
+        // 1. 게시글 먼저 생성 (이미지 없이)
+        let createResponse = await submitPost(user.id, title, content, []);
+        
+        if (!createResponse.success) {
+            throw new Error(createResponse.message || '게시글 생성에 실패했습니다.');
+        }
+        
+        const postId = createResponse.data?.postId;
+        if (!postId) {
+            console.error('게시글 생성 응답:', createResponse);
+            throw new Error('게시글 ID를 받지 못했습니다.');
+        }
+        
+        // 2. 이미지 업로드 및 게시글 업데이트 (이미지가 있는 경우)
+        if (selectedImages.length > 0) {
+            try {
+                // 이미지 업로드 (resourceId는 게시글 ID)
+                const imageObjectKeys = await uploadImages(selectedImages, postId);
+                
+                // 게시글 업데이트 (이미지 objectKey 포함)
+                const updateResponse = await updatePost(postId, {
+                    title,
+                    content,
+                    imageObjectKeys
+                });
+                
+                if (!updateResponse.success) {
+                    throw new Error(updateResponse.message || '게시글 업데이트에 실패했습니다.');
+                }
+            } catch (error) {
+                // 이미지 업로드 실패 시 게시글 삭제 고려 (선택사항)
+                throw new Error(error.message || '이미지 업로드에 실패했습니다.');
+            }
+        }
+        
+        showSuccess('게시글이 성공적으로 등록되었습니다!');
     } catch (error) {
+        isPostSubmitted = false;
         showError(error.message || '게시글 등록 중 오류가 발생했습니다.');
     } finally {
         hideLoading();
@@ -232,29 +291,38 @@ async function handleFormSubmit(e) {
 }
 
 /**
- * FormData 생성
+ * 이미지 업로드 (게시글 작성 후)
  */
-function createFormData() {
-    const formData = new FormData();
-    formData.append('title', postTitle.value.trim());
-    formData.append('content', postContent.value.trim());
-    selectedImages.forEach(image => formData.append('images', image));
-    return formData;
+async function uploadImages(imageFiles, postId) {
+    const uploadedKeys = [];
+    
+    for (const imageData of imageFiles) {
+        try {
+            // 이미지 업로드 (resourceId는 게시글 ID)
+            const response = await uploadImage('POST', postId, imageData.file);
+            
+            if (response.success && response.data && response.data.objectKey) {
+                uploadedKeys.push(response.data.objectKey);
+            } else {
+                throw new Error('이미지 업로드에 실패했습니다.');
+            }
+        } catch (error) {
+            throw new Error(`이미지 업로드 중 오류가 발생했습니다: ${error.message}`);
+        }
+    }
+    
+    return uploadedKeys;
 }
 
 /**
  * 게시글 제출 API 호출
  */
-async function submitPost(formData) {
-    // 실제 구현 시 서버 API 엔드포인트로 변경
-    // 현재는 모의 구현
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                success: true,
-                message: '게시글이 등록되었습니다.'
-            });
-        }, 2000);
+async function submitPost(userId, title, content, imageObjectKeys) {
+    return await createPost({
+        userId,
+        title,
+        content,
+        imageObjectKeys
     });
 }
 

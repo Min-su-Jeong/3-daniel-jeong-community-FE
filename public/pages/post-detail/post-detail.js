@@ -7,6 +7,7 @@ import { ToastUtils } from '../../components/toast/toast.js';
 import { getPostById } from '../../api/posts.js';
 import { addPostLike, removePostLike } from '../../api/post-like.js';
 import { createComment, updateComment, deleteComment as deleteCommentApi } from '../../api/comments.js';
+import { API_SERVER_URI } from '../../utils/constants.js';
 
 // 전역 변수
 let isLiked = false;
@@ -89,6 +90,9 @@ async function initializePostData() {
         elements.postDate.textContent = formatDate(new Date(postData.createdAt));
         elements.postContent.textContent = postData.content || '';
         
+        // 게시글 이미지 표시
+        renderPostImages(postData.imageObjectKeys || []);
+        
         // 통계 정보
         const stats = postData.stats || {};
         elements.likeCount.textContent = formatNumber(stats.likeCount || 0);
@@ -128,6 +132,58 @@ async function initializePostData() {
         });
         ToastUtils.error(error.message || '게시글을 불러올 수 없습니다.');
         navigateTo('/post-list');
+    }
+}
+
+/**
+ * 게시글 이미지 렌더링
+ */
+function renderPostImages(imageObjectKeys) {
+    if (!elements.postImage) return;
+    
+    // 이미지가 없으면 placeholder 표시
+    if (!imageObjectKeys || imageObjectKeys.length === 0) {
+        elements.postImage.innerHTML = '';
+        elements.postImage.style.display = 'none';
+        return;
+    }
+    
+    elements.postImage.style.display = 'block';
+    
+    // 이미지가 1개인 경우
+    if (imageObjectKeys.length === 1) {
+        const img = document.createElement('img');
+        img.src = `${API_SERVER_URI}/files/${imageObjectKeys[0]}`;
+        img.alt = '게시글 이미지';
+        img.className = 'post-image-item';
+        img.onerror = () => {
+            img.style.display = 'none';
+        };
+        elements.postImage.innerHTML = '';
+        elements.postImage.appendChild(img);
+    } else {
+        // 이미지가 여러 개인 경우 갤러리 형식
+        const gallery = document.createElement('div');
+        gallery.className = 'post-image-gallery';
+        
+        imageObjectKeys.forEach((imageKey, index) => {
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'post-image-item-container';
+            
+            const img = document.createElement('img');
+            img.src = `${API_SERVER_URI}/files/${imageKey}`;
+            img.alt = `게시글 이미지 ${index + 1}`;
+            img.className = 'post-image-item';
+            img.onerror = () => {
+                imgContainer.style.display = 'none';
+            };
+            
+            imgContainer.appendChild(img);
+            gallery.appendChild(imgContainer);
+        });
+        
+        elements.postImage.innerHTML = '';
+        elements.postImage.appendChild(gallery);
     }
 }
 

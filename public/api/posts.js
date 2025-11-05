@@ -27,52 +27,35 @@ export async function getPostById(postId) {
 /**
  * 게시글 작성
  * - 의도: 새 게시글 생성
- * - 요청: multipart/form-data (postData: JSON, image: 파일, 선택사항)
+ * - 요청: JSON body (userId, title, content, imageObjectKeys 배열)
  */
-export async function createPost(postData, image = null) {
-    const formData = new FormData();
-    
-    formData.append('postData', new Blob([JSON.stringify({
-        title: postData.title,
-        content: postData.content,
-        imageKey: null
-    })], { type: 'application/json' }));
-    
-    if (image) {
-        formData.append('image', image);
-    }
-    
+export async function createPost(postData) {
     return await request({
         method: METHOD.POST,
         url: '/posts',
-        body: formData,
-        isFormData: true
+        body: {
+            userId: postData.userId,
+            title: postData.title,
+            content: postData.content,
+            imageObjectKeys: postData.imageObjectKeys || []
+        }
     });
 }
 
 /**
  * 게시글 수정
  * - 의도: 게시글 내용 수정
- * - 요청: multipart/form-data (postData: JSON, image: 파일, 선택사항)
+ * - 요청: JSON body (title, content, imageObjectKeys 배열)
  */
-export async function updatePost(postId, postData, image = null) {
-    const formData = new FormData();
-    
-    formData.append('postData', new Blob([JSON.stringify({
-        title: postData.title,
-        content: postData.content,
-        imageKey: postData.imageKey || null
-    })], { type: 'application/json' }));
-    
-    if (image) {
-        formData.append('image', image);
-    }
-    
+export async function updatePost(postId, postData) {
     return await request({
         method: METHOD.PATCH,
         url: `/posts/${postId}`,
-        body: formData,
-        isFormData: true
+        body: {
+            title: postData.title,
+            content: postData.content,
+            imageObjectKeys: postData.imageObjectKeys || []
+        }
     });
 }
 
