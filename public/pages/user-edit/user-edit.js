@@ -132,6 +132,8 @@ function restoreOriginalImage() {
 function setupProfileImageChange() {
     if (!elements.changeImageBtn || !elements.profileImageInput || !elements.profileImage) return;
     
+    elements.profileImageInput.accept = IMAGE_CONSTANTS.ACCEPT;
+    
     elements.changeImageBtn.addEventListener('click', () => {
         elements.profileImageInput.click();
     });
@@ -147,7 +149,6 @@ function setupProfileImageChange() {
         const { validFiles, errors } = validateImageFiles(
             files, 
             IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 
-            IMAGE_CONSTANTS.SUPPORTED_TYPES, 
             1
         );
         

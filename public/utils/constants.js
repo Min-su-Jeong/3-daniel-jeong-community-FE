@@ -13,5 +13,5 @@ export const METHOD = Object.freeze({
 export const IMAGE_CONSTANTS = Object.freeze({
     MAX_IMAGES: 10,
     MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB
-    SUPPORTED_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+    ACCEPT: 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
 });

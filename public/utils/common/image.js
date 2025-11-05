@@ -8,11 +8,10 @@ import { IMAGE_CONSTANTS } from '../constants.js';
  * 이미지 파일들을 유효성 검사
  * @param {FileList} files - 검사할 파일들
  * @param {number} maxSize - 최대 파일 크기 (바이트)
- * @param {string[]} supportedTypes - 지원되는 파일 타입
  * @param {number} maxFiles - 최대 파일 개수
  * @returns {Object} { validFiles: File[], errors: string[] }
  */
-export function validateImageFiles(files, maxSize = IMAGE_CONSTANTS.MAX_IMAGE_SIZE, supportedTypes = IMAGE_CONSTANTS.SUPPORTED_TYPES, maxFiles = IMAGE_CONSTANTS.MAX_IMAGES) {
+export function validateImageFiles(files, maxSize = IMAGE_CONSTANTS.MAX_IMAGE_SIZE, maxFiles = IMAGE_CONSTANTS.MAX_IMAGES) {
     if (files.length === 0) return { validFiles: [], errors: [] };
     
     const validFiles = [];
@@ -25,23 +24,12 @@ export function validateImageFiles(files, maxSize = IMAGE_CONSTANTS.MAX_IMAGE_SI
     }
 
     // 각 파일 검사
+    const maxSizeMB = Math.round(maxSize / (1024 * 1024));
     for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        // 파일 크기 검사
-        if (file.size > maxSize) {
-            const maxSizeMB = Math.round(maxSize / (1024 * 1024));
-            errors.push(`${file.name}: 파일 크기는 ${maxSizeMB}MB 이하여야 합니다.`);
-            continue;
+        if (files[i].size > maxSize) {
+            return { validFiles: [], errors: [`파일 크기는 ${maxSizeMB}MB 이하여야 합니다.`] };
         }
-
-        // 파일 타입 검사
-        if (!supportedTypes.includes(file.type)) {
-            errors.push(`${file.name}: 이미지 파일만 업로드 가능합니다.`);
-            continue;
-        }
-
-        validFiles.push(file);
+        validFiles.push(files[i]);
     }
 
     return { validFiles, errors };

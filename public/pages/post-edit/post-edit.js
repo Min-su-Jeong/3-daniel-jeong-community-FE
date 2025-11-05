@@ -36,6 +36,7 @@ let postId = null; // 수정할 게시글 ID
 
 // 페이지 레이아웃 초기화
 PageLayout.initializePage();
+postImages.accept = IMAGE_CONSTANTS.ACCEPT;
 
 // 이벤트 리스너 설정
 function setupEventListeners() {
@@ -99,7 +100,6 @@ async function handleImageFiles(files) {
     const validation = validateImageFiles(
         files, 
         IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 
-        IMAGE_CONSTANTS.SUPPORTED_TYPES, 
         IMAGE_CONSTANTS.MAX_IMAGES
     );
     

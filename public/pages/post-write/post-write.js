@@ -52,6 +52,7 @@ function getCurrentUser() {
  */
 function init() {
     PageLayout.initializePage();
+    postImages.accept = IMAGE_CONSTANTS.ACCEPT;
     setupEventListeners();
     updateCharCounter();
     validateForm();
@@ -107,7 +108,6 @@ async function handleImageFiles(files) {
     const validation = validateImageFiles(
         files, 
         IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 
-        IMAGE_CONSTANTS.SUPPORTED_TYPES, 
         IMAGE_CONSTANTS.MAX_IMAGES
     );
     

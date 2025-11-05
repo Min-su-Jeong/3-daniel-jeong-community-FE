@@ -215,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 프로필 이미지 선택 이벤트 설정
     if (elements.profileImage && elements.profileInput) {
+        elements.profileInput.accept = IMAGE_CONSTANTS.ACCEPT;
         elements.profileImage.onclick = function() {
             elements.profileInput.click();
         };
@@ -224,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const file = e.target.files[0];
             if (file) {
                 // 이미지 파일 유효성 검사
-                const { validFiles, errors } = validateImageFiles([file], IMAGE_CONSTANTS.MAX_IMAGE_SIZE, IMAGE_CONSTANTS.SUPPORTED_TYPES, 1);
+                const { validFiles, errors } = validateImageFiles([file], IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 1);
                 
                 if (errors.length > 0) {
                     errors.forEach(error => ToastUtils.error(error));
@@ -306,7 +307,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const { validFiles, errors } = validateImageFiles(
                     [profileImage], 
                     IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 
-                    IMAGE_CONSTANTS.SUPPORTED_TYPES, 
                     1
                 );
                 
