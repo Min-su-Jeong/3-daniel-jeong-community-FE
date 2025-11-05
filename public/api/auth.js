@@ -65,3 +65,16 @@ export async function logout() {
         url: '/auth'
     });
 }
+
+export async function checkCurrentPassword(email, password) {
+    try {
+        await request({
+            method: METHOD.POST,
+            url: '/auth',
+            body: { email, password, rememberMe: false }
+        });
+        return { match: true };
+    } catch (error) {
+        return { match: false };
+    }
+}

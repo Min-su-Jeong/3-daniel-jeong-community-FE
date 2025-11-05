@@ -51,6 +51,21 @@ export async function checkNickname(nickname) {
 }
 
 /**
+ * 비밀번호 수정
+ * - 의도: 현재 비밀번호 확인 후 새 비밀번호로 변경
+ */
+export async function updatePassword(id, currentPassword, newPassword) {
+    return await request({
+        method: METHOD.PATCH,
+        url: `/users/${id}/password`,
+        body: {
+            currentPassword,
+            newPassword
+        }
+    });
+}
+
+/**
  * 회원 탈퇴
  * - 의도: deletedAt 설정으로 비활성화
  */

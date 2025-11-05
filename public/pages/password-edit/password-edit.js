@@ -1,77 +1,28 @@
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { validatePassword, setupFormValidation } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements } from '../../utils/common/dom.js';
+import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
+import { checkCurrentPassword } from '../../api/auth.js';
+import { updatePassword } from '../../api/users.js';
 
-// DOM 요소들 초기화
-let elements = {};
+const elements = initializeElements({
+    buttonGroup: 'buttonGroup',
+    passwordEditForm: 'passwordEditForm',
+    currentPassword: 'currentPassword',
+    newPassword: 'newPassword',
+    confirmPassword: 'confirmPassword'
+});
 
-function initializePageElements() {
-    const elementIds = {
-        buttonGroup: 'buttonGroup',
-        passwordEditForm: 'passwordEditForm',
-        currentPassword: 'currentPassword',
-        newPassword: 'newPassword',
-        confirmPassword: 'confirmPassword'
-    };
-    
-    elements = initializeElements(elementIds);
-}
-
-// 비밀번호수정 페이지 버튼 생성
-function createPasswordEditButtons() {
-    if (!elements.buttonGroup) return;
-    
-    elements.buttonGroup.innerHTML = '';
-    
-    const editButton = new Button({
-        text: '수정하기',
-        type: 'submit',
-        variant: 'primary',
-        size: 'medium'
-    });
-    
-    editButton.appendTo(elements.buttonGroup);
-}
-
-// 비밀번호 일치 확인
-function checkPasswordMatch(password, confirmPassword) {
-    if (!confirmPassword) return { match: false, text: '' };
-    
-    if (password === confirmPassword) {
-        return { match: true, text: '비밀번호가 일치합니다' };
-    } else {
-        return { match: false, text: '비밀번호가 일치하지 않습니다' };
+function getUser() {
+    try {
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        return userStr ? JSON.parse(userStr) : null;
+    } catch {
+        return null;
     }
 }
 
-// 비밀번호 확인 실시간 검사
-function setupPasswordConfirmValidation() {
-    if (!elements.newPassword || !elements.confirmPassword) return;
-    
-    const checkMatch = () => {
-        const password = elements.newPassword.value;
-        const confirmPassword = elements.confirmPassword.value;
-        const matchInfo = checkPasswordMatch(password, confirmPassword);
-        
-        const helperText = elements.confirmPassword.nextElementSibling;
-        if (helperText) {
-            if (confirmPassword.length > 0) {
-                helperText.textContent = matchInfo.text;
-                helperText.className = `helper-text ${matchInfo.match ? 'success' : 'error'}`;
-            } else {
-                helperText.textContent = '';
-                helperText.className = 'helper-text';
-            }
-        }
-    };
-    
-    elements.newPassword.addEventListener('input', checkMatch);
-    elements.confirmPassword.addEventListener('input', checkMatch);
-}
-
-// 폼 유효성 검사 설정
 function setupFormFields() {
     setupFormValidation('passwordEditForm', [
         {
@@ -86,23 +37,83 @@ function setupFormFields() {
         }
     ]);
     
-    // TODO: API 연결 시 현재 비밀번호 검증 추가
+    if (!elements.newPassword || !elements.confirmPassword) return;
+    
+    const updateConfirmHelper = () => {
+        const helperText = elements.confirmPassword.nextElementSibling;
+        if (!helperText) return;
+        
+        if (!elements.confirmPassword.value) {
+            helperText.textContent = '';
+            helperText.className = 'helper-text';
+            return;
+        }
+        
+        const isMatch = elements.newPassword.value === elements.confirmPassword.value;
+        helperText.textContent = isMatch ? '비밀번호가 일치합니다' : '비밀번호가 일치하지 않습니다';
+        helperText.className = `helper-text ${isMatch ? 'success' : 'error'}`;
+    };
+    
+    elements.newPassword.addEventListener('input', updateConfirmHelper);
+    elements.confirmPassword.addEventListener('input', updateConfirmHelper);
+    
+    if (!elements.currentPassword) return;
+    const currentHelperText = elements.currentPassword.nextElementSibling;
+    if (!currentHelperText) return;
+    
+    elements.currentPassword.addEventListener('blur', async () => {
+        const password = elements.currentPassword.value.trim();
+        if (!password) {
+            elements.currentPassword.classList.remove('error', 'success');
+            currentHelperText.classList.remove('error', 'success');
+            currentHelperText.textContent = '';
+            return;
+        }
+        
+        const user = getUser();
+        if (!user?.email) return;
+        
+        const result = await checkCurrentPassword(user.email, password);
+        if (result.match === undefined) return;
+        
+        const isMatch = result.match;
+        elements.currentPassword.classList.toggle('success', isMatch);
+        elements.currentPassword.classList.toggle('error', !isMatch);
+        currentHelperText.classList.toggle('success', isMatch);
+        currentHelperText.classList.toggle('error', !isMatch);
+        currentHelperText.textContent = isMatch 
+            ? '현재 비밀번호가 일치합니다' 
+            : '현재 비밀번호가 일치하지 않습니다';
+    });
 }
 
-// 폼 제출 처리
 function setupFormSubmission() {
     if (!elements.passwordEditForm) return;
     
     elements.passwordEditForm.onsubmit = async function(event) {
         event.preventDefault();
-
         const currentPassword = getElementValue(elements.currentPassword, '');
         const newPassword = getElementValue(elements.newPassword, '');
         const confirmPassword = getElementValue(elements.confirmPassword, '');
         
-        // 비밀번호 일치 확인
+        if (!currentPassword) {
+            ToastUtils.error('현재 비밀번호를 입력해주세요.');
+            return;
+        }
+        
+        if (!validatePassword(newPassword).isValid) {
+            ToastUtils.error('올바른 비밀번호를 입력해주세요.');
+            return;
+        }
+        
         if (newPassword !== confirmPassword) {
             ToastUtils.error('새 비밀번호가 일치하지 않습니다.');
+            return;
+        }
+        
+        const user = getUser();
+        if (!user?.id) {
+            ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
             return;
         }
         
@@ -110,32 +121,24 @@ function setupFormSubmission() {
         PageLayout.showLoading(submitButton, '수정 중...');
         
         try {
-            // TODO: 비밀번호 수정 API 호출
-            
-            // 임시 성공 처리
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+            await updatePassword(user.id, currentPassword, newPassword);
             ToastUtils.success('비밀번호가 수정되었습니다!');
-            
-            // 2초 후 이전 페이지로 이동
-            setTimeout(() => {
-                history.back();
-            }, 2000);
-            
+            navigateTo('/');
         } catch (error) {
-            ToastUtils.error('비밀번호 수정에 실패했습니다.');
+            ToastUtils.error(error.message || '비밀번호 수정에 실패했습니다.');
         } finally {
             PageLayout.hideLoading(submitButton, '수정하기');
         }
     };
 }
 
-// DOMContentLoaded 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
     PageLayout.initializePage();
-    initializePageElements();
-    createPasswordEditButtons();
+    if (elements.buttonGroup) {
+        elements.buttonGroup.innerHTML = '';
+        new Button({ text: '수정하기', type: 'submit', variant: 'primary', size: 'medium' })
+            .appendTo(elements.buttonGroup);
+    }
     setupFormFields();
-    setupPasswordConfirmValidation();
     setupFormSubmission();
 });
