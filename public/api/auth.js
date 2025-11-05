@@ -19,18 +19,28 @@ export async function login(credentials) {
 /**
  * 회원가입
  * - 의도: 유효성 검증 후 사용자 생성
+ * - 요청: multipart/form-data (userData: JSON, profileImage: 파일, 선택사항)
  */
-export async function signup(userData) {
+export async function signup(userData, profileImage = null) {
+    const formData = new FormData();
+    
+    formData.append('userData', new Blob([JSON.stringify({
+        email: userData.email,
+        password: userData.password,
+        confirmPassword: userData.confirmPassword || userData.password,
+        nickname: userData.nickname,
+        profileImageKey: null
+    })], { type: 'application/json' }));
+    
+    if (profileImage) {
+        formData.append('profileImage', profileImage);
+    }
+    
     return await request({
         method: METHOD.POST,
         url: '/users',
-        body: {
-            email: userData.email,
-            password: userData.password,
-            confirmPassword: userData.confirmPassword || userData.password,
-            nickname: userData.nickname,
-            profileImageKey: userData.profileImageKey || null
-        }
+        body: formData,
+        isFormData: true
     });
 }
 

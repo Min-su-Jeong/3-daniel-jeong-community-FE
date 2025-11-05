@@ -1,7 +1,6 @@
 // API 함수들 import
 import { signup } from '../../api/auth.js';
-import { uploadImage } from '../../api/images.js';
-import { updateUser, checkEmail, checkNickname } from '../../api/users.js';
+import { checkEmail, checkNickname } from '../../api/users.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { validateEmail, validatePassword, validateNickname, setupFormValidation } from '../../utils/common/validation.js';
@@ -107,7 +106,10 @@ function setupSignupFormFields() {
             
             try {
                 const response = await checkEmail(email);
-                if (response?.data === true) {
+                const emailData = response?.data || {};
+                
+                // 이메일 사용 가능 여부 확인
+                if (emailData.available) {
                     // 사용 가능
                     emailInput.classList.remove('error', 'warning');
                     emailInput.classList.add('success');
@@ -135,12 +137,14 @@ function setupSignupFormFields() {
         });
     }
     
-    // 닉네임 중복 체크
+    /**
+     * 닉네임 중복 체크
+     * - 의도: 닉네임 형식 검증 통과 후 백엔드 API를 통한 중복 여부 확인
+     */
     const nicknameInput = document.getElementById('nickname');
     const nicknameHelperText = nicknameInput?.nextElementSibling;
     if (nicknameInput && nicknameHelperText) {
         const checkNicknameAvailability = debounce(async (nickname) => {
-            // 형식 검증이 통과한 경우에만 중복 체크
             const formatValidation = validateNickname(nickname);
             if (!formatValidation.isValid || nickname.trim() === '') {
                 return;
@@ -148,6 +152,7 @@ function setupSignupFormFields() {
             
             try {
                 const response = await checkNickname(nickname);
+                // 닉네임 사용 가능 여부 확인 (true = 사용 가능, false = 중복)
                 if (response?.data === true) {
                     // 사용 가능
                     nicknameInput.classList.remove('error', 'warning');
@@ -164,7 +169,7 @@ function setupSignupFormFields() {
                     nicknameHelperText.textContent = '이미 사용 중인 닉네임입니다';
                 }
             } catch (error) {
-                // 네트워크 오류 등은 무시 
+                // 네트워크 오류 등은 무시
             }
         }, 500);
         
@@ -214,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.profileInput.click();
         };
 
-        // 프로필 이미지 선택 시 미리보기
+        // 프로필 이미지 선택 시 유효성 검사 및 미리보기
         elements.profileInput.onchange = function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -228,6 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 if (validFiles.length > 0) {
+                    // FileReader를 사용하여 미리보기 생성
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         elements.profileImage.innerHTML = 
@@ -244,6 +250,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    /**
+     * 회원가입 폼 제출 처리
+     * - 의도: 회원가입 요청 처리
+     * - 로직:
+     *   1. 프로필 이미지가 있는 경우: 이미지 유효성 검사 + 회원정보 유효성 검사
+     *   2. 프로필 이미지가 없는 경우: 회원정보 유효성 검사만
+     *   3. 모든 검사 통과 시 회원가입 진행
+     */
     elements.signupForm.onsubmit = async function(event) {
         event.preventDefault(); // 기본 제출 방지
 
@@ -261,78 +275,79 @@ document.addEventListener('DOMContentLoaded', function() {
             const nickname = getElementValue(formElements.nickname, '');
             const profileImage = elements.profileInput?.files[0];
         
+            // 1. 회원정보 유효성 검사
+            const emailValidation = validateEmail(email);
+            const passwordValidation = validatePassword(password);
+            const nicknameValidation = validateNickname(nickname);
+            const confirmPasswordMatch = password === confirmPassword && password.length > 0;
+            
+            if (!emailValidation.isValid) {
+                ToastUtils.error('이메일을 확인해주세요.');
+                return;
+            }
+            
+            if (!passwordValidation.isValid) {
+                ToastUtils.error('비밀번호를 확인해주세요.');
+                return;
+            }
+            
+            if (!confirmPasswordMatch) {
+                ToastUtils.error('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+                return;
+            }
+            
+            if (!nicknameValidation.isValid) {
+                ToastUtils.error('닉네임을 확인해주세요.');
+                return;
+            }
+            
+            // 2. 프로필 이미지 유효성 검사 (있는 경우)
+            if (profileImage) {
+                const { validFiles, errors } = validateImageFiles(
+                    [profileImage], 
+                    IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 
+                    IMAGE_CONSTANTS.SUPPORTED_TYPES, 
+                    1
+                );
+                
+                if (errors.length > 0) {
+                    errors.forEach(error => ToastUtils.error(error));
+                    return;
+                }
+                
+                if (validFiles.length === 0) {
+                    ToastUtils.error('프로필 이미지가 유효하지 않습니다.');
+                    return;
+                }
+            }
+            
+            // 3. 모든 검사 통과 시 회원가입 진행
             // 로딩 상태 표시 (회원가입 버튼)
             const buttonGroup = document.getElementById('buttonGroup');
             const submitButton = buttonGroup?.querySelector('.btn-primary');
             PageLayout.showLoading(submitButton, '처리중...');
             
-            // 1. 회원가입 먼저 처리
+            // 회원가입 처리
             const signupResponse = await signup({ 
                 email, 
                 password, 
                 confirmPassword, 
-                nickname, 
-                profileImageKey: null
-            });
+                nickname
+            }, profileImage);
             
-            // 2. 프로필 이미지가 있으면 업로드하고 사용자 정보 업데이트
-            if (profileImage) {
-                if (!signupResponse?.data?.id) {
-                    ToastUtils.warning('프로필 이미지를 업로드할 수 없습니다. 회원가입은 완료되었습니다.');
-                } else {
-                    try {
-                        // 이미지 업로드
-                        const uploadResponse = await uploadImage('PROFILE', signupResponse.data.id, profileImage);
-                        
-                        // 사용자 정보 업데이트
-                        if (uploadResponse?.data?.objectKey) {
-                            const updateResponse = await updateUser(signupResponse.data.id, {
-                                nickname: nickname,
-                                profileImageKey: uploadResponse.data.objectKey
-                            });
-                            
-                            // 업데이트된 사용자 정보를 localStorage에 저장 (나중에 로그인 시 사용)
-                            if (updateResponse?.data) {
-                                localStorage.setItem('user', JSON.stringify(updateResponse.data));
-                            } else {
-                                ToastUtils.warning('프로필 이미지가 저장되지 않았습니다. 회원정보수정에서 다시 업로드해주세요.');
-                            }
-                        } else {
-                            ToastUtils.warning('프로필 이미지 업로드에 실패했습니다. 회원정보수정에서 다시 업로드해주세요.');
-                        }
-                    } catch (uploadError) {
-                        // 사용자 친화적인 에러 메시지 표시
-                        let userMessage = '프로필 이미지 업로드에 실패했습니다.';
-                        if (uploadError.message) {
-                            if (uploadError.message.includes('지원하지 않는 이미지 확장자')) {
-                                userMessage = '지원하지 않는 이미지 형식입니다. JPG, PNG, GIF, WEBP 파일만 업로드 가능합니다.';
-                            } else if (uploadError.message.includes('최대 크기')) {
-                                userMessage = '이미지 파일 크기가 너무 큽니다. 10MB 이하의 파일만 업로드 가능합니다.';
-                            } else if (uploadError.message.includes('업로드 파일이 비어있습니다')) {
-                                userMessage = '이미지 파일이 비어있습니다. 다른 파일을 선택해주세요.';
-                            }
-                        }
-                        ToastUtils.warning(userMessage + ' 회원가입은 완료되었습니다.');
-                    }
-                }
-            }
-            
-            // 프로필 이미지가 없어도 회원가입 응답의 사용자 정보를 저장
-            if (signupResponse?.data) {
-                const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                // localStorage에 저장된 사용자 정보가 없거나 profileImageKey가 없으면 회원가입 응답 저장
-                if (!savedUser.profileImageKey) {
-                    localStorage.setItem('user', JSON.stringify(signupResponse.data));
-                }
+            if (!signupResponse?.data?.id) {
+                throw new Error('회원가입에 실패했습니다.');
             }
             
             ToastUtils.success('회원가입이 완료되었습니다!');
-            
-            // 에러가 없으면 로그인 페이지로 이동
             navigateTo('/login');
             
         } catch (error) {
-            // 에러 처리 (회원가입 실패 시 처리)
+            /**
+             * 에러 처리
+             * - 의도: 다양한 에러 유형에 대해 사용자 친화적인 메시지 표시
+             * - 로직: 에러 메시지 내용에 따라 적절한 사용자 메시지로 변환
+             */
             let userMessage = '회원가입에 실패했습니다.';
             if (error.message) {
                 if (error.message.includes('이메일')) {
