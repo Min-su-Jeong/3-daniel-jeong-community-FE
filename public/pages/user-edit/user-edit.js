@@ -347,21 +347,6 @@ function setupFormSubmission() {
     };
 }
 
-/**
- * 뒤로가기 버튼 클릭 시 이전 페이지로 이동하고 새로고침
- */
-function setupBackNavigation() {
-    window.handleBackNavigation = function() {
-        // document.referrer가 있으면 해당 페이지로 이동하고 새로고침
-        if (document.referrer) {
-            window.location.href = document.referrer;
-        } else {
-            // referrer가 없으면 홈으로 이동
-            window.location.href = '/';
-        }
-    };
-}
-
 document.addEventListener('DOMContentLoaded', async function() {
     PageLayout.initializePage();
     initializePageElements();
@@ -370,7 +355,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupFormFields();
     setupWithdrawal();
     setupFormSubmission();
-    setupBackNavigation();
+    
+    // 뒤로가기 버튼 클릭 시 게시글 목록 페이지로 이동
+    window.handleBackNavigation = () => navigateTo('/');
     
     // 사용자 정보 로드
     await loadUserData();
