@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
         createPostCard(post) {
             const card = document.createElement('div');
             card.className = 'post-card';
-            card.dataset.postId = post.id;
+            const postId = post.id || post.postId;
+            card.dataset.postId = postId;
             
             const title = post.title || '';
             const author = post.author?.nickname || post.author?.name || post.author || '작성자';
@@ -141,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            card.addEventListener('click', () => navigateTo('/post-detail', { id: post.id }));
+            card.addEventListener('click', () => navigateTo('/post-detail', { id: postId }));
             
             return card;
         }
