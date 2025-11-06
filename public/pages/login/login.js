@@ -154,7 +154,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // 헤더 업데이트를 위해 이벤트 발생
             window.dispatchEvent(new CustomEvent('userUpdated'));
             
-            navigateTo('/');
+            // 저장된 리다이렉트 경로 확인
+            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+            if (redirectPath) {
+                // 저장된 경로로 이동
+                sessionStorage.removeItem('redirectAfterLogin');
+                navigateTo(redirectPath);
+            } else {
+                // 기본 경로로 이동
+                navigateTo('/');
+            }
             
         } catch (error) {
             const errorMessage = error.message || '로그인에 실패했습니다.';

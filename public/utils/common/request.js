@@ -1,29 +1,97 @@
-import { API_SERVER_URI } from '../constants.js';
+import { API_SERVER_URI, METHOD } from '../constants.js';
+import { Modal } from '../../components/modal/modal.js';
+import { logout } from '../../api/auth.js';
+import { navigateTo } from './dom.js';
+import { ToastUtils } from '../../components/toast/toast.js';
 
-// HTTP 메서드 상수
-export const METHOD = Object.freeze({
-    GET: 'GET',
-    POST: 'POST',
-    PUT: 'PUT',
-    PATCH: 'PATCH',
-    DELETE: 'DELETE',
-});
+// 세션 만료 모달 표시 여부 추적
+let isShowingExpiredModal = false;
 
-/**
- * 공통 API 요청 처리 함수
- * - 의도: 반복되는 fetch 호출 및 에러 처리 공통화
- * - 반환: ApiResponse 형식의 응답 데이터
- */
-export async function request({
-    method = METHOD.POST,
-    url = '/',
-    params = '',
-    body = undefined,
-    isFormData = false,
-}) {
+// 사용자 저장소 정리
+function clearUserStorage() {
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
+}
+
+// 로그아웃 처리
+async function handleLogout() {
+    try {
+        await logout();
+    } catch (error) {
+        // 로그아웃 실패해도 무시
+    }
+    clearUserStorage();
+    window.dispatchEvent(new CustomEvent('userUpdated'));
+    navigateTo('/login');
+    isShowingExpiredModal = false;
+}
+
+// Refresh 토큰으로 세션 갱신
+async function handleRefreshToken() {
+    try {
+        const refreshResponse = await fetch(`${API_SERVER_URI}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        if (!refreshResponse.ok) {
+            throw new Error('Refresh failed');
+        }
+        
+        const refreshData = await refreshResponse.json();
+        if (!refreshData.success) {
+            throw new Error('Refresh failed');
+        }
+        
+        ToastUtils.success('세션이 갱신되었습니다.');
+        isShowingExpiredModal = false;
+        window.dispatchEvent(new CustomEvent('userUpdated'));
+        return true;
+    } catch (error) {
+        ToastUtils.error('세션 갱신에 실패했습니다. 로그아웃됩니다.');
+        await handleLogout();
+        return false;
+    }
+}
+
+// 세션 만료 모달 표시
+async function showSessionExpiredModal() {
+    if (isShowingExpiredModal) return;
+    isShowingExpiredModal = true;
+
+    const modal = new Modal({
+        title: '세션 만료',
+        subtitle: '세션이 만료되었습니다. 재로그인을 진행하시겠습니까?',
+        showCancel: true,
+        cancelText: '로그아웃',
+        confirmText: '로그인 유지',
+        confirmType: 'primary',
+        onConfirm: async () => {
+            const success = await handleRefreshToken();
+            if (success) {
+                modal.hide();
+            }
+        },
+        onCancel: async () => {
+            await handleLogout();
+        }
+    });
+
+    modal.show();
+}
+
+// 세션 만료 처리
+async function handleSessionExpired() {
+    await showSessionExpiredModal();
+    const error = new Error('세션이 만료되었습니다.');
+    error.status = 401;
+    throw error;
+}
+
+// 요청 옵션 생성
+function buildRequestOptions(method, body, isFormData) {
     const options = { method, credentials: 'include' };
-
-    // FormData 여부에 따라 헤더 및 body 설정
+    
     if (isFormData) {
         options.body = body;
     } else {
@@ -32,34 +100,73 @@ export async function request({
             options.body = JSON.stringify(body);
         }
     }
+    
+    return options;
+}
 
+// 응답 파싱
+async function parseResponse(response) {
     try {
-        const urlWithParams = params ? `${API_SERVER_URI}${url}?${params}` : `${API_SERVER_URI}${url}`;
-        const response = await fetch(urlWithParams, options);
-        
-        // JSON 파싱
-        let data = {};
-        try {
-            const text = await response.text();
-            data = text ? JSON.parse(text) : {};
-        } catch {
-            // JSON 파싱 실패 시 빈 객체
-        }
+        const text = await response.text();
+        return text ? JSON.parse(text) : {};
+    } catch (error) {
+        const parseError = new Error('응답을 읽을 수 없습니다.');
+        parseError.status = response.status || 0;
+        throw parseError;
+    }
+}
 
-        // 에러 처리
+// 에러 객체 생성
+function createError(data, status) {
+    const errorMessage = Array.isArray(data.data) 
+        ? data.data.join(', ') 
+        : data.data || data.message || `HTTP error! status: ${status}`;
+    const error = new Error(errorMessage);
+    error.status = status;
+    return error;
+}
+
+// 공통 API 요청 처리 함수
+export async function request({
+    method = METHOD.POST,
+    url = '/',
+    params = '',
+    body = undefined,
+    isFormData = false,
+}) {
+    const options = buildRequestOptions(method, body, isFormData);
+    const urlWithParams = params ? `${API_SERVER_URI}${url}?${params}` : `${API_SERVER_URI}${url}`;
+    
+    try {
+        let response;
+        try {
+            response = await fetch(urlWithParams, options);
+        } catch (fetchError) {
+            // CORS 에러로 fetch가 실패한 경우 세션 만료로 간주
+            if (fetchError.name === 'TypeError') {
+                await handleSessionExpired();
+            }
+            throw fetchError;
+        }
+        
+        // 401 에러 처리
+        if (response.status === 401) {
+            await handleSessionExpired();
+        }
+        
+        const data = await parseResponse(response);
+
+        // 응답 에러 처리
         if (!response.ok || !data.success) {
-            const errorMessage = Array.isArray(data.data) 
-                ? data.data.join(', ') 
-                : data.data || data.message || `HTTP error! status: ${response.status}`;
-            const error = new Error(errorMessage);
-            error.status = response.status;
-            throw error;
+            throw createError(data, response.status);
         }
 
         return data;
     } catch (error) {
-        // 네트워크 에러 등 status 없는 경우 처리
-        if (!error.status) error.status = 0;
+        // status가 없는 경우 기본값 설정
+        if (!error.status) {
+            error.status = 0;
+        }
         throw error;
     }
 }
