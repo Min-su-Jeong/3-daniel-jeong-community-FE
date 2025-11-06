@@ -285,8 +285,6 @@ async function handleFormSubmit(e) {
     } catch (error) {
         isPostSubmitted = false;
         showError(error.message || '게시글 등록 중 오류가 발생했습니다.');
-    } finally {
-        hideLoading();
     }
 }
 
@@ -326,21 +324,15 @@ async function submitPost(userId, title, content, imageObjectKeys) {
     });
 }
 
-// Toast 유틸리티 함수들
-const showError = (message) => ToastUtils.error(message, '오류 발생');
-const showSuccess = (message) => {
-    isPostSubmitted = true;
-    ToastUtils.success(message, '등록 완료', { duration: 2000 });
-    setTimeout(() => navigateTo('/post-list'), 1000);
-};
-
 let loadingToast = null;
+
 const showLoading = () => {
     submitBtn.disabled = true;
     submitBtn.style.opacity = '0.6';
     submitBtn.style.cursor = 'not-allowed';
     loadingToast = ToastUtils.info('게시글을 등록하는 중...', '처리 중', { duration: 0, showClose: false });
 };
+
 const hideLoading = () => {
     submitBtn.disabled = false;
     submitBtn.style.opacity = '1';
@@ -349,6 +341,18 @@ const hideLoading = () => {
         loadingToast.hide();
         loadingToast = null;
     }
+};
+
+const showError = (message) => {
+    hideLoading();
+    ToastUtils.error(message, '오류 발생');
+};
+
+const showSuccess = (message) => {
+    hideLoading();
+    isPostSubmitted = true;
+    ToastUtils.success(message, '등록 완료', { duration: 2000 });
+    setTimeout(() => navigateTo('/post-list'), 1000);
 };
 
 // 뒤로가기 처리
