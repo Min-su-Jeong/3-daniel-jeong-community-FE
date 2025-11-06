@@ -3,8 +3,9 @@ import { Button } from '../../components/button/button.js';
 import { validatePassword, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
-import { checkCurrentPassword } from '../../api/auth.js';
 import { updatePassword } from '../../api/users.js';
+import { checkCurrentPassword } from '../../api/auth.js';
+import { debounce } from '../../utils/common/debounce-helper.js';
 
 const elements = initializeElements({
     buttonGroup: 'buttonGroup',
@@ -13,6 +14,10 @@ const elements = initializeElements({
     newPassword: 'newPassword',
     confirmPassword: 'confirmPassword'
 });
+
+let isSubmitting = false;
+let isVerifyingPassword = false;
+let isCurrentPasswordValid = false;
 
 function getUser() {
     try {
@@ -37,6 +42,60 @@ function setupFormFields() {
         }
     ]);
     
+    // 현재 비밀번호 검증
+    if (elements.currentPassword) {
+        const currentPasswordHelper = elements.currentPassword.nextElementSibling;
+        
+        const verifyCurrentPasswordDebounced = debounce(async (password) => {
+            if (!password || password.trim() === '') {
+                if (currentPasswordHelper) {
+                    currentPasswordHelper.textContent = '';
+                    currentPasswordHelper.className = 'helper-text';
+                }
+                isCurrentPasswordValid = false;
+                return;
+            }
+            
+            const user = getUser();
+            if (!user?.email) {
+                return;
+            }
+            
+            if (isVerifyingPassword) return;
+            isVerifyingPassword = true;
+            
+            try {
+                const result = await checkCurrentPassword(user.email, password);
+                if (result.match) {
+                    if (currentPasswordHelper) {
+                        currentPasswordHelper.textContent = '현재 비밀번호가 일치합니다';
+                        currentPasswordHelper.className = 'helper-text success';
+                    }
+                    isCurrentPasswordValid = true;
+                } else {
+                    if (currentPasswordHelper) {
+                        currentPasswordHelper.textContent = '현재 비밀번호가 일치하지 않습니다';
+                        currentPasswordHelper.className = 'helper-text error';
+                    }
+                    isCurrentPasswordValid = false;
+                }
+            } catch (error) {
+                if (currentPasswordHelper) {
+                    currentPasswordHelper.textContent = '현재 비밀번호가 일치하지 않습니다';
+                    currentPasswordHelper.className = 'helper-text error';
+                }
+                isCurrentPasswordValid = false;
+            } finally {
+                isVerifyingPassword = false;
+            }
+        }, 500);
+        
+        elements.currentPassword.addEventListener('blur', () => {
+            const password = getElementValue(elements.currentPassword, '').trim();
+            verifyCurrentPasswordDebounced(password);
+        });
+    }
+    
     if (!elements.newPassword || !elements.confirmPassword) return;
     
     const updateConfirmHelper = () => {
@@ -56,35 +115,6 @@ function setupFormFields() {
     
     elements.newPassword.addEventListener('input', updateConfirmHelper);
     elements.confirmPassword.addEventListener('input', updateConfirmHelper);
-    
-    if (!elements.currentPassword) return;
-    const currentHelperText = elements.currentPassword.nextElementSibling;
-    if (!currentHelperText) return;
-    
-    elements.currentPassword.addEventListener('blur', async () => {
-        const password = elements.currentPassword.value.trim();
-        if (!password) {
-            elements.currentPassword.classList.remove('error', 'success');
-            currentHelperText.classList.remove('error', 'success');
-            currentHelperText.textContent = '';
-            return;
-        }
-        
-        const user = getUser();
-        if (!user?.email) return;
-        
-        const result = await checkCurrentPassword(user.email, password);
-        if (result.match === undefined) return;
-        
-        const isMatch = result.match;
-        elements.currentPassword.classList.toggle('success', isMatch);
-        elements.currentPassword.classList.toggle('error', !isMatch);
-        currentHelperText.classList.toggle('success', isMatch);
-        currentHelperText.classList.toggle('error', !isMatch);
-        currentHelperText.textContent = isMatch 
-            ? '현재 비밀번호가 일치합니다' 
-            : '현재 비밀번호가 일치하지 않습니다';
-    });
 }
 
 function setupFormSubmission() {
@@ -92,12 +122,20 @@ function setupFormSubmission() {
     
     elements.passwordEditForm.onsubmit = async function(event) {
         event.preventDefault();
-        const currentPassword = getElementValue(elements.currentPassword, '');
-        const newPassword = getElementValue(elements.newPassword, '');
-        const confirmPassword = getElementValue(elements.confirmPassword, '');
+        if (isSubmitting) return;
+
+        const currentPassword = getElementValue(elements.currentPassword, '').trim();
+        const newPassword = getElementValue(elements.newPassword, '').trim();
+        const confirmPassword = getElementValue(elements.confirmPassword, '').trim();
         
         if (!currentPassword) {
             ToastUtils.error('현재 비밀번호를 입력해주세요.');
+            return;
+        }
+        
+        if (!isCurrentPasswordValid) {
+            ToastUtils.error('현재 비밀번호가 일치하지 않습니다.');
+            elements.currentPassword.focus();
             return;
         }
         
@@ -117,17 +155,22 @@ function setupFormSubmission() {
             return;
         }
         
-        const submitButton = elements.buttonGroup.querySelector('.btn-primary');
+        const submitButton = elements.buttonGroup?.querySelector('.btn-primary');
+        const inputsToDisable = [elements.currentPassword, elements.newPassword, elements.confirmPassword];
+        inputsToDisable.forEach((el) => el && (el.disabled = true));
+        isSubmitting = true;
         PageLayout.showLoading(submitButton, '수정 중...');
         
         try {
-            await updatePassword(user.id, currentPassword, newPassword);
-            ToastUtils.success('비밀번호가 수정되었습니다!');
+            await updatePassword(user.id, newPassword, confirmPassword);
+            ToastUtils.success('비밀번호가 수정이 완료되었습니다.');
             navigateTo('/');
         } catch (error) {
             ToastUtils.error(error.message || '비밀번호 수정에 실패했습니다.');
         } finally {
             PageLayout.hideLoading(submitButton, '수정하기');
+            inputsToDisable.forEach((el) => el && (el.disabled = false));
+            isSubmitting = false;
         }
     };
 }

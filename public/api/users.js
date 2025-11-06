@@ -28,7 +28,7 @@ export async function updateUser(id, userData) {
 
 /**
  * 이메일 중복 체크
- * - 의도: 이메일 사용 가능 여부 확인
+ * - 반환: true=사용 가능, false=중복
  */
 export async function checkEmail(email) {
     return await request({
@@ -40,7 +40,7 @@ export async function checkEmail(email) {
 
 /**
  * 닉네임 중복 체크
- * - 의도: 닉네임 사용 가능 여부 확인
+ * - 반환: true=사용 가능, false=중복
  */
 export async function checkNickname(nickname) {
     return await request({
@@ -51,22 +51,22 @@ export async function checkNickname(nickname) {
 }
 
 /**
- * 비밀번호 수정
- * - 의도: 현재 비밀번호 확인 후 새 비밀번호로 변경
+ * 비밀번호 변경
+ * - 의도: 현재 비밀번호 검증 후 새 비밀번호로 변경
  */
-export async function updatePassword(id, currentPassword, newPassword) {
+export async function updatePassword(id, newPassword, confirmPassword) {
     return await request({
         method: METHOD.PATCH,
         url: `/users/${id}/password`,
         body: {
-            currentPassword,
-            newPassword
+            newPassword,
+            confirmPassword
         }
     });
 }
 
 /**
- * 회원 탈퇴
+ * 회원 탈퇴(소프트 삭제)
  * - 의도: deletedAt 설정으로 비활성화
  */
 export async function deleteUser(id) {
@@ -75,4 +75,3 @@ export async function deleteUser(id) {
         url: `/users/${id}`
     });
 }
-

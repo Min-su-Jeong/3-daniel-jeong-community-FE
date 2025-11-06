@@ -66,6 +66,10 @@ export async function logout() {
     });
 }
 
+/**
+ * 현재 비밀번호 확인
+ * - 의도: 비밀번호 수정 전 현재 비밀번호 일치 여부 확인 (로그인 API 활용)
+ */
 export async function checkCurrentPassword(email, password) {
     try {
         await request({
@@ -77,4 +81,40 @@ export async function checkCurrentPassword(email, password) {
     } catch (error) {
         return { match: false };
     }
+}
+
+/**
+ * 비밀번호 찾기 - 인증번호 발송
+ * - 의도: 이메일로 인증번호 생성 및 발송
+ */
+export async function sendPasswordResetCode(email) {
+    return await request({
+        method: METHOD.POST,
+        url: '/auth/password-reset',
+        body: { email }
+    });
+}
+
+/**
+ * 비밀번호 찾기 - 인증번호 검증
+ * - 의도: 이메일로 발송된 인증번호 검증
+ */
+export async function verifyPasswordResetCode(userId, verificationCode) {
+    return await request({
+        method: METHOD.POST,
+        url: `/auth/password-reset/${userId}/verify`,
+        body: { verificationCode }
+    });
+}
+
+/**
+ * 비밀번호 찾기 - 비밀번호 재설정
+ * - 의도: 인증번호 검증 완료 후 비밀번호 재설정
+ */
+export async function resetPasswordById(userId, newPassword, confirmPassword) {
+    return await request({
+        method: METHOD.PATCH,
+        url: `/auth/password-reset/${userId}`,
+        body: { newPassword, confirmPassword }
+    });
 }

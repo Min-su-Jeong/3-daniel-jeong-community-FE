@@ -338,7 +338,8 @@ function setupFormSubmission() {
                 elements.profileImageInput.value = '';
                 updateSubmitButtonState();
                 window.dispatchEvent(new CustomEvent('userUpdated'));
-            ToastUtils.success('회원정보가 수정되었습니다!');
+                ToastUtils.success('회원정보가 수정되었습니다!');
+                setTimeout(() => navigateTo('/'), 1200);
             }
         } catch (error) {
             ToastUtils.error(error.message || '회원정보 수정에 실패했습니다.');
