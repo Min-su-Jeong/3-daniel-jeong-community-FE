@@ -1,4 +1,5 @@
-import { request, METHOD } from '../utils/common/request.js';
+import { request } from '../utils/common/request.js';
+import { METHOD } from '../utils/constants.js';
 
 /**
  * 회원 단건 조회

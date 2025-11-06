@@ -1,4 +1,5 @@
-import { request, METHOD } from '../utils/common/request.js';
+import { request } from '../utils/common/request.js';
+import { METHOD } from '../utils/constants.js';
 
 /**
  * 이미지 업로드 (Multipart)

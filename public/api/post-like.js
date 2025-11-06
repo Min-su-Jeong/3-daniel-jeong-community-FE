@@ -1,4 +1,5 @@
-import { request, METHOD } from '../utils/common/request.js';
+import { request } from '../utils/common/request.js';
+import { METHOD } from '../utils/constants.js';
 
 // 게시글 좋아요 추가
 export async function addPostLike(postId, userId) {
