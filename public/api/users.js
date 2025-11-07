@@ -76,3 +76,14 @@ export async function deleteUser(id) {
         url: `/users/${id}`
     });
 }
+
+/**
+ * 회원 복구
+ * - 의도: deletedAt을 null로 설정하여 계정 복구
+ */
+export async function restoreUser(id) {
+    return await request({
+        method: METHOD.PATCH,
+        url: `/users/${id}/restore`
+    });
+}

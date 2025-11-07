@@ -1,6 +1,8 @@
 import { login } from '../../api/auth.js';
+import { restoreUser } from '../../api/users.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
+import { Modal } from '../../components/modal/modal.js';
 import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
@@ -138,31 +140,81 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 사용자 정보 저장
             if (response?.data?.user) {
-                if (rememberMe) {
-                    // rememberMe = true: localStorage
-                    localStorage.setItem('user', JSON.stringify(response.data.user));
-                    sessionStorage.removeItem('user');
+                const user = response.data.user;
+                
+                // 탈퇴 대기 중인 계정인지 확인 
+                const hasDeletedAt = user.deletedAt !== null && user.deletedAt !== undefined && user.deletedAt !== '';
+                
+                if (hasDeletedAt) {
+                    // 계정 복구 처리 함수
+                    const handleRestore = async () => {
+                        try {
+                            await restoreUser(user.id);
+                            
+                            // 복구 후 정상 로그인 처리
+                            if (rememberMe) {
+                                localStorage.setItem('user', JSON.stringify(user));
+                                sessionStorage.removeItem('user');
+                            } else {
+                                sessionStorage.setItem('user', JSON.stringify(user));
+                                localStorage.removeItem('user');
+                            }
+                            
+                            ToastUtils.success('로그인되었습니다! 계정이 복구되었습니다.');
+                            window.dispatchEvent(new CustomEvent('userUpdated'));
+                            
+                            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+                            if (redirectPath) {
+                                sessionStorage.removeItem('redirectAfterLogin');
+                                navigateTo(redirectPath);
+                            } else {
+                                navigateTo('/');
+                            }
+                        } catch (error) {
+                            ToastUtils.error(error.message || '계정 복구에 실패했습니다.');
+                        }
+                    };
+                    
+                    // 탈퇴 대기 중인 계정 복구 여부 확인 모달
+                    const restoreModal = new Modal({
+                        title: '계정 복구 안내',
+                        subtitle: '현재 삭제 대기 상태인 계정입니다.',
+                        content: `이 계정은 탈퇴 신청으로 인해 <strong>삭제 대기 상태</strong>입니다.<br><br>
+                                    복구하시면 계정이 정상적으로 활성화됩니다.<br>
+                                    복구하지 않으시면 30일 경과 후 모든 데이터가 영구적으로 삭제됩니다.<br><br>
+                                    <strong>계정을 복구하시겠습니까?</strong>`,
+                        confirmText: '계정 복구',
+                        confirmType: 'primary',
+                        showCancel: true,
+                        cancelText: '취소',
+                        onConfirm: handleRestore,
+                        onCancel: () => {
+                            // 복구하지 않고 로그인 취소
+                            ToastUtils.info('계정 복구를 취소했습니다.');
+                        }
+                    });
+                    restoreModal.show();
                 } else {
-                    // rememberMe = false: sessionStorage
-                    sessionStorage.setItem('user', JSON.stringify(response.data.user));
-                    localStorage.removeItem('user');
+                    // 정상 로그인 처리
+                    if (rememberMe) {
+                        localStorage.setItem('user', JSON.stringify(user));
+                        sessionStorage.removeItem('user');
+                    } else {
+                        sessionStorage.setItem('user', JSON.stringify(user));
+                        localStorage.removeItem('user');
+                    }
+                    
+                    ToastUtils.success('로그인되었습니다!');
+                    window.dispatchEvent(new CustomEvent('userUpdated'));
+                    
+                    const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+                    if (redirectPath) {
+                        sessionStorage.removeItem('redirectAfterLogin');
+                        navigateTo(redirectPath);
+                    } else {
+                        navigateTo('/');
+                    }
                 }
-            }
-            
-            ToastUtils.success('로그인되었습니다!');
-            
-            // 헤더 업데이트를 위해 이벤트 발생
-            window.dispatchEvent(new CustomEvent('userUpdated'));
-            
-            // 저장된 리다이렉트 경로 확인
-            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
-            if (redirectPath) {
-                // 저장된 경로로 이동
-                sessionStorage.removeItem('redirectAfterLogin');
-                navigateTo(redirectPath);
-            } else {
-                // 기본 경로로 이동
-                navigateTo('/');
             }
             
         } catch (error) {

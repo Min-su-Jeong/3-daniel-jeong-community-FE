@@ -108,7 +108,7 @@ function setupSignupFormFields() {
                 const response = await checkEmail(email);
                 const emailData = response?.data || {};
                 
-                // 이메일 사용 가능 여부 확인
+                // 이메일 사용 가능 여부 확인 (삭제 대기 중인 이메일도 중복으로 처리)
                 if (emailData.available) {
                     // 사용 가능
                     emailInput.classList.remove('error', 'warning');
@@ -117,7 +117,7 @@ function setupSignupFormFields() {
                     emailHelperText.classList.add('success');
                     emailHelperText.textContent = '사용 가능한 이메일입니다';
                 } else {
-                    // 중복
+                    // 중복 (삭제 대기 중인 이메일 포함)
                     emailInput.classList.remove('success');
                     emailInput.classList.add('error');
                     emailHelperText.classList.remove('success');
@@ -302,7 +302,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // 2. 프로필 이미지 유효성 검사 (있는 경우)
+            // 2. 이메일 중복 최종 확인 (삭제 대기 중인 이메일 포함)
+            try {
+                const emailCheckResponse = await checkEmail(email);
+                const emailData = emailCheckResponse?.data || {};
+                if (!emailData.available) {
+                    ToastUtils.error('이미 사용 중인 이메일입니다.');
+                    return;
+                }
+            } catch (error) {
+                ToastUtils.error('이메일 중복 확인에 실패했습니다. 다시 시도해주세요.');
+                return;
+            }
+            
+            // 3. 프로필 이미지 유효성 검사 (있는 경우)
             if (profileImage) {
                 const { validFiles, errors } = validateImageFiles(
                     [profileImage], 
@@ -321,69 +334,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // 3. 모든 검사 통과 시 회원가입 진행
+            // 4. 모든 검사 통과 시 회원가입 진행
             // 로딩 상태 표시 (회원가입 버튼)
             const buttonGroup = document.getElementById('buttonGroup');
             const submitButton = buttonGroup?.querySelector('.btn-primary');
             PageLayout.showLoading(submitButton, '처리중...');
             
             // 회원가입 처리
-            const signupResponse = await signup({ 
+            await signup({ 
                 email, 
                 password, 
                 confirmPassword, 
                 nickname
             }, profileImage);
             
-            if (!signupResponse?.data?.id) {
-                throw new Error('회원가입에 실패했습니다.');
-            }
-            
             ToastUtils.success('회원가입이 완료되었습니다!');
             navigateTo('/login');
             
         } catch (error) {
-            /**
-             * 에러 처리
-             * - 의도: 다양한 에러 유형에 대해 사용자 친화적인 메시지 표시
-             * - 로직: 에러 메시지 내용에 따라 적절한 사용자 메시지로 변환
-             */
-            let userMessage = '회원가입에 실패했습니다.';
-            if (error.message) {
-                if (error.message.includes('이메일')) {
-                    if (error.message.includes('중복') || error.message.includes('이미 사용 중')) {
-                        userMessage = '이미 사용 중인 이메일입니다.';
-                    } else if (error.message.includes('형식')) {
-                        userMessage = '올바른 이메일 형식을 입력해주세요.';
-                    } else {
-                        userMessage = '이메일을 확인해주세요.';
-                    }
-                } else if (error.message.includes('비밀번호')) {
-                    if (error.message.includes('일치')) {
-                        userMessage = '비밀번호와 비밀번호 확인이 일치하지 않습니다.';
-                    } else if (error.message.includes('영문') || error.message.includes('숫자') || error.message.includes('특수문자')) {
-                        userMessage = '비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.';
-                    } else {
-                        userMessage = '비밀번호를 확인해주세요.';
-                    }
-                } else if (error.message.includes('닉네임')) {
-                    if (error.message.includes('중복') || error.message.includes('이미 사용 중')) {
-                        userMessage = '이미 사용 중인 닉네임입니다.';
-                    } else if (error.message.includes('한글') || error.message.includes('영문')) {
-                        userMessage = '닉네임은 2-10자 사이로 한글, 영문, 숫자, 언더스코어(_)만 사용 가능합니다.';
-                    } else {
-                        userMessage = '닉네임을 확인해주세요.';
-                    }
-                } else if (error.message.includes('Conflict')) {
-                    userMessage = '이미 사용 중인 정보입니다. 이메일 또는 닉네임을 확인해주세요.';
-                } else if (error.message.includes('Bad Request')) {
-                    userMessage = '입력한 정보를 확인해주세요.';
-                } else if (error.message.includes('Network') || error.message.includes('fetch')) {
-                    userMessage = '네트워크 연결을 확인해주세요.';
-                }
-            }
-            
-            ToastUtils.error(userMessage);
+            // 에러 메시지 표시
+            const errorMessage = error.message || '회원가입에 실패했습니다.';
+            ToastUtils.error(errorMessage);
         } finally {
             // 로딩 상태 해제
             const buttonGroup = document.getElementById('buttonGroup');
