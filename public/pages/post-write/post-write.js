@@ -255,7 +255,6 @@ async function handleFormSubmit(e) {
         
         const postId = createResponse.data?.postId;
         if (!postId) {
-            console.error('게시글 생성 응답:', createResponse);
             throw new Error('게시글 ID를 받지 못했습니다.');
         }
         

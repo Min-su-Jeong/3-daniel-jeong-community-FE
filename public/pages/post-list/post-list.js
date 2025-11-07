@@ -100,8 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.cursor = postsData.nextCursor || null;
                 
             } catch (error) {
-                console.error('게시글 목록 로드 실패:', error);
-                
                 // 첫 로드 시에만 에러 메시지 표시
                 if (this.cursor === null) {
                     ToastUtils.error(error.message || '게시글 목록을 불러올 수 없습니다.');

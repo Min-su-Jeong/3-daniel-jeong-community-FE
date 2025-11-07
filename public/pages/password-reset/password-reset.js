@@ -254,19 +254,9 @@ elements.passwordForm.onsubmit = async (e) => {
 
     try {
         const response = await resetPasswordById(userId, newPassword, confirmPassword);
-        console.log('✅ 비밀번호 재설정 성공:', {
-            userId,
-            timestamp: new Date().toISOString(),
-            response: response
-        });
         ToastUtils.success('비밀번호가 성공적으로 변경되었습니다.');
         setTimeout(() => { navigateTo('/login'); }, 1200);
     } catch (error) {
-        console.error('❌ 비밀번호 재설정 실패:', {
-            userId,
-            timestamp: new Date().toISOString(),
-            error: error.message || error
-        });
         ToastUtils.error(error.message || '비밀번호 변경 중 오류가 발생했습니다.');
     } finally {
         restore();
