@@ -211,8 +211,9 @@ async function removeUser(userId) {
         sessionStorage.removeItem('user');
         
         window.dispatchEvent(new CustomEvent('userUpdated'));
-        ToastUtils.success('회원 탈퇴가 완료되었습니다.');
-        navigateTo('/');
+        
+        ToastUtils.success('회원 탈퇴 신청이 완료되었습니다. 30일 이내 재로그인하시면 계정을 복구할 수 있습니다.');
+        setTimeout(() => navigateTo('/'), 1500);
     } catch (error) {
         ToastUtils.error(error.message || '회원 탈퇴에 실패했습니다.');
     }
@@ -231,14 +232,23 @@ function setupWithdrawal() {
         
         const firstModal = new Modal({
             title: '회원 탈퇴',
-            content: '회원 탈퇴를 진행하시겠습니까?<br>탈퇴된 계정은 복구할 수 없습니다.',
-            confirmText: '탈퇴',
+            subtitle: '회원 탈퇴를 진행하시겠습니까?',
+            content: `<strong>⚠️ 회원 탈퇴 시 다음 사항을 확인해주세요:</strong><hr><br>
+                    • 탈퇴 신청 후 <strong>30일간 유예 기간</strong>이 제공됩니다.<br>
+                    • 30일 이내 재로그인 시 <strong>계정 복구</strong>가 가능합니다.<br>
+                    • 30일 경과 후에는 <strong>영구적으로 삭제</strong>되어 복구할 수 없습니다.`,
+            confirmText: '탈퇴 신청',
             confirmType: 'danger',
+            showCancel: true,
+            cancelText: '취소',
             onConfirm: () => {
                 const finalModal = new Modal({
-                    title: '회원 탈퇴 확인',
-                    content: '정말로 회원 탈퇴를 진행하시겠습니까?<br><strong>계정과 관련된 모든 정보가 영구적으로 삭제됩니다.</strong>',
-                    confirmText: '탈퇴',
+                    title: '회원 탈퇴 최종 확인',
+                    subtitle: '정말로 회원 탈퇴를 진행하시겠습니까?',
+                    content: `<strong>⚠️ 최종 확인이 필요합니다</strong><hr><br>
+                            • 탈퇴 신청 후 <strong>30일 이내 재로그인</strong>하면 계정을 복구할 수 있습니다.<br>
+                            • 30일 경과 후에는 모든 데이터가 <strong>영구적으로 삭제</strong>됩니다.`,
+                    confirmText: '탈퇴 신청',
                     confirmType: 'danger',
                     cancelText: '취소',
                     onConfirm: () => removeUser(user.id)
