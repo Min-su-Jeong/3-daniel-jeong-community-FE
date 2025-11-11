@@ -2,6 +2,7 @@ import { Modal } from '../modal/modal.js';
 import { API_SERVER_URI } from '../../utils/constants.js';
 import { logout } from '../../api/auth.js';
 import { ToastUtils } from '../toast/toast.js';
+import { renderProfileImage } from '../../utils/common/image.js';
 
 /**
  * 저장소 정리 유틸리티 함수
@@ -40,21 +41,8 @@ async function getUserFromStorage() {
  * 프로필 아이콘 렌더링
  */
 function renderProfileIcon(icon, user) {
-    icon.innerHTML = '';
-    
-    if (user?.profileImageKey) {
-        const profileImageUrl = `${API_SERVER_URI}/files/${user.profileImageKey}`;
-        const img = document.createElement('img');
-        img.src = profileImageUrl;
-        img.alt = user.nickname || '프로필';
-        img.onerror = () => {
-            icon.innerHTML = '';
-            icon.textContent = '👤';
-        };
-        icon.appendChild(img);
-    } else {
-        icon.textContent = '👤';
-    }
+    const profileImageKey = user?.profileImageKey || null;
+    renderProfileImage(icon, profileImageKey, '👤', user?.nickname || '프로필');
 }
 
 /**

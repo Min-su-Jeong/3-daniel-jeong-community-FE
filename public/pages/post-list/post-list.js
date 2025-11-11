@@ -5,6 +5,7 @@ import { initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
 import { getPosts } from '../../api/posts.js';
 import { Modal } from '../../components/modal/modal.js';
+import { extractProfileImageKey, renderProfileImage } from '../../utils/common/image.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     PageLayout.initializePage();
@@ -141,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const likes = stats.likeCount || 0;
             const comments = stats.commentCount || 0;
             const views = stats.viewCount || 0;
-            
+            const profileImageKey = extractProfileImageKey(post.author);
             const truncatedTitle = title.length > 26 ? title.substring(0, 26) + '...' : title;
             
             card.innerHTML = `
@@ -171,10 +172,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="post-author">
-                    <div class="author-avatar">${author.charAt(0)}</div>
+                    <div class="author-avatar"></div>
                     <span class="author-name">${author}</span>
                 </div>
             `;
+            
+            const avatarElement = card.querySelector('.author-avatar');
+            if (avatarElement) {
+                renderProfileImage(avatarElement, profileImageKey, author.charAt(0), author);
+            }
             
             card.addEventListener('click', () => navigateTo('/post-detail', { id: postId }));
             

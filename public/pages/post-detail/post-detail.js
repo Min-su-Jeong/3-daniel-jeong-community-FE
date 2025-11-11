@@ -8,6 +8,7 @@ import { getPostById, deletePost as deletePostApi } from '../../api/posts.js';
 import { addPostLike, removePostLike } from '../../api/post-like.js';
 import { getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../api/comments.js';
 import { API_SERVER_URI } from '../../utils/constants.js';
+import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
 
 let isLiked = false;
 let isLikePending = false;
@@ -82,6 +83,7 @@ const initElements = () => {
     elements = initializeElements({
         postTitle: 'postTitle',
         authorName: 'authorName',
+        authorAvatar: 'authorAvatar',
         postDate: 'postDate',
         postImage: 'postImage',
         postContent: 'postContent',
@@ -143,6 +145,11 @@ const displayPostData = (post) => {
     elements.postDate.textContent = formatDate(new Date(post.createdAt));
     elements.postContent.textContent = post.content || '';
     
+    const profileImageKey = extractProfileImageKey(post.author);
+    if (elements.authorAvatar) {
+        renderProfileImage(elements.authorAvatar, profileImageKey);
+    }
+    
     renderPostImages(post.imageObjectKeys || []);
     
     const stats = post.stats || {};
@@ -184,12 +191,14 @@ const removeComment = (commentList, targetId) => {
 const transformComment = (commentData) => {
     const parentId = commentData.parentId || commentData.parent_id;
     const normalizedParentId = (parentId && parentId !== 0) ? parentId : null;
+    const profileImageKey = extractProfileImageKey(commentData.author);
     
     return {
         id: commentData.id || commentData.commentId,
         parentId: normalizedParentId,
         author: commentData.author?.nickname || commentData.author?.name || '작성자',
         authorId: commentData.author?.id || commentData.author?.userId || null,
+        authorImageKey: profileImageKey,
         date: commentData.createdAt ? formatDate(new Date(commentData.createdAt)) : '',
         content: commentData.content || '',
         isEditable: currentUserId && (commentData.author?.id || commentData.author?.userId) === currentUserId,
@@ -307,7 +316,10 @@ const createCommentHeader = (comment) => {
     const header = createEl('div', 'comment-header');
     
     const authorDiv = createEl('div', 'comment-author');
-    authorDiv.appendChild(createEl('div', 'author-avatar', '👤'));
+    const avatarElement = createEl('div', 'author-avatar');
+    const profileImageKey = comment.authorImageKey || null;
+    renderProfileImage(avatarElement, profileImageKey);
+    authorDiv.appendChild(avatarElement);
     authorDiv.appendChild(createEl('span', 'author-name', comment.author));
     
     const metaDiv = createEl('div', 'comment-meta');
@@ -415,11 +427,13 @@ const submitComment = async (parentId = null) => {
         
         if (responseData) {
             const user = getCurrentUser();
+            const profileImageKey = extractProfileImageKey(responseData.author) || user?.profileImageKey || null;
             const newComment = {
                 id: responseData.commentId || responseData.id,
                 parentId: parentId || null,
                 author: responseData.author?.nickname || responseData.author?.name || user?.nickname || '작성자',
                 authorId: currentUserId,
+                authorImageKey: profileImageKey,
                 date: responseData.createdAt ? formatDate(new Date(responseData.createdAt)) : formatDate(new Date()),
                 content: responseData.content || content,
                 isEditable: true,

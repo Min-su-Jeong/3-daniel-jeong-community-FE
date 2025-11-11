@@ -4,7 +4,7 @@ import { validateNickname, setupFormValidation } from '../../utils/common/valida
 import { getElementValue, setElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
 import { Modal } from '../../components/modal/modal.js';
-import { validateImageFiles, createImagePreviews } from '../../utils/common/image.js';
+import { validateImageFiles, createImagePreviews, renderProfileImage as renderProfileImageUtil } from '../../utils/common/image.js';
 import { IMAGE_CONSTANTS, API_SERVER_URI } from '../../utils/constants.js';
 import { updateUser, deleteUser } from '../../api/users.js';
 import { uploadImage } from '../../api/images.js';
@@ -54,14 +54,8 @@ function saveUserToStorage(userData) {
  * 프로필 이미지 렌더링
  */
 function renderProfileImage(container, imageKey) {
-    if (!container || !imageKey) return;
-    
-    const img = document.createElement('img');
-    img.src = `${API_SERVER_URI}/files/${imageKey}`;
-    img.alt = '프로필 이미지';
-    
-    container.innerHTML = '';
-    container.appendChild(img);
+    if (!container) return;
+    renderProfileImageUtil(container, imageKey);
 }
 
 function createUserEditButtons() {
