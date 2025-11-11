@@ -1,14 +1,11 @@
-import { Button } from '../../components/button/button.js';
-import { Modal } from '../../components/modal/modal.js';
-import { PageLayout } from '../../components/layout/page-layout.js';
-import { formatNumber, formatDate } from '../../utils/common/format.js';
-import { initializeElements, getElementValue, setElementValue, navigateTo, getUrlParam } from '../../utils/common/dom.js';
-import { ToastUtils } from '../../components/toast/toast.js';
-import { getPostById, deletePost as deletePostApi } from '../../api/posts.js';
-import { addPostLike, removePostLike } from '../../api/post-like.js';
-import { getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../api/comments.js';
-import { API_SERVER_URI } from '../../utils/constants.js';
-import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
+import { Button, Modal, PageLayout, ToastUtils } from '../../components/index.js';
+import { formatNumber, formatDate, initializeElements, getElementValue, setElementValue, navigateTo, getUrlParam, renderProfileImage, extractProfileImageKey, getCurrentUser, getUserFromStorage } from '../../utils/common/index.js';
+import { getPostById, deletePost as deletePostApi, addPostLike, removePostLike, getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../api/index.js';
+import { API_SERVER_URI } from '../../utils/constants/api.js';
+import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
+import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
+import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
+import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 
 let isLiked = false;
 let isLikePending = false;
@@ -16,40 +13,31 @@ let editingCommentId = null;
 let comments = [];
 let currentPostId = null;
 let currentUserId = null;
+let currentPost = null; // 현재 게시글 데이터 저장
 let elements = {};
 let likeCountValue = 0;
 let commentCountValue = 0;
 
-// 현재 로그인한 사용자 정보 가져오기
-const getCurrentUser = () => {
-    try {
-        const userString = localStorage.getItem('user') || sessionStorage.getItem('user');
-        return userString ? JSON.parse(userString) : null;
-    } catch {
-        return null;
-    }
-};
-
-// 좋아요 UI 업데이트
+// 좋아요 UI 상태 업데이트 (버튼 스타일, aria-pressed 속성)
 const updateLikeUI = (liked) => {
     isLiked = liked;
     elements.likeBtn.classList.toggle('liked', liked);
     elements.likeBtn.setAttribute('aria-pressed', String(liked));
 };
 
-// 좋아요 개수 업데이트
+// 좋아요 개수 UI 업데이트 (K/M 단위 포맷팅)
 const updateLikeCount = (count) => {
     likeCountValue = count;
     elements.likeCount.textContent = formatNumber(count);
 };
 
-// 댓글 개수 업데이트
+// 댓글 개수 UI 업데이트 (증감분 적용, K/M 단위 포맷팅)
 const updateCommentCount = (delta) => {
     commentCountValue = Math.max(0, commentCountValue + delta);
     elements.commentCount.textContent = formatNumber(commentCountValue);
 };
 
-// DOM 요소 생성 헬퍼
+// DOM 요소 생성 헬퍼 함수
 const createEl = (tag, className = '', text = '') => {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -57,7 +45,7 @@ const createEl = (tag, className = '', text = '') => {
     return element;
 };
 
-// 버튼 생성 및 컨테이너에 추가
+// 버튼 그룹 생성 및 컨테이너에 추가
 const createButtons = (configs, container, cssClass = '') => {
     if (!container) return;
     configs.forEach(config => {
@@ -68,7 +56,7 @@ const createButtons = (configs, container, cssClass = '') => {
     }
 };
 
-// 로그인 체크 및 리다이렉트
+// 로그인 필요 확인 모달 표시 및 로그인 페이지 이동
 const checkLoginAndRedirect = async (message) => {
     const confirmed = await Modal.confirm({
         title: '로그인 필요',
@@ -78,7 +66,7 @@ const checkLoginAndRedirect = async (message) => {
     return confirmed;
 };
 
-// DOM 요소 초기화
+// 페이지 DOM 요소 초기화 (ID로 요소 일괄 조회)
 const initElements = () => {
     elements = initializeElements({
         postTitle: 'postTitle',
@@ -102,14 +90,18 @@ const initElements = () => {
 const renderPostImages = (imageKeys) => {
     if (!elements.postImage || !imageKeys?.length) {
         if (elements.postImage) {
-            elements.postImage.innerHTML = '';
+            while (elements.postImage.firstChild) {
+                elements.postImage.removeChild(elements.postImage.firstChild);
+            }
             elements.postImage.style.display = 'none';
         }
         return;
     }
 
     elements.postImage.style.display = 'block';
-    elements.postImage.innerHTML = '';
+    while (elements.postImage.firstChild) {
+        elements.postImage.removeChild(elements.postImage.firstChild);
+    }
     
     const container = imageKeys.length === 1 ? elements.postImage : document.createElement('div');
     if (imageKeys.length > 1) {
@@ -145,7 +137,14 @@ const displayPostData = (post) => {
     elements.postDate.textContent = formatDate(new Date(post.createdAt));
     elements.postContent.textContent = post.content || '';
     
-    const profileImageKey = extractProfileImageKey(post.author);
+    // 현재 사용자가 작성한 게시글인 경우 최신 프로필 이미지 사용
+    const postAuthorId = post.author?.id || post.author?.userId;
+    let profileImageKey = extractProfileImageKey(post.author);
+    if (postAuthorId && currentUserId && postAuthorId === currentUserId) {
+        const currentUser = getUserFromStorage();
+        profileImageKey = currentUser?.profileImageKey || profileImageKey;
+    }
+    
     if (elements.authorAvatar) {
         renderProfileImage(elements.authorAvatar, profileImageKey);
     }
@@ -191,17 +190,24 @@ const removeComment = (commentList, targetId) => {
 const transformComment = (commentData) => {
     const parentId = commentData.parentId || commentData.parent_id;
     const normalizedParentId = (parentId && parentId !== 0) ? parentId : null;
-    const profileImageKey = extractProfileImageKey(commentData.author);
+    const commentAuthorId = commentData.author?.id || commentData.author?.userId || null;
+    
+    // 현재 사용자가 작성한 댓글인 경우 최신 프로필 이미지 사용
+    let profileImageKey = extractProfileImageKey(commentData.author);
+    if (commentAuthorId && currentUserId && commentAuthorId === currentUserId) {
+        const currentUser = getUserFromStorage();
+        profileImageKey = currentUser?.profileImageKey || profileImageKey;
+    }
     
     return {
         id: commentData.id || commentData.commentId,
         parentId: normalizedParentId,
         author: commentData.author?.nickname || commentData.author?.name || '작성자',
-        authorId: commentData.author?.id || commentData.author?.userId || null,
+        authorId: commentAuthorId,
         authorImageKey: profileImageKey,
         date: commentData.createdAt ? formatDate(new Date(commentData.createdAt)) : '',
         content: commentData.content || '',
-        isEditable: currentUserId && (commentData.author?.id || commentData.author?.userId) === currentUserId,
+        isEditable: currentUserId && commentAuthorId === currentUserId,
         replies: []
     };
 };
@@ -253,16 +259,16 @@ const createActionButtons = (postAuthorId) => {
 
 // 게시글 삭제 처리
 const handleDeletePost = async () => {
-    if (!await Modal.confirmDelete({ title: '게시글 삭제', subtitle: '게시글을 삭제하시겠습니까? <br>삭제한 내용은 복구할 수 없습니다.' })) return;
+    if (!await Modal.confirmDelete({ title: MODAL_MESSAGE.TITLE_DELETE, subtitle: MODAL_MESSAGE.SUBTITLE_POST_DELETE })) return;
 
     try {
         const response = await deletePostApi(currentPostId);
         if (response.success) {
-            ToastUtils.success('게시글이 삭제되었습니다.');
+            ToastUtils.success(TOAST_MESSAGE.POST_DELETE_SUCCESS);
             setTimeout(() => navigateTo('/post-list'), 1000);
         }
     } catch (error) {
-        ToastUtils.error(error.message || '게시글 삭제에 실패했습니다.');
+        ToastUtils.error(error.message || TOAST_MESSAGE.POST_DELETE_FAILED);
     }
 };
 
@@ -295,7 +301,7 @@ const toggleLike = async () => {
     } catch (error) {
         updateLikeUI(previousLiked);
         updateLikeCount(likeCountValue);
-        ToastUtils.error(error.message || '좋아요 처리에 실패했습니다.');
+        ToastUtils.error(error.message || TOAST_MESSAGE.LIKE_FAILED);
     } finally {
         isLikePending = false;
     }
@@ -304,7 +310,10 @@ const toggleLike = async () => {
 // 댓글 목록 렌더링
 const renderComments = () => {
     if (!elements.commentsList) return;
-    elements.commentsList.innerHTML = '';
+    // 기존 댓글 제거
+    while (elements.commentsList.firstChild) {
+        elements.commentsList.removeChild(elements.commentsList.firstChild);
+    }
     comments.forEach(comment => {
         const commentElement = createCommentElement(comment, 0);
         elements.commentsList.appendChild(commentElement);
@@ -317,7 +326,14 @@ const createCommentHeader = (comment) => {
     
     const authorDiv = createEl('div', 'comment-author');
     const avatarElement = createEl('div', 'author-avatar');
-    const profileImageKey = comment.authorImageKey || null;
+    
+    // 현재 사용자가 작성한 댓글인 경우 최신 프로필 이미지 사용
+    let profileImageKey = comment.authorImageKey || null;
+    if (comment.authorId && currentUserId && comment.authorId === currentUserId) {
+        const currentUser = getUserFromStorage();
+        profileImageKey = currentUser?.profileImageKey || profileImageKey;
+    }
+    
     renderProfileImage(avatarElement, profileImageKey);
     authorDiv.appendChild(avatarElement);
     authorDiv.appendChild(createEl('span', 'author-name', comment.author));
@@ -427,7 +443,8 @@ const submitComment = async (parentId = null) => {
         
         if (responseData) {
             const user = getCurrentUser();
-            const profileImageKey = extractProfileImageKey(responseData.author) || user?.profileImageKey || null;
+            // 현재 사용자가 작성한 댓글이므로 최신 프로필 이미지 사용
+            const profileImageKey = user?.profileImageKey || extractProfileImageKey(responseData.author) || null;
             const newComment = {
                 id: responseData.commentId || responseData.id,
                 parentId: parentId || null,
@@ -458,9 +475,9 @@ const submitComment = async (parentId = null) => {
         
         renderComments();
         updateCommentCount(1);
-        ToastUtils.success(parentId ? '답글이 등록되었습니다.' : '댓글이 등록되었습니다.');
+        ToastUtils.success(parentId ? TOAST_MESSAGE.COMMENT_REPLY_SUCCESS : TOAST_MESSAGE.COMMENT_CREATE_SUCCESS);
     } catch (error) {
-        ToastUtils.error(error.message || '댓글 등록에 실패했습니다.');
+        ToastUtils.error(error.message || TOAST_MESSAGE.COMMENT_CREATE_FAILED);
     }
 };
 
@@ -469,7 +486,7 @@ const createReplyInputForm = (commentId) => {
     const inputWrapper = createEl('div', 'reply-input-wrapper');
     
     const textarea = createEl('textarea', 'reply-input text-input');
-    textarea.placeholder = '답글을 입력하세요...';
+    textarea.placeholder = PLACEHOLDER.REPLY;
     textarea.rows = 2;
     
     const actionsContainer = createEl('div', 'reply-actions');
@@ -503,12 +520,18 @@ const toggleReplyInput = (commentId) => {
     
     if (isVisible) {
         container.style.display = 'none';
-        container.innerHTML = '';
+        // 기존 내용 제거
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
     } else {
         document.querySelectorAll('.reply-input-container').forEach(containerElement => {
             if (containerElement.id !== `replyInput-${commentId}`) {
                 containerElement.style.display = 'none';
-                containerElement.innerHTML = '';
+                // 기존 내용 제거
+                while (containerElement.firstChild) {
+                    containerElement.removeChild(containerElement.firstChild);
+                }
             }
         });
         
@@ -524,7 +547,7 @@ const createCommentEditForm = (commentId, content) => {
     const editForm = createEl('div', 'comment-edit-form');
     
     const textarea = createEl('textarea', 'comment-edit-input text-input');
-    textarea.placeholder = '댓글을 입력하세요...';
+    textarea.placeholder = PLACEHOLDER.COMMENT;
     textarea.value = content;
     
     const actionsContainer = createEl('div', 'comment-edit-actions');
@@ -555,7 +578,12 @@ const editComment = (commentId) => {
     editingCommentId = commentId;
     const contentElement = element.querySelector('.comment-content');
     const { editForm, textarea } = createCommentEditForm(commentId, comment.content);
-    contentElement.innerHTML = '';
+    
+    // 기존 내용 제거
+    while (contentElement.firstChild) {
+        contentElement.removeChild(contentElement.firstChild);
+    }
+    
     contentElement.appendChild(editForm);
     
     textarea.focus();
@@ -569,7 +597,7 @@ const saveCommentEdit = async (commentId) => {
 
     const newContent = element.querySelector('.comment-edit-input').value.trim();
     if (!newContent) {
-        Modal.alert({ title: '입력 오류', subtitle: '댓글 내용을 입력해주세요.' });
+        Modal.alert({ title: MODAL_MESSAGE.TITLE_INPUT_ERROR, subtitle: VALIDATION_MESSAGE.COMMENT_REQUIRED });
         return;
     }
 
@@ -582,25 +610,25 @@ const saveCommentEdit = async (commentId) => {
 
         editingCommentId = null;
         renderComments();
-        ToastUtils.success('댓글이 수정되었습니다.');
+        ToastUtils.success(TOAST_MESSAGE.COMMENT_UPDATE_SUCCESS);
     } catch (error) {
-        ToastUtils.error(error.message || '댓글 수정에 실패했습니다.');
+        ToastUtils.error(error.message || TOAST_MESSAGE.COMMENT_UPDATE_FAILED);
     }
 };
 
 // 댓글 삭제 처리
 const deleteComment = async (commentId) => {
     if (!findComment(comments, commentId)) return;
-    if (!await Modal.confirmDelete({ title: '댓글 삭제', subtitle: '댓글을 삭제하시겠습니까?' })) return;
+    if (!await Modal.confirmDelete({ title: MODAL_MESSAGE.TITLE_DELETE, subtitle: MODAL_MESSAGE.SUBTITLE_COMMENT_DELETE })) return;
 
     try {
         await deleteCommentApi(currentPostId, commentId);
         removeComment(comments, commentId);
         renderComments();
         updateCommentCount(-1);
-        ToastUtils.success('댓글이 삭제되었습니다.');
+        ToastUtils.success(TOAST_MESSAGE.COMMENT_DELETE_SUCCESS);
     } catch (error) {
-        ToastUtils.error(error.message || '댓글 삭제에 실패했습니다.');
+        ToastUtils.error(error.message || TOAST_MESSAGE.COMMENT_DELETE_FAILED);
     }
 };
 
@@ -608,7 +636,7 @@ const deleteComment = async (commentId) => {
 const initPostData = async () => {
     const postId = getUrlParam('id');
     if (!postId) {
-        ToastUtils.error('게시글 ID가 없습니다.');
+        ToastUtils.error(TOAST_MESSAGE.POST_ID_MISSING);
         navigateTo('/post-list');
         return;
     }
@@ -621,11 +649,12 @@ const initPostData = async () => {
         const response = await getPostById(postId);
         const post = response.data;
         if (!post) {
-            ToastUtils.error('게시글을 찾을 수 없습니다.');
+            ToastUtils.error(TOAST_MESSAGE.POST_NOT_FOUND);
             navigateTo('/post-list');
             return;
         }
 
+        currentPost = post; // 게시글 데이터 저장 (프로필 업데이트용)
         displayPostData(post);
         createActionButtons(post.author?.id || post.author?.userId || null);
         
@@ -637,9 +666,45 @@ const initPostData = async () => {
             processComments(commentsData);
         }
     } catch (error) {
-        ToastUtils.error(error.message || '게시글을 불러올 수 없습니다.');
+        ToastUtils.error(error.message || TOAST_MESSAGE.POST_LOAD_FAILED);
         navigateTo('/post-list');
     }
+};
+
+// 사용자 프로필 업데이트 시 현재 사용자가 작성한 게시글/댓글의 프로필 이미지 업데이트
+const updateCurrentUserProfileImages = () => {
+    if (!currentUserId) return;
+    
+    const currentUser = getUserFromStorage();
+    const updatedProfileImageKey = currentUser?.profileImageKey || null;
+    
+    // 현재 사용자가 작성한 게시글의 프로필 이미지 업데이트
+    if (currentPost && elements.authorAvatar) {
+        const postAuthorId = currentPost.author?.id || currentPost.author?.userId;
+        if (postAuthorId === currentUserId) {
+            // 게시글 작성자 프로필 이미지 업데이트 (null이어도 기본 프로필로 표시)
+            renderProfileImage(elements.authorAvatar, updatedProfileImageKey);
+        }
+    }
+    
+    // 현재 사용자가 작성한 댓글의 프로필 이미지 업데이트
+    // profileImageKey가 null이어도 업데이트 (기본 프로필로 표시)
+    comments.forEach(comment => {
+        if (comment.authorId === currentUserId) {
+            comment.authorImageKey = updatedProfileImageKey;
+        }
+        // 대댓글도 업데이트
+        if (comment.replies) {
+            comment.replies.forEach(reply => {
+                if (reply.authorId === currentUserId) {
+                    reply.authorImageKey = updatedProfileImageKey;
+                }
+            });
+        }
+    });
+    
+    // 댓글 목록 재렌더링
+    renderComments();
 };
 
 // 페이지 초기화
@@ -647,6 +712,11 @@ const initPage = async () => {
     PageLayout.initializePage();
     initElements();
     await initPostData();
+    
+    // 사용자 정보 업데이트 이벤트 리스너 등록
+    window.addEventListener('userUpdated', () => {
+        updateCurrentUserProfileImages();
+    });
     
     // 이벤트 리스너 등록
     if (elements.likeBtn) {
@@ -686,7 +756,9 @@ window.addEventListener('pageshow', async (event) => {
         }
         document.querySelectorAll('.reply-input-container').forEach(container => {
             container.style.display = 'none';
-            container.innerHTML = '';
+            while (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
         });
     }
 });

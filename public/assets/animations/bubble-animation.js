@@ -161,7 +161,9 @@ class BubbleAnimation {
         });
         
         // 기존 말풍선 제거
-        this.bubblesContainer.innerHTML = '';
+        while (this.bubblesContainer.firstChild) {
+            this.bubblesContainer.removeChild(this.bubblesContainer.firstChild);
+        }
         
         // Set 초기화
         this.usedTexts.clear();

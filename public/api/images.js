@@ -1,10 +1,7 @@
 import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants.js';
+import { METHOD } from '../utils/constants/api.js';
 
-/**
- * 이미지 업로드 (Multipart)
- * - 의도: 서버가 파일을 직접 받아 정책 검증 후 저장 및 응답
- */
+// 이미지 업로드 API (multipart/form-data, 서버에서 검증 후 저장)
 export async function uploadImage(imageType, resourceId, file) {
     const formData = new FormData();
     formData.append('imageType', imageType);

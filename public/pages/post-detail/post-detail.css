@@ -10,6 +10,7 @@
     z-index: var(--z-content);
 }
 
+/* 게시글 상세 페이지 전용 컨테이너 - common.css의 .container 스타일 오버라이드 */
 .container {
     width: 100%;
     max-width: 700px;
@@ -17,6 +18,19 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-3xl);
+    /* common.css의 .container 스타일 제거 */
+    background: transparent;
+    backdrop-filter: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+    animation: none;
+    overflow: visible;
+}
+
+.container::before {
+    display: none;
 }
 
 /* 공통 카드 스타일 */

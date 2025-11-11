@@ -1,7 +1,4 @@
-/**
- * 공통 CSS 변수 및 기본 스타일
- * 모든 페이지에서 공통으로 사용되는 스타일 관리
- */
+/* 공통 CSS 변수 및 기본 스타일 */
 
 :root {
     /* 색상 */
@@ -43,7 +40,42 @@
     --spacing-4xl: 40px;
     --spacing-5xl: 48px;
     
+    /* 폰트 크기 */
+    --font-size-xs: 12px;
+    --font-size-sm: 13px;
+    --font-size-md: 14px;
+    --font-size-base: 15px;
+    --font-size-lg: 16px;
+    --font-size-xl: 17px;
+    --font-size-2xl: 18px;
+    --font-size-3xl: 20px;
+    --font-size-4xl: 22px;
+    --font-size-5xl: 24px;
+    
+    /* 아이콘 크기 */
+    --icon-size-sm: 14px;
+    --icon-size-md: 16px;
+    --icon-size-lg: 18px;
+    --icon-size-xl: 22px;
+    --icon-size-2xl: 28px;
+    --icon-size-3xl: 32px;
+    
+    /* 프로필 이미지 크기 */
+    --profile-size-sm: 28px;
+    --profile-size-md: 52px;
+    --profile-size-lg: 120px;
+    
+    /* 버튼 크기 */
+    --btn-height-sm: 40px;
+    --btn-height-md: 48px;
+    --btn-height-lg: 56px;
+    
+    /* 컨테이너 크기 */
+    --container-max-width: 420px;
+    --header-container-offset: 350px;
+    
     /* 그림자 */
+    --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.1);
     --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 20px rgba(59, 130, 246, 0.3);
     --shadow-lg: 0 8px 30px rgba(59, 130, 246, 0.4);
@@ -182,11 +214,165 @@ body {
 .z-error { z-index: var(--z-error); }
 .z-critical { z-index: var(--z-critical); }
 
-/* 반응형 z-index 조정 */
+/* 페이지 공통 레이아웃 스타일 */
+
+/* 메인 컨텐츠 영역 */
+.main {
+    padding: var(--spacing-4xl) var(--spacing-2xl);
+    padding-top: calc(var(--header-height) + var(--spacing-4xl));
+    min-height: calc(100vh - 88px);
+    position: relative;
+    z-index: var(--z-content);
+}
+
+/* 공통 컨테이너 */
+.container {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-5xl) var(--spacing-4xl);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideUp var(--transition-slow);
+    position: relative;
+    overflow: hidden;
+    z-index: var(--z-card);
+    margin: 0 auto;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+}
+
+/* 페이지 제목 */
+.page-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: var(--spacing-4xl);
+    letter-spacing: -0.5px;
+    animation: fadeIn 0.8s ease-out 0.2s both;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-align: center;
+}
+
+/* 페이지 헤더 */
+.page-header {
+    text-align: center;
+    margin-bottom: var(--spacing-4xl);
+    padding: 0 var(--spacing-lg);
+}
+
+.page-header .page-title {
+    margin-bottom: var(--spacing-sm);
+    background: linear-gradient(45deg, var(--primary-color), var(--purple));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* 중앙 정렬 컨테이너 */
+.main.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.main.center-start {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* 반응형 z-index 조정 및 페이지 레이아웃 */
 @media (max-width: 768px) {
     :root {
         /* 모바일에서는 일부 레이어 조정 */
         --z-header: 1100;
         --z-modal: 2200;
     }
+    
+    .main {
+        padding: var(--spacing-2xl) var(--spacing-lg);
+        padding-top: calc(var(--header-height) + var(--spacing-2xl));
+    }
+    
+    .container {
+        padding: var(--spacing-3xl) var(--spacing-2xl);
+        max-width: 100%;
+    }
+    
+    .page-title {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main {
+        padding: var(--spacing-lg);
+        padding-top: calc(var(--header-height) + var(--spacing-lg));
+    }
+    
+    .container {
+        padding: var(--spacing-2xl) var(--spacing-xl);
+    }
+    
+    .page-title {
+        font-size: 22px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+    }
+}
+
+/* 추가 링크 컨테이너 */
+.additional-links {
+    text-align: center;
+    margin-top: var(--spacing-2xl);
+    animation: fadeIn 0.8s ease-out 0.8s both;
+}
+
+/* 기본 링크 스타일 */
+.link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    display: inline-block;
+    position: relative;
+}
+
+.link:hover {
+    text-decoration: underline;
+    color: var(--purple);
+    transform: translateY(-1px);
+}
+
+/* 탈퇴 링크 (빨간색) */
+.link.withdrawal-link,
+.withdrawal-link {
+    color: var(--red);
+}
+
+.link.withdrawal-link:hover,
+.withdrawal-link:hover {
+    text-decoration: underline;
+    color: var(--red-hover);
 }

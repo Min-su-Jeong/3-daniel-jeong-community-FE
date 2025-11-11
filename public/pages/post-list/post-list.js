@@ -1,11 +1,8 @@
-import { Button } from '../../components/button/button.js';
-import { formatNumber, formatDate } from '../../utils/common/format.js';
-import { PageLayout } from '../../components/layout/page-layout.js';
-import { initializeElements, navigateTo } from '../../utils/common/dom.js';
-import { ToastUtils } from '../../components/toast/toast.js';
-import { getPosts } from '../../api/posts.js';
-import { Modal } from '../../components/modal/modal.js';
-import { extractProfileImageKey, renderProfileImage } from '../../utils/common/image.js';
+import { Button, PageLayout, ToastUtils, Modal } from '../../components/index.js';
+import { formatNumber, formatDate, initializeElements, navigateTo, extractProfileImageKey, renderProfileImage, getCurrentUser, getUserFromStorage } from '../../utils/common/index.js';
+import { getPosts } from '../../api/index.js';
+import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
+import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 
 
 const SCROLL_THRESHOLD = 200; // 무한 스크롤 트리거 거리 (px)
@@ -32,9 +29,68 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         init() {
+            this.initTypingAnimation();
             this.createWritePostButton();
             this.bindEvents();
             this.loadPosts();
+            
+            // 사용자 정보 업데이트 이벤트 리스너 등록
+            window.addEventListener('userUpdated', () => {
+                this.updateCurrentUserProfileImages();
+            });
+        }
+        
+        // 현재 사용자가 작성한 게시글의 프로필 이미지 업데이트
+        updateCurrentUserProfileImages() {
+            const currentUser = getUserFromStorage();
+            const currentUserId = currentUser?.id || null;
+            const updatedProfileImageKey = currentUser?.profileImageKey || null;
+            
+            if (!currentUserId) return;
+            
+            // 모든 게시글 카드에서 현재 사용자가 작성한 게시글 찾아서 업데이트
+            // profileImageKey가 null이어도 업데이트 (기본 프로필로 표시)
+            const postCards = this.elements.postsContainer.querySelectorAll('.post-card');
+            postCards.forEach(card => {
+                const authorId = card.dataset.authorId;
+                if (!authorId || authorId !== String(currentUserId)) return;
+                
+                const avatar = card.querySelector('.author-avatar');
+                if (avatar) {
+                    // 작성자 이름 가져오기 (기본 이모지용)
+                    const authorNameElement = card.querySelector('.author-name');
+                    const authorName = authorNameElement?.textContent || '';
+                    const fallbackText = authorName ? authorName.charAt(0) : '👤';
+                    renderProfileImage(avatar, updatedProfileImageKey, fallbackText, authorName);
+                }
+            });
+        }
+
+        // 타이핑 애니메이션 초기화
+        initTypingAnimation() {
+            const handwritingText = document.getElementById('handwritingText');
+            if (!handwritingText) return;
+
+            const fullText = handwritingText.textContent || '여러분의 재밌는 이야기를 들려주세요';
+            handwritingText.textContent = '';
+            handwritingText.classList.remove('typing-complete');
+
+            let currentIndex = 0;
+            const typingSpeed = 100; // 타이핑 속도 (ms)
+
+            const typeChar = () => {
+                if (currentIndex < fullText.length) {
+                    handwritingText.textContent += fullText.charAt(currentIndex);
+                    currentIndex++;
+                    setTimeout(typeChar, typingSpeed);
+                } else {
+                    // 타이핑 완료 후 커서 제거
+                    handwritingText.classList.add('typing-complete');
+                }
+            };
+
+            // 약간의 지연 후 시작
+            setTimeout(typeChar, 500);
         }
 
         // 뒤로가기 시 최신 데이터 반영을 위한 목록 새로고침
@@ -60,8 +116,8 @@ document.addEventListener('DOMContentLoaded', function() {
         handleWriteClick() {
             if (!this.isLoggedIn()) {
                 new Modal({
-                    title: '로그인 필요',
-                    subtitle: '게시글을 작성하려면 로그인이 필요합니다.',
+                    title: MODAL_MESSAGE.TITLE_LOGIN_REQUIRED,
+                    subtitle: MODAL_MESSAGE.SUBTITLE_LOGIN_REQUIRED,
                     confirmText: '로그인하기',
                     cancelText: '취소',
                     onConfirm: () => navigateTo('/login')
@@ -129,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 // 첫 로드 시에만 에러 메시지 표시
                 if (this.cursor === null) {
-                    ToastUtils.error(error.message || '게시글 목록을 불러올 수 없습니다.');
+                    ToastUtils.error(error.message || TOAST_MESSAGE.POST_LIST_LOAD_FAILED);
                 }
                 this.hasMorePosts = false;
             } finally {
@@ -144,6 +200,12 @@ document.addEventListener('DOMContentLoaded', function() {
             card.className = 'post-card';
             const postId = post.id || post.postId;
             card.dataset.postId = postId;
+            
+            // 작성자 ID 저장 (프로필 이미지 업데이트용)
+            const postAuthorId = post.author?.id || post.author?.userId;
+            if (postAuthorId) {
+                card.dataset.authorId = postAuthorId;
+            }
 
             const { title, author, createdAt, stats } = this.extractPostData(post);
             const truncatedTitle = title.length > TITLE_MAX_LENGTH 
@@ -155,7 +217,16 @@ document.addEventListener('DOMContentLoaded', function() {
             card.appendChild(this.createPostAuthor(author));
             
             const avatar = card.querySelector('.author-avatar');
-            renderProfileImage(avatar, extractProfileImageKey(post.author), author.charAt(0), author);
+            const currentUser = getCurrentUser();
+            const currentUserId = currentUser?.id || null;
+            
+            // 현재 사용자가 작성한 게시글인 경우 최신 프로필 이미지 사용
+            let profileImageKey = extractProfileImageKey(post.author);
+            if (postAuthorId && currentUserId && postAuthorId === currentUserId) {
+                profileImageKey = currentUser?.profileImageKey || profileImageKey;
+            }
+            
+            renderProfileImage(avatar, profileImageKey, author.charAt(0), author);
             card.addEventListener('click', () => navigateTo('/post-detail', { id: postId }));
             
             return card;

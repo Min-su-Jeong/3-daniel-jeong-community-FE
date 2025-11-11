@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원정보 수정</title>
-    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
+    <link rel="stylesheet" href="../../styles/common.css">
     <link rel="stylesheet" href="../../components/button/button.css">
-    <link rel="stylesheet" href="../../components/toast/toast.css">
     <link rel="stylesheet" href="../../components/modal/modal.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
     <link rel="stylesheet" href="user-edit.css">
 </head>
 <body>
@@ -24,17 +25,13 @@
                 <!-- 프로필 사진 -->
                 <div class="form-group profile-section">
                     <label class="form-label">프로필 사진</label>
-                    <div class="profile-image-container">
+                    <p class="helper-text">프로필 사진을 등록해주세요 (선택)</p>
+                    <div class="profile-upload">
                         <div class="profile-image" id="profileImage">
-                            <div class="profile-placeholder">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                            </div>
+                                <span class="plus-icon">+</span>
                         </div>
-                        <button type="button" class="change-image-btn" id="changeImageBtn">변경</button>
                         <input type="file" id="profileImageInput" style="display: none;">
+                        <button type="button" class="btn-remove-image" id="removeImageBtn" style="display: none;">삭제</button>
                     </div>
                 </div>
 

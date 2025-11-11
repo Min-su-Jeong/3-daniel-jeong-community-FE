@@ -1,7 +1,10 @@
 /**
- * 공통 유효성 검사 유틸리티
+ * 입력값 유효성 검사 유틸리티
+ * 이메일, 비밀번호, 닉네임 등 폼 입력값 검증 로직
  */
+import { debounce } from './debounce-helper.js';
 
+// 이메일 형식 검증 (RFC 5322 간소화 버전)
 export function validateEmail(email) {
     if (email.length === 0) return { isValid: true, message: '' };
     
@@ -15,6 +18,7 @@ export function validateEmail(email) {
     };
 }
 
+// 비밀번호 강도 검증 (8자 이상, 영문/숫자/특수문자 포함, 공백/연속문자 제한)
 export function validatePassword(password) {
     if (password.length === 0) return { isValid: true, message: '' };
     
@@ -37,6 +41,7 @@ export function validatePassword(password) {
     return { isValid: true, message: '' };
 }
 
+// 닉네임 형식 검증 (2-10자, 한글/영문/숫자/언더스코어만 허용, 숫자만 불가)
 export function validateNickname(nickname) {
     if (nickname.length === 0) return { isValid: false, message: '닉네임을 입력해주세요' };
     
@@ -51,6 +56,7 @@ export function validateNickname(nickname) {
     return { isValid: true, message: '' };
 }
 
+// 게시글 제목 길이 검증 (최대 26자)
 export function validateTitle(title) {
     if (title.length === 0) return { isValid: true, message: '' };
     if (title.length > 26) return { isValid: false, message: '제목은 26자 이하여야 합니다' };
@@ -59,6 +65,7 @@ export function validateTitle(title) {
 }
 
 
+// 입력 필드 검증 상태 UI 업데이트 (성공/에러 스타일 적용)
 export function updateFieldValidation(input, helperText, isValid, errorMessage, successMessage) {
     input.classList.remove('success', 'error', 'warning');
     helperText.classList.remove('success', 'error', 'warning');
@@ -79,7 +86,7 @@ export function updateFieldValidation(input, helperText, isValid, errorMessage, 
     }
 }
 
-// 폼 설정 함수
+// 폼 전체 유효성 검사 설정 (실시간 검증, 제출 버튼 활성화 제어)
 export function setupFormValidation(formId, fields) {
     const form = document.getElementById(formId);
     const submitButton = form?.querySelector('.btn-primary');
@@ -167,5 +174,52 @@ export function setupFormValidation(formId, fields) {
     fields.forEach(field => {
         const input = document.getElementById(field.id);
         if (input) input.addEventListener('input', checkFormValidity);
+    });
+}
+
+// 입력값 중복 체크 설정 (디바운스 적용, 실시간 UI 피드백)
+export function setupDuplicateCheck({ 
+    input, 
+    helperText, 
+    checkFunction, 
+    validateFunction, 
+    successMessage = '사용 가능합니다',
+    errorMessage = '이미 사용 중입니다',
+    debounceDelay = 500 
+}) {
+    if (!input || !helperText || !checkFunction || !validateFunction) return;
+
+    const checkAvailability = debounce(async (value) => {
+        const formatValidation = validateFunction(value);
+        if (!formatValidation.isValid || value.trim() === '') {
+            return;
+        }
+        
+        try {
+            const response = await checkFunction(value);
+            const isAvailable = response?.data === true || response?.data?.available === true;
+            
+            input.classList.remove('error', 'warning', 'success');
+            helperText.classList.remove('error', 'warning', 'success');
+            
+            if (isAvailable) {
+                input.classList.add('success');
+                helperText.classList.add('success');
+                helperText.textContent = successMessage;
+            } else {
+                input.classList.add('error');
+                helperText.classList.add('error');
+                helperText.textContent = errorMessage;
+            }
+        } catch (error) {
+            // 네트워크 오류 등은 무시
+        }
+    }, debounceDelay);
+    
+    input.addEventListener('input', () => {
+        const value = input.value.trim();
+        if (value && validateFunction(value).isValid) {
+            checkAvailability(value);
+        }
     });
 }

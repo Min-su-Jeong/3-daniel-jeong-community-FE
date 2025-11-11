@@ -1,10 +1,7 @@
 import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants.js';
+import { METHOD } from '../utils/constants/api.js';
 
-/**
- * 게시글 목록 조회 (cursor 기반)
- * - 의도: 커서 기반 페이지네이션을 통한 게시글 목록 조회
- */
+// 게시글 목록 조회 API (커서 기반 페이지네이션)
 export async function getPosts(cursor = null, size = 10) {
     const params = cursor ? `cursor=${cursor}&size=${size}` : `size=${size}`;
     return await request({
@@ -14,10 +11,7 @@ export async function getPosts(cursor = null, size = 10) {
     });
 }
 
-/**
- * 게시글 상세 조회
- * - 의도: 게시글 ID로 상세 정보 조회
- */
+// 게시글 상세 조회 API
 export async function getPostById(postId) {
     return await request({
         method: METHOD.GET,
@@ -25,11 +19,7 @@ export async function getPostById(postId) {
     });
 }
 
-/**
- * 게시글 작성
- * - 의도: 새 게시글 생성
- * - 요청: JSON body (userId, title, content, imageObjectKeys 배열)
- */
+// 게시글 작성 API
 export async function createPost(postData) {
     return await request({
         method: METHOD.POST,
@@ -43,11 +33,7 @@ export async function createPost(postData) {
     });
 }
 
-/**
- * 게시글 수정
- * - 의도: 게시글 내용 수정
- * - 요청: JSON body (title, content, imageObjectKeys 배열)
- */
+// 게시글 수정 API
 export async function updatePost(postId, postData) {
     return await request({
         method: METHOD.PATCH,
@@ -60,10 +46,7 @@ export async function updatePost(postId, postData) {
     });
 }
 
-/**
- * 게시글 삭제
- * - 의도: 게시글 삭제
- */
+// 게시글 삭제 API
 export async function deletePost(postId) {
     return await request({
         method: METHOD.DELETE,

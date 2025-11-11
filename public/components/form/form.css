@@ -1,0 +1,197 @@
+/* 공통 Form 스타일 */
+
+/* Form 그룹 */
+.form-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.form-group:last-of-type {
+    margin-bottom: var(--spacing-2xl);
+}
+
+/* Form 라벨 */
+.form-label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    letter-spacing: -0.3px;
+}
+
+.form-label .required {
+    color: var(--red);
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+/* Form 입력 필드 */
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 14px var(--spacing-lg);
+    border: 2px solid var(--border-light);
+    border-radius: var(--border-radius-lg);
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: var(--transition-normal);
+    outline: none;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    font-family: inherit;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.form-input:disabled,
+.form-textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Helper Text */
+.helper-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: var(--spacing-sm);
+    margin-left: var(--spacing-xs);
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    min-height: 20px;
+    line-height: 1.4;
+}
+
+.helper-text.hidden {
+    display: none;
+}
+
+/* Helper Text 상태별 스타일 */
+.helper-text.success {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.helper-text.error {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.helper-text.warning {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+/* 입력 필드 상태별 스타일 */
+.form-input.success,
+.form-textarea.success {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.form-input.error,
+.form-textarea.error {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.form-input.warning,
+.form-textarea.warning {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+/* Helper Text 아이콘 */
+.helper-text::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    flex-shrink: 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: all var(--transition-normal);
+    align-self: center;
+    vertical-align: middle;
+}
+
+.helper-text.success::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2310b981'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+}
+
+.helper-text.error::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ef4444'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'/%3E%3C/svg%3E");
+}
+
+.helper-text.warning::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23f59e0b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'/%3E%3C/svg%3E");
+}
+
+/* 기본 상태에서는 아이콘 숨김 */
+.helper-text:not(.success):not(.error):not(.warning)::before {
+    display: none;
+}
+
+/* Form 컨테이너 */
+.form-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-5xl) var(--spacing-4xl);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.form-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+}
+
+/* 반응형 */
+@media (max-width: 480px) {
+    .form-input,
+    .form-textarea {
+        padding: var(--spacing-lg) var(--spacing-lg);
+    }
+    
+    .form-container {
+        padding: var(--spacing-3xl) var(--spacing-2xl);
+    }
+}
+
+@media (max-width: 360px) {
+    .form-container {
+        padding: var(--spacing-2xl) var(--spacing-xl);
+    }
+}
+

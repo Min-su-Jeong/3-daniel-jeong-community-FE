@@ -1,7 +1,4 @@
-/**
- * Toast 컴포넌트
- * @param {Object} options - Toast 설정 옵션
- */
+// Toast 컴포넌트
 export class Toast {
     constructor(options = {}) {
         this.options = {

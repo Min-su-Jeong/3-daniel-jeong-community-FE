@@ -1,10 +1,7 @@
 import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants.js';
+import { METHOD } from '../utils/constants/api.js';
 
-/**
- * 로그인 (인증 생성)
- * - 의도: 이메일/비밀번호 검증 후 JWT 토큰 발급 및 쿠키 설정
- */
+// 로그인 API (JWT 토큰 발급 및 쿠키 설정)
 export async function login(credentials) {
     return await request({
         method: METHOD.POST,
@@ -17,11 +14,7 @@ export async function login(credentials) {
     });
 }
 
-/**
- * 회원가입
- * - 의도: 유효성 검증 후 사용자 생성
- * - 요청: multipart/form-data (userData: JSON, profileImage: 파일, 선택사항)
- */
+// 회원가입 API (multipart/form-data로 사용자 정보 및 프로필 이미지 전송)
 export async function signup(userData, profileImage = null) {
     const formData = new FormData();
     
@@ -45,10 +38,7 @@ export async function signup(userData, profileImage = null) {
     });
 }
 
-/**
- * 토큰 갱신 (인증 상태 확인)
- * - 의도: 쿠키의 refresh token으로 새 access token 발급
- */
+// Refresh 토큰으로 Access 토큰 갱신 (쿠키의 refresh token 사용)
 export async function refresh() {
     return await request({
         method: METHOD.POST,
@@ -56,10 +46,7 @@ export async function refresh() {
     });
 }
 
-/**
- * 로그아웃 (인증 삭제)
- * - 의도: 쿠키를 즉시 만료시키고 DB의 refresh token도 무효화
- */
+// 로그아웃 API (쿠키 만료 및 DB refresh token 무효화)
 export async function logout() {
     return await request({
         method: METHOD.DELETE,
@@ -67,10 +54,7 @@ export async function logout() {
     });
 }
 
-/**
- * 현재 비밀번호 확인
- * - 의도: 비밀번호 수정 전 현재 비밀번호 일치 여부 확인 (로그인 API 활용)
- */
+// 현재 비밀번호 확인 (로그인 API 재사용하여 일치 여부 확인)
 export async function checkCurrentPassword(email, password) {
     try {
         await request({
@@ -84,10 +68,7 @@ export async function checkCurrentPassword(email, password) {
     }
 }
 
-/**
- * 비밀번호 찾기 - 인증번호 발송
- * - 의도: 이메일로 인증번호 생성 및 발송
- */
+// 비밀번호 재설정 인증번호 발송 API
 export async function sendPasswordResetCode(email) {
     return await request({
         method: METHOD.POST,
@@ -96,10 +77,7 @@ export async function sendPasswordResetCode(email) {
     });
 }
 
-/**
- * 비밀번호 찾기 - 인증번호 검증
- * - 의도: 이메일로 발송된 인증번호 검증
- */
+// 비밀번호 재설정 인증번호 검증 API
 export async function verifyPasswordResetCode(userId, verificationCode) {
     return await request({
         method: METHOD.POST,
@@ -108,10 +86,7 @@ export async function verifyPasswordResetCode(userId, verificationCode) {
     });
 }
 
-/**
- * 비밀번호 찾기 - 비밀번호 재설정
- * - 의도: 인증번호 검증 완료 후 비밀번호 재설정
- */
+// 비밀번호 재설정 API (인증번호 검증 완료 후)
 export async function resetPasswordById(userId, newPassword, confirmPassword) {
     return await request({
         method: METHOD.PATCH,

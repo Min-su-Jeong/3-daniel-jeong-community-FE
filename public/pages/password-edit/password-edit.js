@@ -1,11 +1,8 @@
-import { PageLayout } from '../../components/layout/page-layout.js';
-import { Button } from '../../components/button/button.js';
-import { validatePassword, setupFormValidation } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
-import { ToastUtils } from '../../components/toast/toast.js';
-import { updatePassword } from '../../api/users.js';
-import { checkCurrentPassword } from '../../api/auth.js';
-import { debounce } from '../../utils/common/debounce-helper.js';
+import { PageLayout, Button, ToastUtils, createFormHandler, getFormValues } from '../../components/index.js';
+import { validatePassword, setupFormValidation, getElementValue, initializeElements, navigateTo, debounce, getUserFromStorage } from '../../utils/common/index.js';
+import { updatePassword, checkCurrentPassword } from '../../api/index.js';
+import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
+import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 
 const elements = initializeElements({
     buttonGroup: 'buttonGroup',
@@ -15,18 +12,8 @@ const elements = initializeElements({
     confirmPassword: 'confirmPassword'
 });
 
-let isSubmitting = false;
 let isVerifyingPassword = false;
 let isCurrentPasswordValid = false;
-
-function getUser() {
-    try {
-        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-        return userStr ? JSON.parse(userStr) : null;
-    } catch {
-        return null;
-    }
-}
 
 function setupFormFields() {
     setupFormValidation('passwordEditForm', [
@@ -34,7 +21,7 @@ function setupFormFields() {
             id: 'newPassword',
             validation: validatePassword,
             options: {
-                successMessage: '사용 가능한 비밀번호입니다',
+                successMessage: VALIDATION_MESSAGE.PASSWORD_VALID,
                 defaultText: '',
                 minLength: 8,
                 maxLength: 50
@@ -56,7 +43,7 @@ function setupFormFields() {
                 return;
             }
             
-            const user = getUser();
+            const user = getUserFromStorage();
             if (!user?.email) {
                 return;
             }
@@ -120,68 +107,70 @@ function setupFormFields() {
 function setupFormSubmission() {
     if (!elements.passwordEditForm) return;
     
-    elements.passwordEditForm.onsubmit = async function(event) {
-        event.preventDefault();
-        if (isSubmitting) return;
-
-        const currentPassword = getElementValue(elements.currentPassword, '').trim();
-        const newPassword = getElementValue(elements.newPassword, '').trim();
-        const confirmPassword = getElementValue(elements.confirmPassword, '').trim();
+    createFormHandler({
+        form: elements.passwordEditForm,
+        loadingText: '수정 중...',
+        successMessage: TOAST_MESSAGE.PASSWORD_RESET_SUCCESS,
+        submitButtonSelector: elements.buttonGroup?.querySelector('.btn-primary'),
+        validate: () => {
+            const formValues = getFormValues(elements.passwordEditForm, ['currentPassword', 'newPassword', 'confirmPassword']);
+            const { currentPassword, newPassword, confirmPassword } = formValues;
         
-        if (!currentPassword) {
-            ToastUtils.error('현재 비밀번호를 입력해주세요.');
-            return;
+            if (!currentPassword?.trim()) {
+            ToastUtils.error(VALIDATION_MESSAGE.CURRENT_PASSWORD_REQUIRED);
+                return false;
         }
         
         if (!isCurrentPasswordValid) {
-            ToastUtils.error('현재 비밀번호가 일치하지 않습니다.');
+            ToastUtils.error(VALIDATION_MESSAGE.CURRENT_PASSWORD_MISMATCH);
             elements.currentPassword.focus();
-            return;
+                return false;
         }
         
-        if (!validatePassword(newPassword).isValid) {
-            ToastUtils.error('올바른 비밀번호를 입력해주세요.');
-            return;
+            if (!validatePassword(newPassword || '').isValid) {
+            ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_INVALID);
+                return false;
         }
         
         if (newPassword !== confirmPassword) {
-            ToastUtils.error('새 비밀번호가 일치하지 않습니다.');
-            return;
+            ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_MISMATCH);
+                return false;
         }
         
-        const user = getUser();
+            return true;
+        },
+        onSubmit: async (formData) => {
+            const user = getUserFromStorage();
         if (!user?.id) {
-            ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
-            return;
+                throw new Error(TOAST_MESSAGE.USER_LOAD_FAILED);
         }
         
-        const submitButton = elements.buttonGroup?.querySelector('.btn-primary');
-        const inputsToDisable = [elements.currentPassword, elements.newPassword, elements.confirmPassword];
-        inputsToDisable.forEach((el) => el && (el.disabled = true));
-        isSubmitting = true;
-        PageLayout.showLoading(submitButton, '수정 중...');
-        
-        try {
+            const newPassword = formData.newPassword?.trim() || '';
+            const confirmPassword = formData.confirmPassword?.trim() || '';
+            
             await updatePassword(user.id, newPassword, confirmPassword);
-            ToastUtils.success('비밀번호가 수정이 완료되었습니다.');
+            return { success: true };
+        },
+        onSuccess: () => {
             navigateTo('/');
-        } catch (error) {
-            ToastUtils.error(error.message || '비밀번호 수정에 실패했습니다.');
-        } finally {
-            PageLayout.hideLoading(submitButton, '수정하기');
-            inputsToDisable.forEach((el) => el && (el.disabled = false));
-            isSubmitting = false;
         }
-    };
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     PageLayout.initializePage();
+    
+    // 버튼 생성
     if (elements.buttonGroup) {
-        elements.buttonGroup.innerHTML = '';
-        new Button({ text: '수정하기', type: 'submit', variant: 'primary', size: 'medium' })
-            .appendTo(elements.buttonGroup);
+        Button.clearGroup(elements.buttonGroup);
+        Button.create(elements.buttonGroup, {
+            text: '수정하기',
+            type: 'submit',
+            variant: 'primary',
+            size: 'medium'
+        });
     }
+    
     setupFormFields();
     setupFormSubmission();
 });

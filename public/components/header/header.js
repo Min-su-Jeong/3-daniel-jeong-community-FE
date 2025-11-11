@@ -2,35 +2,14 @@ import { Modal } from '../modal/modal.js';
 import { logout } from '../../api/auth.js';
 import { ToastUtils } from '../toast/toast.js';
 import { renderProfileImage } from '../../utils/common/image.js';
+import { getUserFromStorage, removeUserFromStorage, dispatchUserUpdatedEvent } from '../../utils/common/user.js';
+import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
+import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
 const LOGO_TEXT = '아무 말 대잔치';
 const HOME_PATH = '/post-list';
 
-/**
- * 사용자 저장소 정리 (localStorage, sessionStorage)
- */
-function clearUserStorage() {
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('user');
-}
-
-/**
- * 저장소에서 사용자 정보 가져오기
- */
-async function getUserFromStorage() {
-    try {
-        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-        return userStr ? JSON.parse(userStr) : null;
-    } catch (error) {
-        return null;
-    }
-}
-
-/**
- * 프로필 아이콘 렌더링
- * @param {HTMLElement} icon - 아이콘 컨테이너 요소
- * @param {Object|null} user - 사용자 정보
- */
+// 프로필 아이콘 렌더링
 function renderProfileIcon(icon, user) {
     const profileImageKey = user?.profileImageKey || null;
     renderProfileImage(icon, profileImageKey, '👤', user?.nickname || '프로필');
@@ -60,25 +39,19 @@ function handlePostLogoutNavigation() {
 async function handleLogout() {
     try {
         await logout();
-        clearUserStorage();
-        window.dispatchEvent(new CustomEvent('userUpdated'));
-        ToastUtils.success('로그아웃되었습니다.');
+        removeUserFromStorage();
+        dispatchUserUpdatedEvent();
+        ToastUtils.success(TOAST_MESSAGE.LOGOUT_SUCCESS);
         handlePostLogoutNavigation();
     } catch (error) {
-        clearUserStorage();
-        window.dispatchEvent(new CustomEvent('userUpdated'));
-        ToastUtils.error('로그아웃 중 오류가 발생했습니다.');
+        removeUserFromStorage();
+        dispatchUserUpdatedEvent();
+        ToastUtils.error(TOAST_MESSAGE.LOGOUT_FAILED);
         handlePostLogoutNavigation();
     }
 }
 
-/**
- * 드롭다운 메뉴 아이템 생성
- * @param {string} action - 액션 타입 (login, user-edit, password-edit, logout)
- * @param {string} text - 표시할 텍스트
- * @param {string} className - 추가 CSS 클래스
- * @returns {HTMLElement} 메뉴 아이템 요소
- */
+// 드롭다운 메뉴 아이템 생성
 function createDropdownMenuItem(action, text, className = '') {
     const item = document.createElement('button');
     item.className = `dropdown-item ${className}`.trim();
@@ -87,16 +60,53 @@ function createDropdownMenuItem(action, text, className = '') {
     return item;
 }
 
-/**
- * 프로필 드롭다운 메뉴 생성 및 이벤트 바인딩
- * @param {HTMLElement} userProfile - 프로필 컨테이너 요소
- * @param {boolean} isLoggedIn - 로그인 여부
- */
-function createDropdownMenu(userProfile, isLoggedIn) {
+// 드롭다운 사용자 정보 섹션 생성
+function createDropdownUserInfo(user) {
+    const userInfo = document.createElement('div');
+    userInfo.className = 'dropdown-user-info';
+    
+    const profileImage = document.createElement('div');
+    profileImage.className = 'dropdown-profile-image';
+    renderProfileIcon(profileImage, user);
+    
+    const userDetails = document.createElement('div');
+    userDetails.className = 'dropdown-user-details';
+    
+    const userName = document.createElement('div');
+    userName.className = 'dropdown-user-name';
+    userName.textContent = `${user?.nickname || '사용자'}님`;
+    
+    const userEmail = document.createElement('div');
+    userEmail.className = 'dropdown-user-email';
+    userEmail.textContent = user?.email || '';
+    
+    userDetails.appendChild(userName);
+    if (user?.email) {
+        userDetails.appendChild(userEmail);
+    }
+    
+    userInfo.appendChild(profileImage);
+    userInfo.appendChild(userDetails);
+    
+    return userInfo;
+}
+
+// 프로필 드롭다운 메뉴 생성 및 이벤트 바인딩
+function createDropdownMenu(userProfile, isLoggedIn, user) {
     const dropdown = document.createElement('div');
     dropdown.className = 'profile-dropdown';
     
-    if (isLoggedIn) {
+    if (isLoggedIn && user) {
+        dropdown.classList.add('has-user-info');
+        // 사용자 정보 섹션 추가
+        const userInfo = createDropdownUserInfo(user);
+        dropdown.appendChild(userInfo);
+        
+        // 구분선 추가
+        const divider = document.createElement('div');
+        divider.className = 'dropdown-divider';
+        dropdown.appendChild(divider);
+        
         dropdown.appendChild(createDropdownMenuItem('user-edit', '회원정보수정'));
         dropdown.appendChild(createDropdownMenuItem('password-edit', '비밀번호수정'));
         dropdown.appendChild(createDropdownMenuItem('logout', '로그아웃', 'logout-item'));
@@ -123,10 +133,7 @@ function createDropdownMenu(userProfile, isLoggedIn) {
     setupDropdownCloseListener();
 }
 
-/**
- * 드롭다운 메뉴 액션 처리
- * @param {string} action - 액션 타입
- */
+// 드롭다운 메뉴 액션 처리
 function handleDropdownAction(action) {
     const actionHandlers = {
         'login': () => { window.location.href = '/login'; },
@@ -134,8 +141,8 @@ function handleDropdownAction(action) {
         'password-edit': () => { window.location.href = '/password-edit'; },
         'logout': () => {
             new Modal({
-                title: '로그아웃',
-                subtitle: '로그아웃 하시겠습니까?',
+                title: MODAL_MESSAGE.TITLE_LOGOUT,
+                subtitle: MODAL_MESSAGE.SUBTITLE_LOGOUT,
                 confirmText: '로그아웃',
                 cancelText: '취소',
                 onConfirm: handleLogout
@@ -147,10 +154,7 @@ function handleDropdownAction(action) {
     if (handler) handler();
 }
 
-/**
- * Shadow DOM 내부의 드롭다운 외부 클릭 시 닫기 처리
- * - 전역 이벤트 리스너는 한 번만 등록
- */
+// Shadow DOM 내부의 드롭다운 외부 클릭 시 닫기 처리 (전역 이벤트 리스너는 한 번만 등록)
 function setupDropdownCloseListener() {
     if (document._hasDropdownCloseListener) return;
     
@@ -237,11 +241,7 @@ class AppHeader extends HTMLElement {
         return styleLink;
     }
     
-    /**
-     * 헤더 요소 생성
-     * @param {boolean} showBack - 뒤로가기 버튼 표시 여부
-     * @param {boolean} showProfile - 프로필 메뉴 표시 여부
-     */
+    // 헤더 요소 생성
     async createHeader(showBack, showProfile) {
         const header = document.createElement('header');
         header.className = 'header';
@@ -320,11 +320,11 @@ class AppHeader extends HTMLElement {
         const icon = document.createElement('div');
         icon.className = 'profile-icon';
         
-        const user = await getUserFromStorage();
+        const user = getUserFromStorage();
         renderProfileIcon(icon, user);
         
         userProfile.appendChild(icon);
-        createDropdownMenu(userProfile, !!user);
+        createDropdownMenu(userProfile, !!user, user);
         
         return userProfile;
     }

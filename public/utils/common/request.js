@@ -1,32 +1,34 @@
-import { API_SERVER_URI, METHOD } from '../constants.js';
-import { Modal } from '../../components/modal/modal.js';
-import { logout } from '../../api/auth.js';
-import { navigateTo } from './dom.js';
-import { ToastUtils } from '../../components/toast/toast.js';
+import { API_SERVER_URI, METHOD } from '../constants/api.js';
+import { TOAST_MESSAGE } from '../constants/toast.js';
+import { MODAL_MESSAGE } from '../constants/modal.js';
+import { Modal, ToastUtils } from '../../components/index.js';
+import { logout } from '../../api/index.js';
+import { navigateTo, removeUserFromStorage, dispatchUserUpdatedEvent } from './index.js';
 
-// 세션 만료 모달 표시 여부 추적
+/**
+ * HTTP 요청 공통 유틸리티
+ * 세션 관리, 에러 처리, 요청/응답 파싱 등 API 통신 로직 통합
+ */
+
+/** 세션 만료 모달 중복 표시 방지 플래그 */
 let isShowingExpiredModal = false;
 
-// 사용자 저장소 정리
-function clearUserStorage() {
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('user');
-}
-
-// 로그아웃 처리
+/**
+ * 로그아웃 처리 (API 호출 후 저장소 정리 및 로그인 페이지 이동)
+ */
 async function handleLogout() {
     try {
         await logout();
     } catch (error) {
         // 로그아웃 실패해도 무시
     }
-    clearUserStorage();
-    window.dispatchEvent(new CustomEvent('userUpdated'));
+    removeUserFromStorage();
+    dispatchUserUpdatedEvent();
     navigateTo('/login');
     isShowingExpiredModal = false;
 }
 
-// Refresh 토큰으로 세션 갱신
+// Refresh 토큰으로 세션 갱신 (성공 시 모달 닫고 이벤트 발생, 실패 시 로그아웃)
 async function handleRefreshToken() {
     try {
         const refreshResponse = await fetch(`${API_SERVER_URI}/auth/refresh`, {
@@ -43,25 +45,27 @@ async function handleRefreshToken() {
             throw new Error('Refresh failed');
         }
         
-        ToastUtils.success('세션이 갱신되었습니다.');
+        ToastUtils.success(TOAST_MESSAGE.SESSION_RENEWED);
         isShowingExpiredModal = false;
-        window.dispatchEvent(new CustomEvent('userUpdated'));
+        dispatchUserUpdatedEvent();
         return true;
     } catch (error) {
-        ToastUtils.error('세션 갱신에 실패했습니다. 로그아웃됩니다.');
+        ToastUtils.error(TOAST_MESSAGE.SESSION_RENEW_FAILED);
         await handleLogout();
         return false;
     }
 }
 
-// 세션 만료 모달 표시
+/**
+ * 세션 만료 모달 표시 (중복 표시 방지, 갱신/로그아웃 선택)
+ */
 async function showSessionExpiredModal() {
     if (isShowingExpiredModal) return;
     isShowingExpiredModal = true;
 
     const modal = new Modal({
         title: '세션 만료',
-        subtitle: '세션이 만료되었습니다. 재로그인을 진행하시겠습니까?',
+        subtitle: MODAL_MESSAGE.SUBTITLE_SESSION_EXPIRED,
         showCancel: true,
         cancelText: '로그아웃',
         confirmText: '로그인 유지',
@@ -80,7 +84,9 @@ async function showSessionExpiredModal() {
     modal.show();
 }
 
-// 세션 만료 처리
+/**
+ * 세션 만료 처리 (모달 표시 후 401 에러 throw)
+ */
 async function handleSessionExpired() {
     await showSessionExpiredModal();
     const error = new Error('세션이 만료되었습니다.');
@@ -88,7 +94,7 @@ async function handleSessionExpired() {
     throw error;
 }
 
-// 요청 옵션 생성
+// Fetch 요청 옵션 생성 (FormData/JSON 자동 처리)
 function buildRequestOptions(method, body, isFormData) {
     const options = { method, credentials: 'include' };
     
@@ -104,7 +110,7 @@ function buildRequestOptions(method, body, isFormData) {
     return options;
 }
 
-// 응답 파싱
+// HTTP 응답 본문 파싱 (빈 응답 처리)
 async function parseResponse(response) {
     try {
         const text = await response.text();
@@ -116,7 +122,7 @@ async function parseResponse(response) {
     }
 }
 
-// 에러 객체 생성
+// API 에러 객체 생성 (배열/단일 메시지 모두 처리)
 function createError(data, status) {
     const errorMessage = Array.isArray(data.data) 
         ? data.data.join(', ') 
@@ -126,7 +132,7 @@ function createError(data, status) {
     return error;
 }
 
-// 공통 API 요청 처리 함수
+// 공통 API 요청 처리 (세션 만료 자동 처리, 에러 통일)
 export async function request({
     method = METHOD.POST,
     url = '/',

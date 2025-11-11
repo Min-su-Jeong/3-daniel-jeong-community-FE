@@ -1,10 +1,8 @@
-import { PageLayout } from '../../components/layout/page-layout.js';
-import { Button } from '../../components/button/button.js';
-import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
-import { ToastUtils } from '../../components/toast/toast.js';
-import { sendPasswordResetCode, verifyPasswordResetCode, resetPasswordById } from '../../api/auth.js';
-import { checkEmail } from '../../api/users.js';
+import { PageLayout, Button, ToastUtils } from '../../components/index.js';
+import { validateEmail, validatePassword, setupFormValidation, getElementValue, initializeElements, navigateTo } from '../../utils/common/index.js';
+import { sendPasswordResetCode, verifyPasswordResetCode, resetPasswordById, checkEmail } from '../../api/index.js';
+import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
+import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 
 const elements = initializeElements({
     emailButtonGroup: 'emailButtonGroup',
@@ -38,8 +36,14 @@ function disableControls(controls = []) {
 function createButton(containerId, text, buttonType = 'submit') {
     const container = elements[containerId];
     if (!container) return;
-    container.innerHTML = '';
-    new Button({ text, type: buttonType, variant: 'primary', size: 'medium' }).appendTo(container);
+    
+    Button.clearGroup(container);
+    Button.create(container, {
+        text,
+        type: buttonType,
+        variant: 'primary',
+        size: 'medium'
+    });
 }
 
 function showStep(step) {
@@ -119,7 +123,7 @@ elements.emailForm.onsubmit = async (e) => {
     const email = getElementValue(elements.email, '').trim();
     
     if (!validateEmail(email)) {
-        ToastUtils.error('올바른 이메일 주소를 입력해주세요.');
+        ToastUtils.error(TOAST_MESSAGE.EMAIL_INVALID_FORMAT);
         return;
     }
     if (isSendingCode) return;
@@ -127,20 +131,20 @@ elements.emailForm.onsubmit = async (e) => {
     try {
         const emailCheckResponse = await checkEmail(email);
         if (emailCheckResponse?.data?.available) {
-            ToastUtils.error('가입되지 않은 이메일입니다.');
+            ToastUtils.error(TOAST_MESSAGE.EMAIL_NOT_FOUND);
             return;
         }
         
         const emailSubmitButton = elements.emailButtonGroup?.querySelector('.btn-primary');
         const restore = disableControls([elements.email, emailSubmitButton]);
-        const loadingToast = ToastUtils.info('인증번호 발송 중입니다. 잠시만 기다려 주십시오.', '인증번호 발송 중', { duration: 0 });
+        const loadingToast = ToastUtils.info(TOAST_MESSAGE.VERIFICATION_CODE_SENDING, '인증번호 발송 중', { duration: 0 });
         isSendingCode = true;
         
         try {
             const response = await sendPasswordResetCode(email);
             userId = response.data;
             loadingToast.hide();
-            ToastUtils.success('인증번호가 발송되었습니다.', '인증번호 발송 완료');
+            ToastUtils.success(TOAST_MESSAGE.VERIFICATION_CODE_SENT, '인증번호 발송 완료');
             showStep(2);
             createButton('verificationButtonGroup', '인증번호 확인');
             elements.verificationCode.value = '';
@@ -150,13 +154,13 @@ elements.emailForm.onsubmit = async (e) => {
             setTimeout(() => setupVerificationButton(), 100);
         } catch (error) {
             loadingToast.hide();
-            ToastUtils.error(error.message || '인증번호 발송 중 오류가 발생했습니다.');
+            ToastUtils.error(error.message || TOAST_MESSAGE.VERIFICATION_CODE_SEND_FAILED);
         } finally {
             restore();
             isSendingCode = false;
         }
     } catch (error) {
-        ToastUtils.error(error.message || '처리 중 오류가 발생했습니다.');
+        ToastUtils.error(error.message || TOAST_MESSAGE.GENERIC_ERROR);
     }
 };
 
@@ -172,17 +176,17 @@ function setupVerificationButton() {
         const code = getElementValue(elements.verificationCode, '').trim();
         
         if (!code) {
-            ToastUtils.error('인증번호를 입력해주세요.');
+            ToastUtils.error(TOAST_MESSAGE.VERIFICATION_CODE_REQUIRED);
             return;
         }
         
         if (code.length !== 6 || !/^\d+$/.test(code)) {
-            ToastUtils.error('6자리 숫자 인증번호를 입력해주세요.');
+            ToastUtils.error(TOAST_MESSAGE.VERIFICATION_CODE_INVALID);
             return;
         }
         
         if (!userId) {
-            ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
+            ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
             showStep(1);
             return;
         }
@@ -197,12 +201,12 @@ function setupVerificationButton() {
             updateVerificationStatus(true);
             verifyButton.disabled = true;
             elements.verificationCode.disabled = true;
-            ToastUtils.success('인증번호가 확인되었습니다. 새 비밀번호를 입력해주세요.');
+            ToastUtils.success(TOAST_MESSAGE.VERIFICATION_CODE_VERIFIED);
             showStep(3);
             createButton('resetButtonGroup', '비밀번호 재설정');
             setupPasswordValidation();
         } catch (error) {
-            ToastUtils.error(error.message || '인증번호가 일치하지 않습니다.');
+            ToastUtils.error(error.message || TOAST_MESSAGE.VERIFICATION_CODE_MISMATCH);
         } finally {
             restore();
             isVerifyingCode = false;
@@ -224,7 +228,7 @@ elements.passwordForm.onsubmit = async (e) => {
     if (isResettingPassword) return;
     
     if (!isVerified) {
-        ToastUtils.error('인증번호를 먼저 확인해주세요.');
+        ToastUtils.error(TOAST_MESSAGE.VERIFICATION_REQUIRED);
         showStep(2);
         return;
     }
@@ -233,17 +237,17 @@ elements.passwordForm.onsubmit = async (e) => {
     const confirmPassword = getElementValue(elements.confirmPassword, '').trim();
     
     if (!validatePassword(newPassword).isValid) {
-        ToastUtils.error('올바른 비밀번호를 입력해주세요.');
+        ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_INVALID);
         return;
     }
     
     if (newPassword !== confirmPassword) {
-        ToastUtils.error('비밀번호가 일치하지 않습니다.');
+        ToastUtils.error(TOAST_MESSAGE.PASSWORD_MISMATCH);
         return;
     }
     
     if (!userId) {
-        ToastUtils.error('처음부터 다시 시도해주세요.');
+        ToastUtils.error(TOAST_MESSAGE.RETRY_REQUIRED);
         showStep(1);
         return;
     }
@@ -254,10 +258,10 @@ elements.passwordForm.onsubmit = async (e) => {
 
     try {
         const response = await resetPasswordById(userId, newPassword, confirmPassword);
-        ToastUtils.success('비밀번호가 성공적으로 변경되었습니다.');
+        ToastUtils.success(TOAST_MESSAGE.PASSWORD_RESET_SUCCESS);
         setTimeout(() => { navigateTo('/login'); }, 1200);
     } catch (error) {
-        ToastUtils.error(error.message || '비밀번호 변경 중 오류가 발생했습니다.');
+        ToastUtils.error(error.message || TOAST_MESSAGE.PASSWORD_RESET_FAILED);
     } finally {
         restore();
         isResettingPassword = false;

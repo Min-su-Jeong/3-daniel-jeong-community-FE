@@ -1,15 +1,20 @@
-import { login } from '../../api/auth.js';
-import { restoreUser } from '../../api/users.js';
-import { PageLayout } from '../../components/layout/page-layout.js';
-import { Button } from '../../components/button/button.js';
-import { Modal } from '../../components/modal/modal.js';
-import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
-import { ToastUtils } from '../../components/toast/toast.js';
+import { login, restoreUser } from '../../api/index.js';
+import { PageLayout, Button, Modal, ToastUtils } from '../../components/index.js';
+import { validateEmail, validatePassword, setupFormValidation, getElementValue, initializeElements, navigateTo, removeUserFromStorage, dispatchUserUpdatedEvent, saveUserToStorage } from '../../utils/common/index.js';
+import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
+import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
+import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
+import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
+import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
-// DOM 요소들 초기화
+/** 페이지 DOM 요소 캐시 */
 let elements = {};
+/** 버튼 그룹 컴포넌트 인스턴스 */
+let buttonGroup = null;
 
+/**
+ * 페이지 DOM 요소 초기화 (ID로 요소 일괄 조회)
+ */
 function initializePageElements() {
     const elementIds = {
         buttonGroup: 'buttonGroup',
@@ -22,98 +27,85 @@ function initializePageElements() {
     elements = initializeElements(elementIds);
 }
 
-// 로그인 페이지 버튼 생성
+/**
+ * 로그인 페이지 버튼 생성 (로그인/회원가입 가로 배치, 비회원 로그인 하단 배치)
+ */
 function createLoginButtons() {
     if (!elements.buttonGroup) return;
     
-    elements.buttonGroup.innerHTML = '';
-    
-    // 로그인 버튼
-    const loginButton = new Button({
-        text: '로그인',
-        type: 'submit',
-        variant: 'primary',
-        size: 'medium'
-    });
-    
-    // 회원가입 버튼
-    const signupButton = new Button({
-        text: '회원가입',
-        type: 'button',
-        variant: 'secondary',
-        size: 'medium',
-        onClick: () => {
-            navigateTo('/signup');
+    // 로그인/회원가입 버튼을 가로로 배치
+    buttonGroup = Button.createGroup(elements.buttonGroup, [
+        {
+            text: '로그인',
+            type: 'submit',
+            variant: 'primary',
+            size: 'medium'
+        },
+        {
+            text: '회원가입',
+            type: 'button',
+            variant: 'secondary',
+            size: 'medium',
+            onClick: () => navigateTo('/signup')
         }
-    });
+    ], { wrapInRow: false });
     
-    loginButton.appendTo(elements.buttonGroup);
-    signupButton.appendTo(elements.buttonGroup);
-    
-    // 비회원으로 로그인 버튼
-    const guestLoginButton = new Button({
+    // 비회원으로 로그인 버튼은 아래 행에 추가
+    Button.create(elements.buttonGroup, {
         text: '비회원으로 로그인',
         type: 'button',
         variant: 'secondary',
         size: 'medium',
-        onClick: () => {
-            handleGuestLogin();
-        }
+        onClick: handleGuestLogin
     });
-    
-    guestLoginButton.appendTo(elements.buttonGroup);
-    
-    // 로그인/회원가입 버튼을 가로로 배치
-    const authButtons = elements.buttonGroup.querySelectorAll('.btn:nth-child(-n+2)');
-    if (authButtons.length === 2) {
-        const buttonRow = document.createElement('div');
-        authButtons.forEach(btn => {
-            buttonRow.appendChild(btn);
-        });
-        elements.buttonGroup.insertBefore(buttonRow, elements.buttonGroup.firstChild);
-    }
 }
 
-// 비회원으로 로그인 처리
+/**
+ * 비회원 로그인 처리 (저장소 정리 후 홈으로 이동)
+ */
 function handleGuestLogin() {
-    // 모든 저장소에서 사용자 정보 삭제
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('user');
-    
-    // 헤더 업데이트를 위해 이벤트 발생
-    window.dispatchEvent(new CustomEvent('userUpdated'));
-    
-    ToastUtils.success('비회원으로 로그인되었습니다.');
-    
-    // 게시글 목록 페이지로 이동
+    removeUserFromStorage();
+    dispatchUserUpdatedEvent();
+    ToastUtils.success(TOAST_MESSAGE.LOGIN_GUEST);
     navigateTo('/');
 }
 
-// 폼 유효성 검사 설정
+/**
+ * 폼 필드 유효성 검사 설정 (이메일/비밀번호 실시간 검증)
+ */
 function setupFormFields() {
     setupFormValidation('loginForm', [
         {
             id: 'email',
             validation: validateEmail,
             options: {
-                successMessage: '유효한 이메일 주소입니다',
-                defaultText: '이메일 주소를 입력해주세요'
+                successMessage: VALIDATION_MESSAGE.EMAIL_VALID,
+                defaultText: HELPER_TEXT.EMAIL
             }
         },
         {
             id: 'password',
             validation: validatePassword,
             options: {
-                successMessage: '유효한 비밀번호입니다',
-                defaultText: '비밀번호를 입력해주세요',
+                successMessage: VALIDATION_MESSAGE.PASSWORD_VALID,
+                defaultText: HELPER_TEXT.PASSWORD,
                 preventSpaces: true
             }
         }
     ]);
 }
 
+/**
+ * 입력 필드 placeholder 텍스트 설정
+ */
+function setupPlaceholders() {
+    if (elements.email) elements.email.placeholder = PLACEHOLDER.EMAIL;
+    if (elements.password) elements.password.placeholder = PLACEHOLDER.PASSWORD;
+}
+
 // DOMContentLoaded 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
+    setupPlaceholders();
     
     PageLayout.initializePage();
     initializePageElements();
@@ -152,16 +144,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             await restoreUser(user.id);
                             
                             // 복구 후 정상 로그인 처리
-                            if (rememberMe) {
-                                localStorage.setItem('user', JSON.stringify(user));
-                                sessionStorage.removeItem('user');
-                            } else {
-                                sessionStorage.setItem('user', JSON.stringify(user));
-                                localStorage.removeItem('user');
-                            }
-                            
-                            ToastUtils.success('로그인되었습니다! 계정이 복구되었습니다.');
-                            window.dispatchEvent(new CustomEvent('userUpdated'));
+                            saveUserToStorage(user, rememberMe);
+                            ToastUtils.success(TOAST_MESSAGE.LOGIN_RESTORED);
+                            dispatchUserUpdatedEvent();
                             
                             const redirectPath = sessionStorage.getItem('redirectAfterLogin');
                             if (redirectPath) {
@@ -171,14 +156,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 navigateTo('/');
                             }
                         } catch (error) {
-                            ToastUtils.error(error.message || '계정 복구에 실패했습니다.');
+                            ToastUtils.error(error.message || TOAST_MESSAGE.ACCOUNT_RESTORE_FAILED);
                         }
                     };
                     
                     // 탈퇴 대기 중인 계정 복구 여부 확인 모달
                     const restoreModal = new Modal({
-                        title: '계정 복구 안내',
-                        subtitle: '현재 삭제 대기 상태인 계정입니다.',
+                        title: MODAL_MESSAGE.TITLE_ACCOUNT_RESTORE,
+                        subtitle: MODAL_MESSAGE.SUBTITLE_ACCOUNT_RESTORE,
                         content: `이 계정은 탈퇴 신청으로 인해 <strong>삭제 대기 상태</strong>입니다.<br><br>
                                     복구하시면 계정이 정상적으로 활성화됩니다.<br>
                                     복구하지 않으시면 30일 경과 후 모든 데이터가 영구적으로 삭제됩니다.<br><br>
@@ -190,22 +175,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         onConfirm: handleRestore,
                         onCancel: () => {
                             // 복구하지 않고 로그인 취소
-                            ToastUtils.info('계정 복구를 취소했습니다.');
+                            ToastUtils.info(TOAST_MESSAGE.ACCOUNT_RESTORE_CANCELLED);
                         }
                     });
                     restoreModal.show();
                 } else {
                     // 정상 로그인 처리
-                    if (rememberMe) {
-                        localStorage.setItem('user', JSON.stringify(user));
-                        sessionStorage.removeItem('user');
-                    } else {
-                        sessionStorage.setItem('user', JSON.stringify(user));
-                        localStorage.removeItem('user');
-                    }
-                    
-                    ToastUtils.success('로그인되었습니다!');
-                    window.dispatchEvent(new CustomEvent('userUpdated'));
+                    saveUserToStorage(user, rememberMe);
+                    ToastUtils.success(TOAST_MESSAGE.LOGIN_SUCCESS);
+                    dispatchUserUpdatedEvent();
                     
                     const redirectPath = sessionStorage.getItem('redirectAfterLogin');
                     if (redirectPath) {
@@ -218,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
         } catch (error) {
-            const errorMessage = error.message || '로그인에 실패했습니다.';
+            const errorMessage = error.message || TOAST_MESSAGE.LOGIN_FAILED;
             ToastUtils.error(errorMessage);
         } finally {
             // 로딩 상태 해제

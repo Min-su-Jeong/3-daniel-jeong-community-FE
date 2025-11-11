@@ -1,9 +1,7 @@
 import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants.js';
+import { METHOD } from '../utils/constants/api.js';
 
-/**
- * 댓글 목록 조회
- */
+// 댓글 목록 조회 API (페이지네이션)
 export async function getComments(postId, page = 0, size = 10) {
     const params = `page=${page}&size=${size}`;
     return await request({
@@ -13,9 +11,7 @@ export async function getComments(postId, page = 0, size = 10) {
     });
 }
 
-/**
- * 댓글 생성
- */
+// 댓글 생성 API (일반 댓글 또는 답글)
 export async function createComment(postId, userId, content, parentId = null) {
     return await request({
         method: METHOD.POST,
@@ -29,9 +25,7 @@ export async function createComment(postId, userId, content, parentId = null) {
     });
 }
 
-/**
- * 댓글 수정
- */
+// 댓글 수정 API
 export async function updateComment(postId, commentId, content) {
     return await request({
         method: METHOD.PATCH,
@@ -40,9 +34,7 @@ export async function updateComment(postId, commentId, content) {
     });
 }
 
-/**
- * 댓글 삭제
- */
+// 댓글 삭제 API
 export async function deleteComment(postId, commentId) {
     return await request({
         method: METHOD.DELETE,
