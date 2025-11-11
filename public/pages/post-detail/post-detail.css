@@ -19,8 +19,8 @@
     gap: var(--spacing-3xl);
 }
 
-/* 게시글 상세 */
-.post-detail {
+/* 공통 카드 스타일 */
+.card-section {
     background: var(--white);
     border-radius: var(--border-radius-xl);
     padding: var(--spacing-3xl);
@@ -28,11 +28,10 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
     overflow: hidden;
-    animation: slideUp var(--transition-slow);
     z-index: var(--z-card);
 }
 
-.post-detail::before {
+.card-section::before {
     content: '';
     position: absolute;
     top: 0;
@@ -40,6 +39,14 @@
     right: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+}
+
+.post-detail {
+    animation: slideUp var(--transition-slow);
+}
+
+.comments-section {
+    animation: slideUp var(--transition-slow) 0.2s both;
 }
 
 /* 게시글 헤더 */
@@ -66,21 +73,21 @@
     flex-shrink: 0;
 }
 
-/* 게시글 액션 버튼 크기 조정 */
+/* 공통 작은 버튼 스타일 */
+.btn-small {
+    box-shadow: none !important;
+}
+
+.btn-small:hover,
+.btn-small:active {
+    box-shadow: none !important;
+}
+
 .btn-post-action {
     padding: 6px 12px !important;
     font-size: 12px !important;
     min-width: 60px !important;
     height: 32px !important;
-    box-shadow: none !important;
-}
-
-.btn-post-action:hover {
-    box-shadow: none !important;
-}
-
-.btn-post-action:active {
-    box-shadow: none !important;
 }
 
 /* 게시글 메타 정보 */
@@ -323,28 +330,6 @@
     text-align: center;
 }
 
-/* 댓글 섹션 */
-.comments-section {
-    background: var(--white);
-    border-radius: var(--border-radius-xl);
-    padding: var(--spacing-3xl);
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    animation: slideUp var(--transition-slow) 0.2s both;
-    position: relative;
-    overflow: hidden;
-    z-index: var(--z-card);
-}
-
-.comments-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-}
 
 .comments-title {
     font-size: 20px;
@@ -352,6 +337,29 @@
     color: var(--text-primary);
     margin-bottom: var(--spacing-xl);
     letter-spacing: -0.3px;
+}
+
+/* 공통 입력 필드 스타일 */
+.text-input {
+    width: 100%;
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius-md);
+    font-family: inherit;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--white);
+    resize: vertical;
+    transition: var(--transition-fast);
+    outline: none;
+}
+
+.text-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.text-input::placeholder {
+    color: var(--text-muted);
 }
 
 /* 댓글 입력 */
@@ -363,31 +371,25 @@
 }
 
 .comment-input {
-    width: 100%;
     padding: var(--spacing-lg);
     border: 2px solid var(--border-light);
     border-radius: var(--border-radius-lg);
     font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    min-height: 80px;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     transition: var(--transition-normal);
-    outline: none;
-    font-weight: 500;
-    letter-spacing: -0.2px;
-    resize: vertical;
-    min-height: 80px;
-    font-family: inherit;
 }
 
 .comment-input:focus {
-    border-color: var(--primary-color);
     background: rgba(255, 255, 255, 0.95);
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
     transform: translateY(-1px);
 }
 
 .comment-input::placeholder {
-    color: var(--text-muted);
     font-weight: 400;
 }
 
@@ -410,12 +412,10 @@
     border: 1px solid var(--border-light);
     transition: var(--transition-normal);
     animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: none;
 }
 
 .comment-item:hover {
     transform: translateY(-2px);
-    box-shadow: none;
 }
 
 .comment-header {
@@ -450,21 +450,11 @@
     gap: var(--spacing-xs);
 }
 
-/* 댓글 액션 버튼 크기 조정 */
 .btn-comment-action {
     padding: 4px 8px !important;
     font-size: 11px !important;
     min-width: 50px !important;
     height: 28px !important;
-    box-shadow: none !important;
-}
-
-.btn-comment-action:hover {
-    box-shadow: none !important;
-}
-
-.btn-comment-action:active {
-    box-shadow: none !important;
 }
 
 .comment-content {
@@ -485,25 +475,9 @@
 }
 
 .comment-edit-input {
-    width: 100%;
-    min-height: 80px;
     padding: var(--spacing-sm);
-    border: 1px solid var(--border-light);
-    border-radius: var(--border-radius-md);
     font-size: 15px;
-    font-family: inherit;
-    line-height: 1.5;
-    color: var(--text-primary);
-    background: var(--white);
-    resize: vertical;
-    transition: var(--transition-fast);
-    box-shadow: none;
-}
-
-.comment-edit-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: none;
+    min-height: 80px;
 }
 
 .comment-edit-actions {
@@ -511,6 +485,99 @@
     gap: var(--spacing-sm);
     justify-content: flex-end;
     margin-top: var(--spacing-xs);
+}
+
+/* 댓글 푸터 (답글 버튼) */
+.comment-footer {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-light);
+}
+
+.reply-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+    transition: var(--transition-fast);
+    font-family: inherit;
+}
+
+.reply-btn:hover {
+    background: var(--background-secondary);
+    color: var(--primary-color-dark);
+}
+
+.reply-btn:active {
+    transform: scale(0.98);
+}
+
+/* 대댓글 스타일 */
+.comment-reply {
+    margin-left: var(--spacing-2xl);
+    margin-top: var(--spacing-md);
+    padding-left: var(--spacing-xl);
+    border-left: 2px solid var(--border-light);
+    background: var(--background-secondary);
+    position: relative;
+}
+
+.comment-reply::before {
+    content: '↳';
+    position: absolute;
+    left: calc(var(--spacing-xl) - 10px);
+    top: var(--spacing-sm);
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1;
+}
+
+
+/* 대댓글 컨테이너 */
+.replies-container {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* 답글 입력 컨테이너 */
+.reply-input-container {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-light);
+}
+
+.reply-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.reply-input {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 14px;
+    min-height: 60px;
+}
+
+.reply-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: flex-end;
+    margin-top: var(--spacing-xs);
+}
+
+.btn-reply-action {
+    padding: 4px 12px !important;
+    font-size: 12px !important;
+    min-width: 60px !important;
+    height: 28px !important;
 }
 
 
@@ -524,12 +591,20 @@
         gap: var(--spacing-2xl);
     }
     
-    .post-detail, .comments-section {
+    .card-section {
         padding: var(--spacing-2xl);
     }
     
-    .post-header {
+    .post-header,
+    .post-meta,
+    .comment-header,
+    .comment-meta {
         flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+    
+    .post-header {
         gap: var(--spacing-md);
     }
     
@@ -537,58 +612,23 @@
         align-self: flex-end;
     }
     
-    .post-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
-    }
-    
     .post-stats {
         flex-wrap: wrap;
         gap: var(--spacing-lg);
     }
     
-    .comment-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
-    }
-    
-    .comment-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
+    .comment-reply {
+        margin-left: var(--spacing-lg);
+        padding-left: var(--spacing-md);
     }
 }
 
 @media (max-width: 480px) {
-    .header {
-        padding: var(--spacing-lg);
-    }
-    
-    .logo {
-        font-size: 18px;
-    }
-    
-    .post-detail, .comments-section {
+    .card-section {
         padding: var(--spacing-xl);
     }
     
     .post-title {
         font-size: 20px;
-    }
-    
-    .btn-edit, .btn-delete {
-        padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: 12px;
-    }
-    
-    .modal {
-        padding: var(--spacing-2xl);
-        margin: var(--spacing-lg);
-    }
-    
-    .modal-actions {
-        flex-direction: column;
     }
 }
