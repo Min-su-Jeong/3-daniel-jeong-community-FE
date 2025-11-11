@@ -4,6 +4,7 @@ import { PageLayout } from '../../components/layout/page-layout.js';
 import { initializeElements, navigateTo } from '../../utils/common/dom.js';
 import { ToastUtils } from '../../components/toast/toast.js';
 import { getPosts } from '../../api/posts.js';
+import { Modal } from '../../components/modal/modal.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     PageLayout.initializePage();
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.isLoading = false;
             this.hasMorePosts = true;
             this.pageSize = 10;
+            this.writePostButton = null;
             
             this.init();
         }
@@ -43,12 +45,26 @@ document.addEventListener('DOMContentLoaded', function() {
         createWritePostButton() {
             if (!this.elements.welcomeSection) return;
             
-            new Button({
+            this.writePostButton = new Button({
                 text: '게시글 작성',
                 variant: 'primary',
                 size: 'medium',
-                onClick: () => navigateTo('/post-write')
-            }).appendTo(this.elements.welcomeSection);
+                onClick: () => {
+                    if (!(localStorage.getItem('user') || sessionStorage.getItem('user'))) {
+                        new Modal({
+                            title: '로그인 필요',
+                            subtitle: '게시글을 작성하려면 로그인이 필요합니다.',
+                            confirmText: '로그인하기',
+                            cancelText: '취소',
+                            onConfirm: () => navigateTo('/login')
+                        }).show();
+                        return;
+                    }
+                    navigateTo('/post-write');
+                }
+            });
+            
+            this.writePostButton.appendTo(this.elements.welcomeSection);
         }
         
         bindEvents() {
