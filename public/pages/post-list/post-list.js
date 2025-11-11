@@ -7,6 +7,11 @@ import { getPosts } from '../../api/posts.js';
 import { Modal } from '../../components/modal/modal.js';
 import { extractProfileImageKey, renderProfileImage } from '../../utils/common/image.js';
 
+
+const SCROLL_THRESHOLD = 200; // 무한 스크롤 트리거 거리 (px)
+const TITLE_MAX_LENGTH = 26;  // 게시글 제목 최대 길이
+const PAGE_SIZE = 10;         // 페이지당 게시글 수
+
 document.addEventListener('DOMContentLoaded', function() {
     PageLayout.initializePage();
     
@@ -20,8 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
             this.cursor = null;
             this.isLoading = false;
             this.hasMorePosts = true;
-            this.pageSize = 10;
-            this.writePostButton = null;
+            this.pageSize = PAGE_SIZE;
+            this.isInitialLoad = true;
             
             this.init();
         }
@@ -32,49 +37,58 @@ document.addEventListener('DOMContentLoaded', function() {
             this.loadPosts();
         }
 
-        // 목록 리프레시: 뒤로가기 시 최신 데이터 반영
+        // 뒤로가기 시 최신 데이터 반영을 위한 목록 새로고침
         refreshList() {
             this.cursor = null;
             this.hasMorePosts = true;
             this.isLoading = false;
-            if (this.elements.postsContainer) {
-                this.elements.postsContainer.innerHTML = '';
-            }
+            this.elements.postsContainer.replaceChildren();
             this.loadPosts();
         }
         
         createWritePostButton() {
             if (!this.elements.welcomeSection) return;
             
-            this.writePostButton = new Button({
+            new Button({
                 text: '게시글 작성',
                 variant: 'primary',
                 size: 'medium',
-                onClick: () => {
-                    if (!(localStorage.getItem('user') || sessionStorage.getItem('user'))) {
-                        new Modal({
-                            title: '로그인 필요',
-                            subtitle: '게시글을 작성하려면 로그인이 필요합니다.',
-                            confirmText: '로그인하기',
-                            cancelText: '취소',
-                            onConfirm: () => navigateTo('/login')
-                        }).show();
-                        return;
-                    }
-                    navigateTo('/post-write');
-                }
-            });
-            
-            this.writePostButton.appendTo(this.elements.welcomeSection);
+                onClick: () => this.handleWriteClick()
+            }).appendTo(this.elements.welcomeSection);
+        }
+        
+        handleWriteClick() {
+            if (!this.isLoggedIn()) {
+                new Modal({
+                    title: '로그인 필요',
+                    subtitle: '게시글을 작성하려면 로그인이 필요합니다.',
+                    confirmText: '로그인하기',
+                    cancelText: '취소',
+                    onConfirm: () => navigateTo('/login')
+                }).show();
+                return;
+            }
+            navigateTo('/post-write');
+        }
+        
+        // localStorage와 sessionStorage 모두 확인 (로그인 상태 체크)
+        isLoggedIn() {
+            return !!(localStorage.getItem('user') || sessionStorage.getItem('user'));
         }
         
         bindEvents() {
             window.addEventListener('scroll', () => this.handleScroll());
-            // 브라우저 뒤로가기 시 목록 새로고침
+            
+            // 뒤로가기/앞으로가기 또는 bfcache 복원 시 목록 새로고침
             window.addEventListener('pageshow', (event) => {
-                const navEntries = performance.getEntriesByType('navigation');
-                const navType = navEntries && navEntries[0] ? navEntries[0].type : undefined;
-                if (event.persisted === true || navType === 'back_forward') {
+                // 초기 로드 시 중복 호출 방지
+                if (this.isInitialLoad) {
+                    this.isInitialLoad = false;
+                    return;
+                }
+                
+                const navType = performance.getEntriesByType('navigation')[0]?.type;
+                if (event.persisted || navType === 'back_forward') {
                     this.refreshList();
                 }
             });
@@ -83,11 +97,8 @@ document.addEventListener('DOMContentLoaded', function() {
         handleScroll() {
             if (this.isLoading || !this.hasMorePosts) return;
             
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
-            
-            if (scrollTop + windowHeight >= documentHeight - 200) {
+            const { scrollTop, scrollHeight } = document.documentElement;
+            if (scrollTop + window.innerHeight >= scrollHeight - SCROLL_THRESHOLD) {
                 this.loadPosts();
             }
         }
@@ -99,9 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
             this.showLoading();
             
             try {
-                const response = await getPosts(this.cursor, this.pageSize);
-                const postsData = response.data || {};
-                const posts = postsData.items || [];
+                const { data = {} } = await getPosts(this.cursor, this.pageSize);
+                const posts = data.items || [];
                 
                 if (posts.length === 0) {
                     this.hasMorePosts = false;
@@ -113,90 +123,114 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 // 커서 기반 페이지네이션: nextCursor가 null이면 더 이상 없음
-                this.hasMorePosts = postsData.hasNext === true;
-                this.cursor = postsData.nextCursor || null;
+                this.hasMorePosts = data.hasNext === true;
+                this.cursor = data.nextCursor || null;
                 
             } catch (error) {
                 // 첫 로드 시에만 에러 메시지 표시
                 if (this.cursor === null) {
                     ToastUtils.error(error.message || '게시글 목록을 불러올 수 없습니다.');
                 }
-                
                 this.hasMorePosts = false;
             } finally {
                 this.isLoading = false;
                 this.hideLoading();
+                this.isInitialLoad = false;
             }
         }
         
-		createPostCard(post) {
+        createPostCard(post) {
             const card = document.createElement('div');
             card.className = 'post-card';
             const postId = post.id || post.postId;
             card.dataset.postId = postId;
 
-            const title = post.title || '';
-            const author = post.author?.nickname || post.author?.name || post.author || '작성자';
-            const createdAt = post.createdAt ? new Date(post.createdAt) : new Date();
-            const stats = post?.stats || {};
-            const likes = stats.likeCount || 0;
-            const comments = stats.commentCount || 0;
-            const views = stats.viewCount || 0;
-            const profileImageKey = extractProfileImageKey(post.author);
-            const truncatedTitle = title.length > 26 ? title.substring(0, 26) + '...' : title;
+            const { title, author, createdAt, stats } = this.extractPostData(post);
+            const truncatedTitle = title.length > TITLE_MAX_LENGTH 
+                ? title.substring(0, TITLE_MAX_LENGTH) + '...' 
+                : title;
             
-            card.innerHTML = `
-                <div class="post-header">
-                    <h3 class="post-title">${truncatedTitle}</h3>
-                    <span class="post-date">${formatDate(createdAt)}</span>
-                </div>
-                <div class="post-meta">
-                    <div class="meta-item">
-                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                        <span>좋아요 ${formatNumber(likes)}</span>
-                    </div>
-                    <div class="meta-item">
-                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                        </svg>
-                        <span>댓글 ${formatNumber(comments)}</span>
-                    </div>
-                    <div class="meta-item">
-                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        <span>조회수 ${formatNumber(views)}</span>
-                    </div>
-                </div>
-                <div class="post-author">
-                    <div class="author-avatar"></div>
-                    <span class="author-name">${author}</span>
-                </div>
-            `;
+            card.appendChild(this.createPostHeader(truncatedTitle, createdAt));
+            card.appendChild(this.createPostMeta(stats));
+            card.appendChild(this.createPostAuthor(author));
             
-            const avatarElement = card.querySelector('.author-avatar');
-            if (avatarElement) {
-                renderProfileImage(avatarElement, profileImageKey, author.charAt(0), author);
-            }
-            
+            const avatar = card.querySelector('.author-avatar');
+            renderProfileImage(avatar, extractProfileImageKey(post.author), author.charAt(0), author);
             card.addEventListener('click', () => navigateTo('/post-detail', { id: postId }));
             
             return card;
         }
         
+        // API 응답 형식 차이 대응
+        extractPostData(post) {
+            return {
+                title: post.title || '',
+                author: post.author?.nickname || post.author?.name || '작성자',
+                createdAt: post.createdAt ? new Date(post.createdAt) : new Date(),
+                stats: { likeCount: 0, commentCount: 0, viewCount: 0, ...post.stats }
+            };
+        }
+        
+        createPostHeader(title, date) {
+            const header = document.createElement('div');
+            header.className = 'post-header';
+            
+            const titleElement = document.createElement('h3');
+            titleElement.className = 'post-title';
+            titleElement.textContent = title;
+            
+            const dateElement = document.createElement('span');
+            dateElement.className = 'post-date';
+            dateElement.textContent = formatDate(date);
+            
+            header.appendChild(titleElement);
+            header.appendChild(dateElement);
+            return header;
+        }
+        
+        createPostMeta(stats) {
+            const meta = document.createElement('div');
+            meta.className = 'post-meta';
+            meta.appendChild(this.createMetaItem('like', `좋아요 ${formatNumber(stats.likeCount)}`));
+            meta.appendChild(this.createMetaItem('comment', `댓글 ${formatNumber(stats.commentCount)}`));
+            meta.appendChild(this.createMetaItem('view', `조회수 ${formatNumber(stats.viewCount)}`));
+            return meta;
+        }
+        
+        createPostAuthor(author) {
+            const authorDiv = document.createElement('div');
+            authorDiv.className = 'post-author';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'author-avatar';
+            
+            const authorName = document.createElement('span');
+            authorName.className = 'author-name';
+            authorName.textContent = author;
+            
+            authorDiv.appendChild(avatar);
+            authorDiv.appendChild(authorName);
+            return authorDiv;
+        }
+        
+        createMetaItem(type, text) {
+            const item = document.createElement('div');
+            item.className = 'meta-item';
+            const icon = document.createElement('div');
+            icon.className = `meta-icon meta-icon-${type}`;
+            const span = document.createElement('span');
+            span.textContent = text;
+            item.appendChild(icon);
+            item.appendChild(span);
+            return item;
+        }
+        
         showLoading() {
-            if (this.elements.loadingIndicator) {
-                this.elements.loadingIndicator.style.display = 'flex';
-            }
+            this.elements.loadingIndicator?.style.setProperty('display', 'flex');
         }
         
         hideLoading() {
-            if (this.elements.loadingIndicator) {
-                this.elements.loadingIndicator.style.display = 'none';
-            }
+            this.elements.loadingIndicator?.style.setProperty('display', 'none');
         }
     }
     
