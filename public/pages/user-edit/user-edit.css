@@ -103,8 +103,4 @@
     display: none;
 }
 
-/* 추가 링크 - user-edit 페이지 전용 override */
-.additional-links {
-    margin-top: var(--spacing-2xl);
-    animation: fadeIn 0.8s ease-out 0.9s both;
-}
+

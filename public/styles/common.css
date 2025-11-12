@@ -341,38 +341,60 @@ body {
     }
 }
 
-/* 추가 링크 컨테이너 */
+/* 추가 링크 스타일 */
 .additional-links {
     text-align: center;
     margin-top: var(--spacing-2xl);
     animation: fadeIn 0.8s ease-out 0.8s both;
 }
 
-/* 기본 링크 스타일 */
-.link {
-    color: var(--primary-color);
+.additional-links .link,
+.additional-links .withdrawal-link {
     text-decoration: none;
-    font-size: var(--font-size-md);
+    font-size: 15px;
     font-weight: 500;
-    transition: all var(--transition-fast);
-    display: inline-block;
+    transition: var(--transition-normal);
     position: relative;
+    padding: var(--spacing-sm) 0;
 }
 
-.link:hover {
-    text-decoration: underline;
-    color: var(--purple);
+.additional-links .link:hover,
+.additional-links .withdrawal-link:hover {
     transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.additional-links .link::after,
+.additional-links .withdrawal-link::after {
+    content: '';
+    position: absolute;
+    bottom: var(--spacing-xs);
+    left: 50%;
+    width: 0;
+    height: 2px;
+    transition: var(--transition-normal);
+    transform: translateX(-50%);
+}
+
+.additional-links .link:hover::after,
+.additional-links .withdrawal-link:hover::after {
+    width: 100%;
+}
+
+/* 일반 링크 (파란색) */
+.additional-links .link {
+    color: var(--primary-color);
+}
+
+.additional-links .link::after {
+    background: var(--primary-color);
 }
 
 /* 탈퇴 링크 (빨간색) */
-.link.withdrawal-link,
-.withdrawal-link {
+.additional-links .withdrawal-link {
     color: var(--red);
 }
 
-.link.withdrawal-link:hover,
-.withdrawal-link:hover {
-    text-decoration: underline;
-    color: var(--red-hover);
+.additional-links .withdrawal-link::after {
+    background: var(--red);
 }
