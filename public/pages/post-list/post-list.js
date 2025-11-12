@@ -263,8 +263,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const meta = document.createElement('div');
             meta.className = 'post-meta';
             meta.appendChild(this.createMetaItem('like', `좋아요 ${formatNumber(stats.likeCount)}`));
-            meta.appendChild(this.createMetaItem('comment', `댓글 ${formatNumber(stats.commentCount)}`));
             meta.appendChild(this.createMetaItem('view', `조회수 ${formatNumber(stats.viewCount)}`));
+            meta.appendChild(this.createMetaItem('comment', `댓글 ${formatNumber(stats.commentCount)}`));
             return meta;
         }
         
