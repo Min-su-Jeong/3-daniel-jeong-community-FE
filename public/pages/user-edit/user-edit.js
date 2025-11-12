@@ -16,7 +16,6 @@ import {
     getSubmitButton
 } from '../../utils/common/index.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
-import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
@@ -178,7 +177,7 @@ async function removeUser(userId) {
         dispatchUserUpdatedEvent();
         
         ToastUtils.success(TOAST_MESSAGE.USER_DELETE_SUCCESS);
-        setTimeout(() => navigateTo('/'), 1200);
+        setTimeout(() => navigateTo('/'), 2000);
     } catch (error) {
         ToastUtils.error(error.message || TOAST_MESSAGE.USER_DELETE_FAILED);
     }
