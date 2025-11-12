@@ -281,7 +281,7 @@ export function setupProfileImagePreview({ imageContainer, imageInput, removeBut
                 onRemove();
             } else {
                 createProfilePlaceholder(imageContainer);
-                removeButton.style.display = 'none';
+                removeButton.classList.remove('visible');
                 imageInput.value = '';
             }
         });
@@ -310,21 +310,23 @@ export function setupProfileImagePreview({ imageContainer, imageInput, removeBut
                 }
 
                 if (previews.length > 0) {
+                    const preview = previews[0];
+                    
                     while (imageContainer.firstChild) {
                         imageContainer.removeChild(imageContainer.firstChild);
                     }
                     
                     const img = document.createElement('img');
-                    img.src = previews[0].url;
+                    img.src = preview.url;
                     img.alt = '프로필 이미지';
                     imageContainer.appendChild(img);
                     
                     if (removeButton) {
-                        removeButton.style.display = 'block';
+                        removeButton.classList.add('visible');
                     }
                     
                     if (onChange) {
-                        onChange(previews[0].url);
+                        onChange(preview.url);
                     }
                 }
             } catch (error) {

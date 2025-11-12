@@ -1,5 +1,13 @@
-import { PageLayout, Button, ToastUtils, createFormHandler, getFormValues } from '../../components/index.js';
-import { validatePassword, setupFormValidation, getElementValue, initializeElements, navigateTo, debounce, getUserFromStorage } from '../../utils/common/index.js';
+import { PageLayout, Button, ToastUtils, createFormHandler } from '../../components/index.js';
+import { 
+    validatePassword, 
+    setupFormValidation, 
+    getElementValue, 
+    initializeElements, 
+    navigateTo, 
+    debounce, 
+    getUserFromStorage 
+} from '../../utils/common/index.js';
 import { updatePassword, checkCurrentPassword } from '../../api/index.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
@@ -13,8 +21,82 @@ const elements = initializeElements({
 });
 
 let isVerifyingPassword = false;
-let isCurrentPasswordValid = false;
 
+// 현재 비밀번호 검증 (API 호출)
+async function verifyCurrentPassword(password) {
+    if (!password?.trim()) return false;
+    
+    const user = getUserFromStorage();
+    if (!user?.email) return false;
+    
+    if (isVerifyingPassword) return false;
+    isVerifyingPassword = true;
+    
+    try {
+        const result = await checkCurrentPassword(user.email, password.trim());
+        return result.match;
+    } catch (error) {
+        return false;
+    } finally {
+        isVerifyingPassword = false;
+    }
+}
+
+// Helper 텍스트 업데이트
+function updateHelperText(helper, text, className) {
+    if (!helper) return;
+    helper.textContent = text;
+    helper.className = `helper-text ${className}`;
+}
+
+// 현재 비밀번호 UI 업데이트
+function updateCurrentPasswordUI(isValid) {
+    const helper = elements.currentPassword?.nextElementSibling;
+    const message = isValid ? '현재 비밀번호가 일치합니다' : '현재 비밀번호가 일치하지 않습니다';
+    const className = isValid ? 'success' : 'error';
+    updateHelperText(helper, message, className);
+}
+
+// 현재 비밀번호 실시간 검증 설정
+function setupCurrentPasswordValidation() {
+    if (!elements.currentPassword) return;
+    
+    const verifyDebounced = debounce(async (password) => {
+        const helper = elements.currentPassword.nextElementSibling;
+        
+        if (!password?.trim()) {
+            updateHelperText(helper, '', '');
+            return;
+        }
+        
+        const isValid = await verifyCurrentPassword(password);
+        updateCurrentPasswordUI(isValid);
+    }, 500);
+    
+    elements.currentPassword.addEventListener('blur', () => {
+        const password = getElementValue(elements.currentPassword, '');
+        verifyDebounced(password);
+    });
+}
+
+// 새 비밀번호 확인 UI 업데이트
+function updateConfirmPasswordUI() {
+    const helper = elements.confirmPassword?.nextElementSibling;
+    if (!helper) return;
+    
+    const confirmValue = elements.confirmPassword.value;
+    if (!confirmValue) {
+        updateHelperText(helper, '', '');
+        return;
+    }
+    
+    const isMatch = elements.newPassword.value === confirmValue;
+    const message = isMatch ? '비밀번호가 일치합니다' : '비밀번호가 일치하지 않습니다';
+    const className = isMatch ? 'success' : 'error';
+    updateHelperText(helper, message, className);
+}
+
+// 폼 필드 설정
 function setupFormFields() {
     setupFormValidation('passwordEditForm', [
         {
@@ -29,81 +111,83 @@ function setupFormFields() {
         }
     ]);
     
-    // 현재 비밀번호 검증
-    if (elements.currentPassword) {
-        const currentPasswordHelper = elements.currentPassword.nextElementSibling;
-        
-        const verifyCurrentPasswordDebounced = debounce(async (password) => {
-            if (!password || password.trim() === '') {
-                if (currentPasswordHelper) {
-                    currentPasswordHelper.textContent = '';
-                    currentPasswordHelper.className = 'helper-text';
-                }
-                isCurrentPasswordValid = false;
-                return;
-            }
-            
-            const user = getUserFromStorage();
-            if (!user?.email) {
-                return;
-            }
-            
-            if (isVerifyingPassword) return;
-            isVerifyingPassword = true;
-            
-            try {
-                const result = await checkCurrentPassword(user.email, password);
-                if (result.match) {
-                    if (currentPasswordHelper) {
-                        currentPasswordHelper.textContent = '현재 비밀번호가 일치합니다';
-                        currentPasswordHelper.className = 'helper-text success';
-                    }
-                    isCurrentPasswordValid = true;
-                } else {
-                    if (currentPasswordHelper) {
-                        currentPasswordHelper.textContent = '현재 비밀번호가 일치하지 않습니다';
-                        currentPasswordHelper.className = 'helper-text error';
-                    }
-                    isCurrentPasswordValid = false;
-                }
-            } catch (error) {
-                if (currentPasswordHelper) {
-                    currentPasswordHelper.textContent = '현재 비밀번호가 일치하지 않습니다';
-                    currentPasswordHelper.className = 'helper-text error';
-                }
-                isCurrentPasswordValid = false;
-            } finally {
-                isVerifyingPassword = false;
-            }
-        }, 500);
-        
-        elements.currentPassword.addEventListener('blur', () => {
-            const password = getElementValue(elements.currentPassword, '').trim();
-            verifyCurrentPasswordDebounced(password);
-        });
+    setupCurrentPasswordValidation();
+    
+    if (elements.newPassword && elements.confirmPassword) {
+        elements.newPassword.addEventListener('input', updateConfirmPasswordUI);
+        elements.confirmPassword.addEventListener('input', updateConfirmPasswordUI);
     }
-    
-    if (!elements.newPassword || !elements.confirmPassword) return;
-    
-    const updateConfirmHelper = () => {
-        const helperText = elements.confirmPassword.nextElementSibling;
-        if (!helperText) return;
-        
-        if (!elements.confirmPassword.value) {
-            helperText.textContent = '';
-            helperText.className = 'helper-text';
-            return;
-        }
-        
-        const isMatch = elements.newPassword.value === elements.confirmPassword.value;
-        helperText.textContent = isMatch ? '비밀번호가 일치합니다' : '비밀번호가 일치하지 않습니다';
-        helperText.className = `helper-text ${isMatch ? 'success' : 'error'}`;
-    };
-    
-    elements.newPassword.addEventListener('input', updateConfirmHelper);
-    elements.confirmPassword.addEventListener('input', updateConfirmHelper);
 }
 
+// 폼 데이터 검증
+async function validateFormData() {
+    const currentPassword = getElementValue(elements.currentPassword, '').trim();
+    const newPassword = getElementValue(elements.newPassword, '').trim();
+    const confirmPassword = getElementValue(elements.confirmPassword, '').trim();
+    
+    const validations = [
+        { 
+            condition: !currentPassword, 
+            error: VALIDATION_MESSAGE.CURRENT_PASSWORD_REQUIRED 
+        },
+        { 
+            condition: !newPassword, 
+            error: VALIDATION_MESSAGE.NEW_PASSWORD_REQUIRED 
+        },
+        { 
+            condition: !confirmPassword, 
+            error: VALIDATION_MESSAGE.NEW_PASSWORD_CONFIRM_REQUIRED 
+        }
+    ];
+    
+    for (const { condition, error } of validations) {
+        if (condition) {
+            ToastUtils.error(error);
+            return false;
+        }
+    }
+    
+    const isCurrentValid = await verifyCurrentPassword(currentPassword);
+    if (!isCurrentValid) {
+        ToastUtils.error(VALIDATION_MESSAGE.CURRENT_PASSWORD_MISMATCH);
+        elements.currentPassword?.focus();
+        return false;
+    }
+    
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+        ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_INVALID);
+        return false;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_MISMATCH);
+        return false;
+    }
+    
+    if (currentPassword === newPassword) {
+        ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_SAME_AS_CURRENT);
+        return false;
+    }
+    
+    return true;
+}
+
+// 비밀번호 변경 처리
+async function handlePasswordUpdate() {
+    const user = getUserFromStorage();
+    if (!user?.id) {
+        throw new Error(TOAST_MESSAGE.USER_LOAD_FAILED);
+    }
+    
+    const newPassword = getElementValue(elements.newPassword, '').trim();
+    const confirmPassword = getElementValue(elements.confirmPassword, '').trim();
+    
+    await updatePassword(user.id, newPassword, confirmPassword);
+    return { success: true };
+}
+
+// 폼 제출 설정
 function setupFormSubmission() {
     if (!elements.passwordEditForm) return;
     
@@ -112,65 +196,28 @@ function setupFormSubmission() {
         loadingText: '수정 중...',
         successMessage: TOAST_MESSAGE.PASSWORD_RESET_SUCCESS,
         submitButtonSelector: elements.buttonGroup?.querySelector('.btn-primary'),
-        validate: () => {
-            const formValues = getFormValues(elements.passwordEditForm, ['currentPassword', 'newPassword', 'confirmPassword']);
-            const { currentPassword, newPassword, confirmPassword } = formValues;
-        
-            if (!currentPassword?.trim()) {
-            ToastUtils.error(VALIDATION_MESSAGE.CURRENT_PASSWORD_REQUIRED);
-                return false;
-        }
-        
-        if (!isCurrentPasswordValid) {
-            ToastUtils.error(VALIDATION_MESSAGE.CURRENT_PASSWORD_MISMATCH);
-            elements.currentPassword.focus();
-                return false;
-        }
-        
-            if (!validatePassword(newPassword || '').isValid) {
-            ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_INVALID);
-                return false;
-        }
-        
-        if (newPassword !== confirmPassword) {
-            ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_MISMATCH);
-                return false;
-        }
-        
-            return true;
-        },
-        onSubmit: async (formData) => {
-            const user = getUserFromStorage();
-        if (!user?.id) {
-                throw new Error(TOAST_MESSAGE.USER_LOAD_FAILED);
-        }
-        
-            const newPassword = formData.newPassword?.trim() || '';
-            const confirmPassword = formData.confirmPassword?.trim() || '';
-            
-            await updatePassword(user.id, newPassword, confirmPassword);
-            return { success: true };
-        },
-        onSuccess: () => {
-            navigateTo('/');
-        }
+        validate: async () => await validateFormData(),
+        onSubmit: handlePasswordUpdate,
+        onSuccess: () => navigateTo('/')
+    });
+}
+
+// 버튼 생성
+function createPasswordEditButton() {
+    if (!elements.buttonGroup) return;
+    
+    Button.clearGroup(elements.buttonGroup);
+    Button.create(elements.buttonGroup, {
+        text: '수정하기',
+        type: 'submit',
+        variant: 'primary',
+        size: 'medium'
     });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     PageLayout.initializePage();
-    
-    // 버튼 생성
-    if (elements.buttonGroup) {
-        Button.clearGroup(elements.buttonGroup);
-        Button.create(elements.buttonGroup, {
-            text: '수정하기',
-            type: 'submit',
-            variant: 'primary',
-            size: 'medium'
-        });
-    }
-    
+    createPasswordEditButton();
     setupFormFields();
     setupFormSubmission();
 });

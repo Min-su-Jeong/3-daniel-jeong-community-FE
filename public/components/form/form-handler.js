@@ -54,7 +54,7 @@ export function createFormHandler(options) {
 
         // 커스텀 유효성 검사
         if (validate) {
-            const validationResult = validate();
+            const validationResult = await validate();
             if (validationResult !== true) {
                 if (typeof validationResult === 'string') {
                     ToastUtils.error(validationResult);

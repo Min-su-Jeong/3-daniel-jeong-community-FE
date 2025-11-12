@@ -15,8 +15,11 @@ export const VALIDATION_MESSAGE = Object.freeze({
     NICKNAME_DUPLICATE: '이미 사용 중인 닉네임입니다',
     CURRENT_PASSWORD_REQUIRED: '현재 비밀번호를 입력해주세요.',
     CURRENT_PASSWORD_MISMATCH: '현재 비밀번호가 일치하지 않습니다.',
+    NEW_PASSWORD_REQUIRED: '새 비밀번호를 입력해주세요.',
     NEW_PASSWORD_INVALID: '올바른 비밀번호를 입력해주세요.',
     NEW_PASSWORD_MISMATCH: '새 비밀번호가 일치하지 않습니다.',
+    NEW_PASSWORD_CONFIRM_REQUIRED: '비밀번호 확인을 입력해주세요.',
+    NEW_PASSWORD_SAME_AS_CURRENT: '현재 비밀번호와 새 비밀번호가 동일합니다.',
     COMMENT_REQUIRED: '댓글 내용을 입력해주세요.',
     ALL_FIELDS_REQUIRED: '모든 필수 항목을 입력해주세요.',
     POST_FORM_INCOMPLETE: '제목, 내용을 모두 작성해주세요'

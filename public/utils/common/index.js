@@ -11,4 +11,5 @@ export * from './image.js';
 export * from './format.js';
 export * from './debounce-helper.js';
 export * from './request.js';
+export * from './profile.js';
 

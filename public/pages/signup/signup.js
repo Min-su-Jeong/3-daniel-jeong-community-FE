@@ -9,12 +9,10 @@ import {
     getElementValue, 
     initializeElements, 
     navigateTo, 
-    validateImageFiles,
-    setupProfileImagePreview,
-    createProfilePlaceholder,
+    setupProfileImage,
+    validateProfileImage,
     getSubmitButton
 } from '../../utils/common/index.js';
-import { IMAGE_CONSTANTS } from '../../utils/constants/api.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
@@ -40,16 +38,16 @@ function createSignupButtons() {
     
     Button.createGroup(elements.buttonGroup, [
         {
-        text: '회원가입',
-        type: 'submit',
-        variant: 'primary',
-        size: 'medium'
+            text: '회원가입',
+            type: 'submit',
+            variant: 'primary',
+            size: 'medium'
         },
         {
-        text: '로그인하러 가기',
-        type: 'button',
-        variant: 'secondary',
-        size: 'medium',
+            text: '로그인하러 가기',
+            type: 'button',
+            variant: 'secondary',
+            size: 'medium',
             onClick: () => navigateTo('/login')
         }
     ]);
@@ -106,29 +104,36 @@ function setupSignupFormFields() {
         }
     ]);
     
-    // 이메일 중복 체크
-    if (elements.email && elements.email.nextElementSibling) {
-        setupDuplicateCheck({
+    const duplicateChecks = [
+        {
             input: elements.email,
-            helperText: elements.email.nextElementSibling,
             checkFunction: checkEmail,
             validateFunction: validateEmail,
             successMessage: VALIDATION_MESSAGE.EMAIL_AVAILABLE,
             errorMessage: VALIDATION_MESSAGE.EMAIL_DUPLICATE
-        });
-    }
-    
-    // 닉네임 중복 체크
-    if (elements.nickname && elements.nickname.nextElementSibling) {
-        setupDuplicateCheck({
+        },
+        {
             input: elements.nickname,
-            helperText: elements.nickname.nextElementSibling,
             checkFunction: checkNickname,
             validateFunction: validateNickname,
             successMessage: VALIDATION_MESSAGE.NICKNAME_AVAILABLE,
             errorMessage: VALIDATION_MESSAGE.NICKNAME_DUPLICATE
-        });
-    }
+        }
+    ];
+
+    duplicateChecks.forEach(({ input, checkFunction, validateFunction, successMessage, errorMessage }) => {
+        const helperText = input?.nextElementSibling;
+        if (input && helperText) {
+            setupDuplicateCheck({
+                input,
+                helperText,
+                checkFunction,
+                validateFunction,
+                successMessage,
+                errorMessage
+            });
+        }
+    });
     
     // 비밀번호 변경 시 비밀번호 확인 유효성 검사
     if (elements.password && elements.confirmPassword) {
@@ -140,27 +145,14 @@ function setupSignupFormFields() {
     }
 }
 
-/**
- * 프로필 이미지 업로드 설정 (미리보기, 삭제 버튼 처리)
- */
-function setupProfileImage() {
-    if (!elements.profileImage || !elements.profileInput) return;
-
-    const handleRemove = () => {
-        createProfilePlaceholder(elements.profileImage);
-        if (elements.removeImageBtn) {
-            elements.removeImageBtn.style.display = 'none';
-        }
-                    elements.profileInput.value = '';
-    };
-
-    setupProfileImagePreview({
+// 프로필 이미지 업로드 설정 (미리보기, 삭제 버튼 처리)
+function setupProfileImageHandler() {
+    setupProfileImage({
         imageContainer: elements.profileImage,
         imageInput: elements.profileInput,
-        removeButton: elements.removeImageBtn,
-        onRemove: handleRemove
+        removeButton: elements.removeImageBtn
     });
-    }
+}
     
 // 폼 데이터 유효성 검사 (이메일/비밀번호/닉네임 형식 검증)
 function validateFormData() {
@@ -169,76 +161,45 @@ function validateFormData() {
     const confirmPassword = getElementValue(elements.confirmPassword, '');
     const nickname = getElementValue(elements.nickname, '');
     
-            const emailValidation = validateEmail(email);
-            const passwordValidation = validatePassword(password);
-            const nicknameValidation = validateNickname(nickname);
-            const confirmPasswordMatch = password === confirmPassword && password.length > 0;
-            
-            if (!emailValidation.isValid) {
-                ToastUtils.error(VALIDATION_MESSAGE.EMAIL_INVALID);
-        return false;
-            }
-            
-            if (!passwordValidation.isValid) {
-                ToastUtils.error(VALIDATION_MESSAGE.PASSWORD_INVALID);
-        return false;
-            }
-            
-            if (!confirmPasswordMatch) {
-                ToastUtils.error(VALIDATION_MESSAGE.PASSWORD_MISMATCH);
-        return false;
-            }
-            
-            if (!nicknameValidation.isValid) {
-                ToastUtils.error(VALIDATION_MESSAGE.NICKNAME_INVALID);
-        return false;
-            }
-            
-    return true;
-            }
-            
-// 이메일 중복 체크 (API 호출)
-async function validateEmailAvailability(email) {
-            try {
-        const response = await checkEmail(email);
-        const emailData = response?.data || {};
-                if (!emailData.available) {
-                    ToastUtils.error(VALIDATION_MESSAGE.EMAIL_DUPLICATE);
+    const validations = [
+        { result: validateEmail(email), error: VALIDATION_MESSAGE.EMAIL_INVALID },
+        { result: validatePassword(password), error: VALIDATION_MESSAGE.PASSWORD_INVALID },
+        { result: validateNickname(nickname), error: VALIDATION_MESSAGE.NICKNAME_INVALID },
+        { 
+            result: { isValid: password === confirmPassword && password.length > 0 }, 
+            error: VALIDATION_MESSAGE.PASSWORD_MISMATCH 
+        }
+    ];
+
+    for (const { result, error } of validations) {
+        if (!result.isValid) {
+            ToastUtils.error(error);
             return false;
-                }
-        return true;
-            } catch (error) {
-                ToastUtils.error(VALIDATION_MESSAGE.EMAIL_CHECK_FAILED);
-        return false;
+        }
     }
-            }
-            
-// 프로필 이미지 유효성 검사 (크기/형식 검증)
-function validateProfileImage(profileImage) {
-    if (!profileImage) return true;
-    
-                const { validFiles, errors } = validateImageFiles(
-                    [profileImage], 
-                    IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 
-                    1
-                );
-                
-                if (errors.length > 0) {
-                    errors.forEach(error => ToastUtils.error(error));
-        return false;
-                }
-                
-                if (validFiles.length === 0) {
-                    ToastUtils.error(TOAST_MESSAGE.IMAGE_INVALID);
-        return false;
-                }
     
     return true;
 }
 
-/**
- * 폼 제출 핸들러 설정 (유효성 검사, API 호출, 성공 시 로그인 페이지 이동)
- */
+// 이메일 중복 체크 (API 호출)
+async function validateEmailAvailability(email) {
+    try {
+        const response = await checkEmail(email);
+        const isAvailable = response?.data?.available ?? false;
+        
+        if (!isAvailable) {
+            ToastUtils.error(VALIDATION_MESSAGE.EMAIL_DUPLICATE);
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        ToastUtils.error(VALIDATION_MESSAGE.EMAIL_CHECK_FAILED);
+        return false;
+    }
+}
+            
+// 폼 제출 핸들러 설정 (유효성 검사, API 호출, 성공 시 로그인 페이지 이동)
 function setupFormSubmission() {
     if (!elements.signupForm) return;
 
@@ -248,21 +209,13 @@ function setupFormSubmission() {
         successMessage: TOAST_MESSAGE.SIGNUP_SUCCESS,
         submitButtonSelector: getSubmitButton(elements.buttonGroup),
         validate: async () => {
-            if (!validateFormData()) {
-                return false;
-            }
+            if (!validateFormData()) return false;
             
             const email = getElementValue(elements.email, '');
-            if (!(await validateEmailAvailability(email))) {
-                return false;
-            }
+            if (!(await validateEmailAvailability(email))) return false;
             
             const profileImage = elements.profileInput?.files[0];
-            if (!validateProfileImage(profileImage)) {
-                return false;
-            }
-            
-            return true;
+            return validateProfileImage(profileImage);
         },
         onSubmit: async () => {
             const email = getElementValue(elements.email, '');
@@ -288,28 +241,22 @@ function setupFormSubmission() {
 
 // Placeholder 및 Helper Text 설정
 function setupPlaceholdersAndHelperTexts() {
-    if (elements.email) elements.email.placeholder = PLACEHOLDER.EMAIL;
-    if (elements.password) elements.password.placeholder = PLACEHOLDER.PASSWORD;
-    if (elements.confirmPassword) elements.confirmPassword.placeholder = PLACEHOLDER.PASSWORD_CONFIRM;
-    if (elements.nickname) elements.nickname.placeholder = PLACEHOLDER.NICKNAME;
-    
-    // Helper Text 설정
-    const emailHelper = elements.email?.nextElementSibling;
-    if (emailHelper?.classList.contains('helper-text')) {
-        emailHelper.textContent = HELPER_TEXT.EMAIL;
-    }
-    const passwordHelper = elements.password?.nextElementSibling;
-    if (passwordHelper?.classList.contains('helper-text')) {
-        passwordHelper.textContent = HELPER_TEXT.PASSWORD;
-    }
-    const confirmPasswordHelper = elements.confirmPassword?.nextElementSibling;
-    if (confirmPasswordHelper?.classList.contains('helper-text')) {
-        confirmPasswordHelper.textContent = HELPER_TEXT.PASSWORD_CONFIRM;
-    }
-    const nicknameHelper = elements.nickname?.nextElementSibling;
-    if (nicknameHelper?.classList.contains('helper-text')) {
-        nicknameHelper.textContent = HELPER_TEXT.NICKNAME;
-    }
+    const fieldConfigs = [
+        { element: elements.email, placeholder: PLACEHOLDER.EMAIL, helperText: HELPER_TEXT.EMAIL },
+        { element: elements.password, placeholder: PLACEHOLDER.PASSWORD, helperText: HELPER_TEXT.PASSWORD },
+        { element: elements.confirmPassword, placeholder: PLACEHOLDER.PASSWORD_CONFIRM, helperText: HELPER_TEXT.PASSWORD_CONFIRM },
+        { element: elements.nickname, placeholder: PLACEHOLDER.NICKNAME, helperText: HELPER_TEXT.NICKNAME }
+    ];
+
+    fieldConfigs.forEach(({ element, placeholder, helperText }) => {
+        if (element) {
+            element.placeholder = placeholder;
+            const helper = element.nextElementSibling;
+            if (helper?.classList.contains('helper-text')) {
+                helper.textContent = helperText;
+            }
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -317,6 +264,6 @@ document.addEventListener('DOMContentLoaded', function() {
     PageLayout.initializePage();
     createSignupButtons();
     setupSignupFormFields();
-    setupProfileImage();
+    setupProfileImageHandler();
     setupFormSubmission();
 });

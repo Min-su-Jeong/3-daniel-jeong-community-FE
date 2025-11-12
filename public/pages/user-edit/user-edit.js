@@ -6,17 +6,15 @@ import {
     setElementValue, 
     initializeElements, 
     navigateTo, 
-    validateImageFiles, 
-    createImagePreviews, 
     renderProfileImage as renderProfileImageUtil,
     createProfilePlaceholder,
+    setupProfileImage,
     getUserFromStorage, 
     saveUserToStorage, 
     dispatchUserUpdatedEvent, 
     removeUserFromStorage,
     getSubmitButton
 } from '../../utils/common/index.js';
-import { IMAGE_CONSTANTS } from '../../utils/constants/api.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
@@ -25,13 +23,13 @@ import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 import { updateUser, deleteUser, uploadImage, logout } from '../../api/index.js';
 
 const elements = initializeElements({
-        buttonGroup: 'buttonGroup',
-        userEditForm: 'userEditForm',
-        nickname: 'nickname',
-        profileImage: 'profileImage',
-        profileImageInput: 'profileImageInput',
-        removeImageBtn: 'removeImageBtn',
-        withdrawalLink: 'withdrawalLink'
+    buttonGroup: 'buttonGroup',
+    userEditForm: 'userEditForm',
+    nickname: 'nickname',
+    profileImage: 'profileImage',
+    profileImageInput: 'profileImageInput',
+    removeImageBtn: 'removeImageBtn',
+    withdrawalLink: 'withdrawalLink'
 });
 
 let originalNickname = '';
@@ -43,6 +41,12 @@ let editButton = null;
 function renderProfileImage(container, imageKey) {
     if (!container) return;
     renderProfileImageUtil(container, imageKey);
+}
+
+// 삭제 버튼 표시 상태 업데이트
+function updateRemoveButtonVisibility(show) {
+    if (!elements.removeImageBtn) return;
+    elements.removeImageBtn.classList.toggle('visible', show);
 }
 
 function createUserEditButtons() {
@@ -97,107 +101,46 @@ function updateSubmitButtonState() {
  * 원본 프로필 이미지 복원 (변경 취소 시)
  */
 function restoreOriginalImage() {
-    while (elements.profileImage.firstChild) {
-        elements.profileImage.removeChild(elements.profileImage.firstChild);
-    }
+    clearImageContainer();
     
     if (originalProfileImageKey) {
         renderProfileImage(elements.profileImage, originalProfileImageKey);
-        if (elements.removeImageBtn) {
-            elements.removeImageBtn.style.display = 'block';
-        }
+        updateRemoveButtonVisibility(true);
     } else {
         createProfilePlaceholder(elements.profileImage);
-        if (elements.removeImageBtn) {
-            elements.removeImageBtn.style.display = 'none';
-        }
+        updateRemoveButtonVisibility(false);
     }
+    
     elements.profileImageInput.value = '';
     updateSubmitButtonState();
+}
+
+// 이미지 컨테이너 초기화
+function clearImageContainer() {
+    while (elements.profileImage.firstChild) {
+        elements.profileImage.removeChild(elements.profileImage.firstChild);
+    }
 }
 
 /**
  * 프로필 이미지 제거 (placeholder 표시)
  */
 function removeProfileImage() {
+    clearImageContainer();
     createProfilePlaceholder(elements.profileImage);
-    if (elements.removeImageBtn) {
-        elements.removeImageBtn.style.display = 'none';
-    }
+    updateRemoveButtonVisibility(false);
     elements.profileImageInput.value = '';
     updateSubmitButtonState();
 }
 
-/**
- * 프로필 이미지 변경 처리 (파일 선택, 검증, 미리보기)
- */
+// 프로필 이미지 변경 처리 (파일 선택, 검증, 미리보기)
 function setupProfileImageChange() {
-    if (!elements.profileImageInput || !elements.profileImage) return;
-    
-    const handleImageChange = async (files) => {
-        if (files.length === 0) {
-            restoreOriginalImage();
-            return;
-        }
-        
-        const { validFiles, errors } = validateImageFiles(
-            files, 
-            IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 
-            1
-        );
-        
-        if (errors.length > 0) {
-            errors.forEach(error => ToastUtils.error(error));
-            restoreOriginalImage();
-            return;
-        }
-        
-        try {
-            const { previews, errors: previewErrors } = await createImagePreviews(validFiles);
-            
-            if (previewErrors.length > 0) {
-                previewErrors.forEach(({ error }) => ToastUtils.error(error.message));
-                restoreOriginalImage();
-                return;
-            }
-            
-            if (previews.length > 0) {
-                while (elements.profileImage.firstChild) {
-                    elements.profileImage.removeChild(elements.profileImage.firstChild);
-                }
-                
-                const img = document.createElement('img');
-                img.src = previews[0].url;
-                img.alt = '프로필 이미지';
-                elements.profileImage.appendChild(img);
-                
-                if (elements.removeImageBtn) {
-                    elements.removeImageBtn.style.display = 'block';
-                }
-                
-                updateSubmitButtonState();
-            }
-        } catch {
-            ToastUtils.error(TOAST_MESSAGE.IMAGE_PROCESS_FAILED);
-            restoreOriginalImage();
-        }
-    };
-
-    elements.profileImageInput.accept = IMAGE_CONSTANTS.ACCEPT;
-    elements.profileImage.addEventListener('click', () => {
-        elements.profileImageInput.click();
-    });
-
-    if (elements.removeImageBtn) {
-        elements.removeImageBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            removeProfileImage();
-        });
-    }
-
-    elements.profileImageInput.addEventListener('change', async (e) => {
-        const files = Array.from(e.target.files);
-        await handleImageChange(files);
+    setupProfileImage({
+        imageContainer: elements.profileImage,
+        imageInput: elements.profileImageInput,
+        removeButton: elements.removeImageBtn,
+        onRemove: removeProfileImage,
+        onImageChange: updateSubmitButtonState
     });
 }
 
@@ -218,7 +161,11 @@ function setupFormFields() {
         }
     ]);
     
-    elements.nickname?.addEventListener('input', updateSubmitButtonState);
+    // 닉네임 입력 시 버튼 상태 업데이트 (유효성 검사 후)
+    elements.nickname?.addEventListener('input', () => {
+        // 다음 틱에서 실행하여 setupFormValidation의 검증이 완료된 후 버튼 상태 업데이트
+        setTimeout(updateSubmitButtonState, 0);
+    });
 }
 
 // 회원 탈퇴 처리 (API 호출, 로그아웃, 저장소 정리, 홈으로 이동)
@@ -251,13 +198,20 @@ function setupWithdrawal() {
             return;
         }
         
-        const firstModal = new Modal({
-            title: MODAL_MESSAGE.TITLE_DELETE,
-            subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
-            content: `<strong>⚠️ 회원 탈퇴 시 다음 사항을 확인해주세요:</strong><hr><br>
+        const withdrawalContent = {
+            first: `<strong>⚠️ 회원 탈퇴 시 다음 사항을 확인해주세요:</strong><hr><br>
                     • 탈퇴 신청 후 <strong>30일간 유예 기간</strong>이 제공됩니다.<br>
                     • 30일 이내 재로그인 시 <strong>계정 복구</strong>가 가능합니다.<br>
                     • 30일 경과 후에는 <strong>영구적으로 삭제</strong>되어 복구할 수 없습니다.`,
+            final: `<strong>⚠️ 최종 확인이 필요합니다</strong><hr><br>
+                    • 탈퇴 신청 후 <strong>30일 이내 재로그인</strong>하면 계정을 복구할 수 있습니다.<br>
+                    • 30일 경과 후에는 모든 데이터가 <strong>영구적으로 삭제</strong>됩니다.`
+        };
+
+        const firstModal = new Modal({
+            title: MODAL_MESSAGE.TITLE_DELETE,
+            subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
+            content: withdrawalContent.first,
             confirmText: '탈퇴 신청',
             confirmType: 'danger',
             showCancel: true,
@@ -266,9 +220,7 @@ function setupWithdrawal() {
                 const finalModal = new Modal({
                     title: MODAL_MESSAGE.TITLE_DELETE,
                     subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
-                    content: `<strong>⚠️ 최종 확인이 필요합니다</strong><hr><br>
-                            • 탈퇴 신청 후 <strong>30일 이내 재로그인</strong>하면 계정을 복구할 수 있습니다.<br>
-                            • 30일 경과 후에는 모든 데이터가 <strong>영구적으로 삭제</strong>됩니다.`,
+                    content: withdrawalContent.final,
                     confirmText: '탈퇴 신청',
                     confirmType: 'danger',
                     cancelText: '취소',
@@ -294,21 +246,14 @@ async function loadUserData() {
     originalProfileImageKey = user.profileImageKey || null;
     
     setElementValue(elements.nickname, originalNickname);
-    
-    while (elements.profileImage.firstChild) {
-        elements.profileImage.removeChild(elements.profileImage.firstChild);
-    }
+    clearImageContainer();
     
     if (originalProfileImageKey) {
         renderProfileImage(elements.profileImage, originalProfileImageKey);
-        if (elements.removeImageBtn) {
-            elements.removeImageBtn.style.display = 'block';
-        }
+        updateRemoveButtonVisibility(true);
     } else {
         createProfilePlaceholder(elements.profileImage);
-        if (elements.removeImageBtn) {
-            elements.removeImageBtn.style.display = 'none';
-        }
+        updateRemoveButtonVisibility(false);
     }
     
     elements.profileImageInput.value = '';
@@ -330,21 +275,47 @@ async function uploadProfileImage(userId, file) {
 }
 
 function updateProfileImageDisplay(imageKey) {
-    while (elements.profileImage.firstChild) {
-        elements.profileImage.removeChild(elements.profileImage.firstChild);
-    }
+    clearImageContainer();
     
     if (imageKey) {
         renderProfileImage(elements.profileImage, imageKey);
-        if (elements.removeImageBtn) {
-            elements.removeImageBtn.style.display = 'block';
-        }
+        updateRemoveButtonVisibility(true);
     } else {
         createProfilePlaceholder(elements.profileImage);
-        if (elements.removeImageBtn) {
-            elements.removeImageBtn.style.display = 'none';
-        }
+        updateRemoveButtonVisibility(false);
     }
+}
+
+// 프로필 이미지 키 결정 (삭제/업로드/유지)
+async function determineProfileImageKey(profileImageFile) {
+    const hasOriginalImage = !!originalProfileImageKey;
+    const hasCurrentImage = !!elements.profileImage.querySelector('img');
+    const isImageRemoved = hasOriginalImage && !hasCurrentImage && !profileImageFile;
+    
+    if (isImageRemoved) {
+        return '';
+    }
+    
+    if (profileImageFile) {
+        return await uploadProfileImage(user.id, profileImageFile);
+    }
+    
+    return user.profileImageKey || null;
+}
+
+// 사용자 정보 업데이트 후 상태 동기화
+function syncUserState(updatedUser, nickname) {
+    user = updatedUser;
+    const isRemembered = localStorage.getItem('user') !== null;
+    saveUserToStorage(user, isRemembered);
+    
+    originalNickname = nickname;
+    originalProfileImageKey = user.profileImageKey || null;
+    
+    updateProfileImageDisplay(user.profileImageKey || null);
+    elements.profileImageInput.value = '';
+    updateSubmitButtonState();
+    dispatchUserUpdatedEvent();
 }
 
 function setupFormSubmission() {
@@ -356,58 +327,36 @@ function setupFormSubmission() {
         successMessage: TOAST_MESSAGE.USER_UPDATE_SUCCESS,
         submitButtonSelector: getSubmitButton(elements.buttonGroup),
         validate: () => {
-        if (!user) {
-            ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
+            if (!user) {
+                ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
                 return false;
-        }
+            }
             return true;
         },
         onSubmit: async () => {
-        const nickname = getElementValue(elements.nickname, '').trim();
-        const profileImageFile = elements.profileImageInput?.files[0];
-        
-            const hasOriginalImage = !!originalProfileImageKey;
-            const hasCurrentImage = !!elements.profileImage.querySelector('img');
-            const isImageRemoved = hasOriginalImage && !hasCurrentImage && !profileImageFile;
-        
-            let profileImageKey = user.profileImageKey || null;
+            const nickname = getElementValue(elements.nickname, '').trim();
+            const profileImageFile = elements.profileImageInput?.files[0];
             
-            if (isImageRemoved) {
-                profileImageKey = '';
-            } else if (profileImageFile) {
-                profileImageKey = await uploadProfileImage(user.id, profileImageFile);
-            }
+            const profileImageKey = await determineProfileImageKey(profileImageFile);
+            const updatePayload = { nickname };
             
-            const updatePayload = {
-                nickname: nickname
-            };
-            
-            if (isImageRemoved || profileImageFile || profileImageKey !== user.profileImageKey) {
+            const hasImageChange = profileImageKey !== (user.profileImageKey || null);
+            if (hasImageChange) {
                 updatePayload.profileImageKey = profileImageKey;
             }
             
             const response = await updateUser(user.id, updatePayload);
             
-            if (response?.data) {
-                user = response.data;
-                saveUserToStorage(user, localStorage.getItem('user') !== null);
-                
-                originalNickname = nickname;
-                originalProfileImageKey = user.profileImageKey || null;
-                
-                updateProfileImageDisplay(user.profileImageKey || null);
-                elements.profileImageInput.value = '';
-                updateSubmitButtonState();
-                dispatchUserUpdatedEvent();
-                
-                return { success: true };
+            if (!response?.data) {
+                throw new Error(TOAST_MESSAGE.USER_UPDATE_FAILED);
             }
             
-            throw new Error(TOAST_MESSAGE.USER_UPDATE_FAILED);
+            syncUserState(response.data, nickname);
+            return { success: true };
         },
         onSuccess: () => {
             setTimeout(() => navigateTo('/'), 1200);
-            }
+        }
     });
 }
 

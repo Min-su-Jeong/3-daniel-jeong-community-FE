@@ -205,9 +205,16 @@
     font-size: var(--font-size-sm);
     font-weight: 600;
     cursor: pointer;
-    display: none;
-    transition: var(--transition-normal);
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
     font-family: inherit;
+    min-height: 32px;
+}
+
+.btn-remove-image.visible {
+    visibility: visible;
+    opacity: 1;
 }
 
 .btn-remove-image:hover {
