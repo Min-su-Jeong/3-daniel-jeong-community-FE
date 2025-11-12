@@ -1,6 +1,5 @@
 /**
  * 공통 버튼 컴포넌트
- * innerHTML 사용 없이 DOM API로 안전하게 생성
  */
 export class Button {
     constructor(options = {}) {
@@ -18,7 +17,7 @@ export class Button {
         this.buttonElement = null;
     }
 
-    // 버튼 요소를 DOM에 추가 (DOM API로 안전하게 생성)
+    // 버튼 요소를 DOM에 추가
     appendTo(container) {
         const buttonElement = document.createElement('button');
         buttonElement.type = this.options.type;

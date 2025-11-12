@@ -160,11 +160,11 @@ export function setupImageUploadEvents(container, input, onFileSelect) {
         return;
     }
 
-    const existingHandlers = container._imageUploadHandlers;
+    const existingHandlers = container.imageUploadHandlers;
     manageImageUploadHandlers(container, input, existingHandlers, true);
 
     const handlers = createImageUploadHandlers(container, input, onFileSelect);
-    container._imageUploadHandlers = handlers;
+    container.imageUploadHandlers = handlers;
 
     manageImageUploadHandlers(container, input, handlers, false);
 }

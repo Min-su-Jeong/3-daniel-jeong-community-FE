@@ -156,7 +156,7 @@ function handleDropdownAction(action) {
 
 // Shadow DOM 내부의 드롭다운 외부 클릭 시 닫기 처리 (전역 이벤트 리스너는 한 번만 등록)
 function setupDropdownCloseListener() {
-    if (document._hasDropdownCloseListener) return;
+    if (document.hasDropdownCloseListener) return;
     
     document.addEventListener('click', (e) => {
         const headers = document.querySelectorAll('app-header');
@@ -175,7 +175,7 @@ function setupDropdownCloseListener() {
         });
     });
     
-    document._hasDropdownCloseListener = true;
+    document.hasDropdownCloseListener = true;
 }
 
 /**
@@ -188,20 +188,20 @@ class AppHeader extends HTMLElement {
 
     constructor() {
         super();
-        this._onBack = this._onBack.bind(this);
-        this._shadow = this.attachShadow({ mode: 'open' });
+        this.onBack = this.onBack.bind(this);
+        this.attachShadow({ mode: 'open' });
     }
 
     connectedCallback() { 
-        this._renderAsync();
+        this.renderAsync();
         // 사용자 정보 업데이트 시 헤더 재렌더링
         window.addEventListener('userUpdated', () => {
-            this._renderAsync();
+            this.renderAsync();
         });
     }
     
     attributeChangedCallback() { 
-        this._renderAsync(); 
+        this.renderAsync(); 
     }
     
     /**
@@ -209,7 +209,7 @@ class AppHeader extends HTMLElement {
      * - 커스텀 핸들러가 있으면 우선 사용
      * - 없으면 기본 history.back() 사용
      */
-    _onBack() {
+    onBack() {
         if (window.handleBackNavigation) {
             window.handleBackNavigation();
         } else {
@@ -220,15 +220,16 @@ class AppHeader extends HTMLElement {
     /**
      * 헤더 비동기 렌더링
      */
-    async _renderAsync() {
+    async renderAsync() {
         const showBack = this.hasAttribute('show-back');
         const showProfile = this.hasAttribute('show-profile');
 
-        this._shadow.innerHTML = '';
-        this._shadow.appendChild(this.createStyleLink());
+        // Shadow DOM 초기화 (replaceChildren으로 모든 자식 제거)
+        this.shadowRoot.replaceChildren();
+        this.shadowRoot.appendChild(this.createStyleLink());
         
         const header = await this.createHeader(showBack, showProfile);
-        this._shadow.appendChild(header);
+        this.shadowRoot.appendChild(header);
     }
     
     /**
@@ -269,7 +270,7 @@ class AppHeader extends HTMLElement {
             backButton.className = 'back-btn';
             backButton.setAttribute('aria-label', '뒤로가기');
             backButton.textContent = '←';
-            backButton.addEventListener('click', this._onBack);
+            backButton.addEventListener('click', this.onBack);
             left.appendChild(backButton);
         }
         

@@ -50,7 +50,7 @@ export class Modal {
         if (this.options.subtitle) {
             const subtitle = document.createElement('p');
             subtitle.className = 'modal-subtitle';
-            subtitle.innerHTML = this.options.subtitle;
+            subtitle.textContent = this.options.subtitle;
             header.appendChild(subtitle);
         }
         
@@ -60,8 +60,8 @@ export class Modal {
         if (this.options.content) {
             const content = document.createElement('div');
             content.className = 'modal-content';
-            // HTML 콘텐츠가 있을 수 있으므로 innerHTML 사용 (사용자 입력이 아닌 경우)
-            content.innerHTML = this.options.content;
+            // textContent 사용으로 XSS 방지
+            content.textContent = this.options.content;
             modal.appendChild(content);
         }
         
