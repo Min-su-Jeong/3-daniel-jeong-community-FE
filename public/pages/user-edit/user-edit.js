@@ -197,38 +197,28 @@ function setupWithdrawal() {
             return;
         }
         
-        const withdrawalContent = {
-            first: `<strong>⚠️ 회원 탈퇴 시 다음 사항을 확인해주세요:</strong><hr><br>
-                    • 탈퇴 신청 후 <strong>30일간 유예 기간</strong>이 제공됩니다.<br>
-                    • 30일 이내 재로그인 시 <strong>계정 복구</strong>가 가능합니다.<br>
-                    • 30일 경과 후에는 <strong>영구적으로 삭제</strong>되어 복구할 수 없습니다.`,
-            final: `<strong>⚠️ 최종 확인이 필요합니다</strong><hr><br>
-                    • 탈퇴 신청 후 <strong>30일 이내 재로그인</strong>하면 계정을 복구할 수 있습니다.<br>
-                    • 30일 경과 후에는 모든 데이터가 <strong>영구적으로 삭제</strong>됩니다.`
-        };
-
-        const firstModal = new Modal({
+        const confirmModal = new Modal({
             title: MODAL_MESSAGE.TITLE_DELETE,
             subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
-            content: withdrawalContent.first,
+            content: MODAL_MESSAGE.WITHDRAWAL_CONFIRM,
             confirmText: '탈퇴 신청',
             confirmType: 'danger',
             showCancel: true,
             cancelText: '취소',
             onConfirm: () => {
-                const finalModal = new Modal({
+                const reconfirmModal = new Modal({
                     title: MODAL_MESSAGE.TITLE_DELETE,
                     subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
-                    content: withdrawalContent.final,
+                    content: MODAL_MESSAGE.WITHDRAWAL_RECONFIRM,
                     confirmText: '탈퇴 신청',
                     confirmType: 'danger',
                     cancelText: '취소',
                     onConfirm: () => removeUser(user.id)
                 });
-                finalModal.show();
+                reconfirmModal.show();
             }
         });
-        firstModal.show();
+        confirmModal.show();
     });
 }
 

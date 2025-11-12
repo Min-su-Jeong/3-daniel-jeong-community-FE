@@ -9,8 +9,6 @@ import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
 /** 페이지 DOM 요소 캐시 */
 let elements = {};
-/** 버튼 그룹 컴포넌트 인스턴스 */
-let buttonGroup = null;
 
 /**
  * 페이지 DOM 요소 초기화 (ID로 요소 일괄 조회)
@@ -34,7 +32,7 @@ function createLoginButtons() {
     if (!elements.buttonGroup) return;
     
     // 로그인/회원가입 버튼을 가로로 배치
-    buttonGroup = Button.createGroup(elements.buttonGroup, [
+    Button.createGroup(elements.buttonGroup, [
         {
             text: '로그인',
             type: 'submit',
@@ -164,10 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const restoreModal = new Modal({
                         title: MODAL_MESSAGE.TITLE_ACCOUNT_RESTORE,
                         subtitle: MODAL_MESSAGE.SUBTITLE_ACCOUNT_RESTORE,
-                        content: `이 계정은 탈퇴 신청으로 인해 <strong>삭제 대기 상태</strong>입니다.<br><br>
-                                    복구하시면 계정이 정상적으로 활성화됩니다.<br>
-                                    복구하지 않으시면 30일 경과 후 모든 데이터가 영구적으로 삭제됩니다.<br><br>
-                                    <strong>계정을 복구하시겠습니까?</strong>`,
+                        content: MODAL_MESSAGE.CONTENT_ACCOUNT_RESTORE,
                         confirmText: '계정 복구',
                         confirmType: 'primary',
                         showCancel: true,
