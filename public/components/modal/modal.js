@@ -1,6 +1,27 @@
+import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
+
+
+// HTML 문자열을 DocumentFragment로 변환하여 삽입
+function parseHTML(htmlString) {
+    if (!htmlString) {
+        return document.createDocumentFragment();
+    }
+    
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const fragment = document.createDocumentFragment();
+    
+    // body의 모든 자식 노드를 fragment로 이동
+    Array.from(doc.body.childNodes).forEach(node => {
+        fragment.appendChild(node.cloneNode(true));
+    });
+    
+    return fragment;
+}
+
 /**
- * 모달 컴포넌트
- * @param {Object} options - 모달 설정 옵션
+ * 모달 컴포넌트 클래스
+ * 확인/취소 다이얼로그, 배경 스크롤 방지, 애니메이션 지원
  */
 export class Modal {
     constructor(options = {}) {
@@ -21,40 +42,70 @@ export class Modal {
         this.isVisible = false;
     }
 
-    render() {
-        const { title, subtitle, content, showCancel, cancelText, confirmText, confirmType } = this.options;
-        const confirmClass = confirmType !== 'primary' ? `btn-confirm ${confirmType}` : 'btn-confirm';
-        
-        return `
-            <div class="modal-overlay">
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3 class="modal-title">${title}</h3>
-                        ${subtitle ? `<p class="modal-subtitle">${subtitle}</p>` : ''}
-                    </div>
-                    ${content ? `<div class="modal-content">${content}</div>` : ''}
-                    <div class="modal-actions">
-                        ${showCancel ? `<button class="btn-cancel">${cancelText}</button>` : ''}
-                        <button class="${confirmClass}">${confirmText}</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
     /**
-     * 모달 표시
-     * 배경 스크롤 방지 및 애니메이션 적용
+     * 모달 표시 (DOM 생성, 이벤트 리스너 등록, 배경 스크롤 방지)
      */
     show() {
         if (this.isVisible) return;
         
         this.hide();
         
-        const modalContainer = document.createElement('div');
-        modalContainer.innerHTML = this.render();
+        // DOM API로 모달 생성
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
         
-        this.modalElement = modalContainer.firstElementChild;
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        
+        // 헤더
+        const header = document.createElement('div');
+        header.className = 'modal-header';
+        
+        const title = document.createElement('h3');
+        title.className = 'modal-title';
+        title.appendChild(parseHTML(this.options.title));
+        header.appendChild(title);
+        
+        if (this.options.subtitle) {
+            const subtitle = document.createElement('p');
+            subtitle.className = 'modal-subtitle';
+            subtitle.appendChild(parseHTML(this.options.subtitle));
+            header.appendChild(subtitle);
+        }
+        
+        modal.appendChild(header);
+        
+        // 컨텐츠
+        if (this.options.content) {
+            const content = document.createElement('div');
+            content.className = 'modal-content';
+            // DOMParser를 사용하여 HTML 문자열을 파싱하여 안전하게 삽입
+            content.appendChild(parseHTML(this.options.content));
+            modal.appendChild(content);
+        }
+        
+        // 액션 버튼
+        const actions = document.createElement('div');
+        actions.className = 'modal-actions';
+        
+        if (this.options.showCancel) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn-cancel';
+            cancelBtn.textContent = this.options.cancelText;
+            actions.appendChild(cancelBtn);
+        }
+        
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = this.options.confirmType !== 'primary' 
+            ? `btn-confirm ${this.options.confirmType}` 
+            : 'btn-confirm';
+        confirmBtn.textContent = this.options.confirmText;
+        actions.appendChild(confirmBtn);
+        
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        
+        this.modalElement = overlay;
         document.body.appendChild(this.modalElement);
         
         this.setupEventListeners();
@@ -70,8 +121,7 @@ export class Modal {
     }
 
     /**
-     * 모달 숨김
-     * 애니메이션 완료 후 DOM에서 제거
+     * 모달 숨김 (애니메이션 후 DOM 제거, 배경 스크롤 복구)
      */
     hide() {
         if (!this.isVisible || !this.modalElement) return;
@@ -90,8 +140,7 @@ export class Modal {
     }
 
     /**
-     * 이벤트 리스너 설정
-     * 확인/취소 버튼, 배경 클릭, ESC 키 처리
+     * 모달 이벤트 리스너 설정 (확인/취소 버튼, 배경 클릭, ESC 키)
      */
     setupEventListeners() {
         if (!this.modalElement) return;
@@ -129,15 +178,11 @@ export class Modal {
         });
     }
 
-    /**
-     * 확인 모달 (Promise 반환)
-     * @param {Object} options - 모달 옵션
-     * @returns {Promise<boolean>} - 확인(true) 또는 취소(false)
-     */
+    // 확인 모달 (Promise 반환)
     static confirm(options = {}) {
         const modal = new Modal({
             title: '확인',
-            subtitle: '정말로 진행하시겠습니까?',
+            subtitle: MODAL_MESSAGE.SUBTITLE_CONFIRM,
             ...options
         });
         
@@ -148,15 +193,11 @@ export class Modal {
         });
     }
 
-    /**
-     * 삭제 확인 모달
-     * @param {Object} options - 모달 옵션
-     * @returns {Promise<boolean>} - 삭제 확인(true) 또는 취소(false)
-     */
+    // 삭제 확인 모달
     static confirmDelete(options = {}) {
         const modal = new Modal({
-            title: '삭제 확인',
-            subtitle: '정말로 삭제하시겠습니까?',
+            title: MODAL_MESSAGE.TITLE_DELETE,
+            subtitle: MODAL_MESSAGE.SUBTITLE_DELETE_CONFIRM,
             confirmText: '삭제',
             confirmType: 'danger',
             ...options
@@ -173,7 +214,7 @@ export class Modal {
     static success(options = {}) {
         const modal = new Modal({
             title: '성공',
-            subtitle: '작업이 완료되었습니다.',
+            subtitle: MODAL_MESSAGE.SUBTITLE_SUCCESS,
             confirmText: '확인',
             confirmType: 'success',
             showCancel: false,

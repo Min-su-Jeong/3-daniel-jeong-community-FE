@@ -47,7 +47,6 @@
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
 
-
 /* 타이핑 효과 */
 .handwriting-text {
     position: relative;
@@ -157,13 +156,34 @@
 .meta-icon {
     width: 16px;
     height: 16px;
-    color: var(--text-secondary);
     flex-shrink: 0;
     transition: var(--transition-fast);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: var(--text-secondary);
+}
+
+.meta-icon-like {
+    --icon-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E");
+    mask-image: var(--icon-svg);
+    -webkit-mask-image: var(--icon-svg);
+}
+
+.meta-icon-comment {
+    --icon-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+    mask-image: var(--icon-svg);
+    -webkit-mask-image: var(--icon-svg);
+}
+
+.meta-icon-view {
+    --icon-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+    mask-image: var(--icon-svg);
+    -webkit-mask-image: var(--icon-svg);
 }
 
 .meta-item:hover .meta-icon {
-    color: var(--primary-color);
+    background-color: var(--primary-color);
     transform: scale(1.1);
 }
 
@@ -185,6 +205,15 @@
     font-size: 14px;
     color: var(--text-muted);
     font-weight: 600;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.author-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .author-name {
@@ -217,7 +246,6 @@
     font-size: 14px;
     font-weight: 500;
 }
-
 
 /* 반응형 */
 @media (max-width: 768px) {
@@ -264,14 +292,6 @@
 }
 
 @media (max-width: 480px) {
-    .header {
-        padding: var(--spacing-lg);
-    }
-    
-    .logo {
-        font-size: 18px;
-    }
-    
     .welcome-text h2 {
         font-size: 18px;
     }

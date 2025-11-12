@@ -1,13 +1,18 @@
-import { login } from '../../api/login.js';
-import { PageLayout } from '../../components/layout/page-layout.js';
-import { Button } from '../../components/button/button.js';
-import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
-import { ToastUtils } from '../../components/toast/toast.js';
+import { login, restoreUser } from '../../api/index.js';
+import { PageLayout, Button, Modal, ToastUtils } from '../../components/index.js';
+import { validateEmail, validatePassword, setupFormValidation, getElementValue, initializeElements, navigateTo, removeUserFromStorage, dispatchUserUpdatedEvent, saveUserToStorage } from '../../utils/common/index.js';
+import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
+import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
+import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
+import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
+import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
-// DOM 요소들 초기화
+/** 페이지 DOM 요소 캐시 */
 let elements = {};
 
+/**
+ * 페이지 DOM 요소 초기화 (ID로 요소 일괄 조회)
+ */
 function initializePageElements() {
     const elementIds = {
         buttonGroup: 'buttonGroup',
@@ -20,60 +25,85 @@ function initializePageElements() {
     elements = initializeElements(elementIds);
 }
 
-// 로그인 페이지 버튼 생성
+/**
+ * 로그인 페이지 버튼 생성 (로그인/회원가입 가로 배치, 비회원 로그인 하단 배치)
+ */
 function createLoginButtons() {
     if (!elements.buttonGroup) return;
     
-    elements.buttonGroup.innerHTML = '';
+    // 로그인/회원가입 버튼을 가로로 배치
+    Button.createGroup(elements.buttonGroup, [
+        {
+            text: '로그인',
+            type: 'submit',
+            variant: 'primary',
+            size: 'medium'
+        },
+        {
+            text: '회원가입',
+            type: 'button',
+            variant: 'secondary',
+            size: 'medium',
+            onClick: () => navigateTo('/signup')
+        }
+    ], { wrapInRow: false });
     
-    // 로그인 버튼
-    const loginButton = new Button({
-        text: '로그인',
-        type: 'submit',
-        variant: 'primary',
-        size: 'medium'
-    });
-    
-    // 회원가입 버튼
-    const signupButton = new Button({
-        text: '회원가입',
+    // 비회원으로 로그인 버튼은 아래 행에 추가
+    Button.create(elements.buttonGroup, {
+        text: '비회원으로 로그인',
         type: 'button',
         variant: 'secondary',
         size: 'medium',
-        onClick: () => {
-            navigateTo('/signup');
-        }
+        onClick: handleGuestLogin
     });
-    
-    loginButton.appendTo(elements.buttonGroup);
-    signupButton.appendTo(elements.buttonGroup);
 }
 
-// 폼 유효성 검사 설정
+/**
+ * 비회원 로그인 처리 (저장소 정리 후 홈으로 이동)
+ */
+function handleGuestLogin() {
+    removeUserFromStorage();
+    dispatchUserUpdatedEvent();
+    ToastUtils.success(TOAST_MESSAGE.LOGIN_GUEST);
+    navigateTo('/');
+}
+
+/**
+ * 폼 필드 유효성 검사 설정 (이메일/비밀번호 실시간 검증)
+ */
 function setupFormFields() {
     setupFormValidation('loginForm', [
         {
             id: 'email',
             validation: validateEmail,
             options: {
-                successMessage: '유효한 이메일 주소입니다',
-                defaultText: '이메일 주소를 입력해주세요'
+                successMessage: VALIDATION_MESSAGE.EMAIL_VALID,
+                defaultText: HELPER_TEXT.EMAIL
             }
         },
         {
             id: 'password',
             validation: validatePassword,
             options: {
-                successMessage: '유효한 비밀번호입니다',
-                defaultText: '비밀번호를 입력해주세요',
+                successMessage: VALIDATION_MESSAGE.PASSWORD_VALID,
+                defaultText: HELPER_TEXT.PASSWORD,
                 preventSpaces: true
             }
         }
     ]);
 }
 
+/**
+ * 입력 필드 placeholder 텍스트 설정
+ */
+function setupPlaceholders() {
+    if (elements.email) elements.email.placeholder = PLACEHOLDER.EMAIL;
+    if (elements.password) elements.password.placeholder = PLACEHOLDER.PASSWORD;
+}
+
 // DOMContentLoaded 이벤트 리스너
 document.addEventListener('DOMContentLoaded', function() {
+    setupPlaceholders();
     
     PageLayout.initializePage();
     initializePageElements();
@@ -96,15 +126,73 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // API 호출로 로그인 처리
-            console.log('로그인 시도:', { email, password, rememberMe });
             const response = await login({ email, password, rememberMe });
             
-            console.log('로그인 성공:', response);
-            ToastUtils.success('로그인되었습니다!');
-            navigateTo('/');
+            // 사용자 정보 저장
+            if (response?.data?.user) {
+                const user = response.data.user;
+                
+                // 탈퇴 대기 중인 계정인지 확인 
+                const hasDeletedAt = user.deletedAt !== null && user.deletedAt !== undefined && user.deletedAt !== '';
+                
+                if (hasDeletedAt) {
+                    // 계정 복구 처리 함수
+                    const handleRestore = async () => {
+                        try {
+                            await restoreUser(user.id);
+                            
+                            // 복구 후 정상 로그인 처리
+                            saveUserToStorage(user, rememberMe);
+                            ToastUtils.success(TOAST_MESSAGE.LOGIN_RESTORED);
+                            dispatchUserUpdatedEvent();
+                            
+                            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+                            if (redirectPath) {
+                                sessionStorage.removeItem('redirectAfterLogin');
+                                navigateTo(redirectPath);
+                            } else {
+                                navigateTo('/');
+                            }
+                        } catch (error) {
+                            ToastUtils.error(error.message || TOAST_MESSAGE.ACCOUNT_RESTORE_FAILED);
+                        }
+                    };
+                    
+                    // 탈퇴 대기 중인 계정 복구 여부 확인 모달
+                    const restoreModal = new Modal({
+                        title: MODAL_MESSAGE.TITLE_ACCOUNT_RESTORE,
+                        subtitle: MODAL_MESSAGE.SUBTITLE_ACCOUNT_RESTORE,
+                        content: MODAL_MESSAGE.CONTENT_ACCOUNT_RESTORE,
+                        confirmText: '계정 복구',
+                        confirmType: 'primary',
+                        showCancel: true,
+                        cancelText: '취소',
+                        onConfirm: handleRestore,
+                        onCancel: () => {
+                            // 복구하지 않고 로그인 취소
+                            ToastUtils.info(TOAST_MESSAGE.ACCOUNT_RESTORE_CANCELLED);
+                        }
+                    });
+                    restoreModal.show();
+                } else {
+                    // 정상 로그인 처리
+                    saveUserToStorage(user, rememberMe);
+                    ToastUtils.success(TOAST_MESSAGE.LOGIN_SUCCESS);
+                    dispatchUserUpdatedEvent();
+                    
+                    const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+                    if (redirectPath) {
+                        sessionStorage.removeItem('redirectAfterLogin');
+                        navigateTo(redirectPath);
+                    } else {
+                        navigateTo('/');
+                    }
+                }
+            }
             
         } catch (error) {
-            ToastUtils.error('로그인에 실패했습니다.');
+            const errorMessage = error.message || TOAST_MESSAGE.LOGIN_FAILED;
+            ToastUtils.error(errorMessage);
         } finally {
             // 로딩 상태 해제
             PageLayout.hideLoading(submitButton, '로그인');

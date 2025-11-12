@@ -1,51 +1,12 @@
 /* 공통 스타일 import */
 @import url('../../styles/common.css');
+@import url('../../components/form/form.css');
 
-/* 메인 컨텐츠 */
+/* 로그인 페이지 전용 스타일 */
 .main {
-    padding: var(--spacing-4xl) var(--spacing-2xl);
-    padding-top: calc(var(--header-height) + var(--spacing-4xl));
-    min-height: calc(100vh - 88px);
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
-    z-index: var(--z-content);
-}
-
-.container {
-    width: 100%;
-    max-width: 420px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: var(--border-radius-xl);
-    padding: var(--spacing-5xl) var(--spacing-4xl);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    animation: slideUp var(--transition-slow);
-    position: relative;
-    overflow: hidden;
-    z-index: var(--z-card);
-}
-
-.container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-}
-
-.page-title {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--text-primary);
-    text-align: center;
-    margin-bottom: var(--spacing-4xl);
-    letter-spacing: -0.5px;
-    animation: fadeIn 0.8s ease-out 0.2s both;
 }
 
 /* 폼 스타일 */
@@ -61,42 +22,6 @@
 
 .form-group:nth-child(1) { animation-delay: 0.5s; }
 .form-group:nth-child(2) { animation-delay: 0.6s; }
-
-
-.form-label {
-    display: block;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-sm);
-    letter-spacing: -0.3px;
-}
-
-.form-input {
-    width: 100%;
-    padding: 14px var(--spacing-lg);
-    border: 2px solid var(--border-light);
-    border-radius: var(--border-radius-lg);
-    font-size: 16px;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    transition: var(--transition-normal);
-    outline: none;
-    font-weight: 500;
-    letter-spacing: -0.2px;
-}
-
-.form-input:focus {
-    border-color: var(--primary-color);
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-    transform: translateY(-1px);
-}
-
-.form-input::placeholder {
-    color: var(--text-muted);
-    font-weight: 400;
-}
 
 /* 로그인 옵션 */
 .login-options {
@@ -149,63 +74,30 @@
     color: var(--white);
     font-size: 12px;
     font-weight: bold;
-    animation: checkmark 0.3s ease-out;
 }
 
-
-/* 버튼 그룹 */
-.button-group {
-    margin-bottom: var(--spacing-2xl);
-    animation: fadeIn 0.8s ease-out 0.8s both;
+/* 버튼 그룹 스타일 - 로그인 페이지 전용 */
+.login-form .button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
-/* 추가 링크 */
-.additional-links {
-    text-align: center;
-    animation: fadeIn 0.8s ease-out 0.9s both;
+.login-form .button-group .btn {
+    flex: 1;
+    min-width: calc(50% - 6px);
 }
 
-.link {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
-    transition: var(--transition-normal);
-    position: relative;
-    padding: var(--spacing-sm) 0;
-}
-
-.link:hover {
-    color: var(--primary-color);
-    transform: translateY(-1px);
-}
-
-.link::after {
-    content: '';
-    position: absolute;
-    bottom: var(--spacing-xs);
-    left: 50%;
-    width: 0;
-    height: 2px;
-    background: var(--primary-color);
-    transition: var(--transition-normal);
-    transform: translateX(-50%);
-}
-
-.link:hover::after {
-    width: 100%;
+/* 비회원 로그인 버튼은 전체 너비로 아래 행에 배치 */
+.login-form .button-group .btn:last-child {
+    flex: 1 1 100%;
+    min-width: 100%;
+    margin-top: var(--spacing-sm);
 }
 
 /* 반응형 */
 @media (max-width: 480px) {
-    .main { padding: var(--spacing-2xl) var(--spacing-lg); }
-    .container { padding: var(--spacing-3xl) var(--spacing-2xl); max-width: 100%; }
-    .page-title { font-size: 24px; }
-    .form-input { padding: var(--spacing-lg) var(--spacing-lg); }
-    .btn-primary, .btn-secondary { padding: var(--spacing-lg) var(--spacing-xl); }
-}
-
-@media (max-width: 360px) {
-    .container { padding: var(--spacing-2xl) var(--spacing-xl); }
-    .page-title { font-size: 22px; }
+    .login-form {
+        margin-bottom: var(--spacing-2xl);
+    }
 }

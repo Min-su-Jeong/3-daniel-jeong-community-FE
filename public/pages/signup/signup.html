@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입</title>
-    <link rel="stylesheet" href="../../components/modal/modal.css">
-    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
+    <link rel="stylesheet" href="../../styles/common.css">
     <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/modal/modal.css">
     <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
     <link rel="stylesheet" href="signup.css">
 </head>
 <body>
@@ -27,7 +28,8 @@
                     <div class="profile-img" id="profileImage">
                         <span class="plus-icon">+</span>
                     </div>
-                    <input type="file" id="profileInput" accept="image/*" style="display: none;">
+                    <input type="file" id="profileInput" style="display: none;">
+                    <button type="button" class="btn-remove-image" id="removeImageBtn">삭제</button>
                 </div>
             </div>
 
@@ -57,7 +59,7 @@
                 <!-- 닉네임 -->
                 <div class="form-group">
                     <label class="form-label">닉네임 *</label>
-                    <input type="text" class="form-input" id="nickname" placeholder="닉네임을 입력하세요" required>
+                    <input type="text" class="form-input" id="nickname" placeholder="닉네임을 입력하세요" maxlength="10" required>
                     <p class="helper-text">2-10자 사이로 입력해주세요</p>
                 </div>
 

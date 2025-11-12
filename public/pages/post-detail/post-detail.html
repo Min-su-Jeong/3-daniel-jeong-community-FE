@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>게시글 상세조회</title>
+    <link rel="stylesheet" href="../../styles/common.css">
     <link rel="stylesheet" href="../../components/button/button.css">
     <link rel="stylesheet" href="../../components/modal/modal.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
     <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
     <link rel="stylesheet" href="post-detail.css">
 </head>
@@ -17,7 +19,7 @@
     <main class="main">
         <div class="container">
             <!-- 게시글 상세 정보 -->
-            <article class="post-detail">
+            <article class="post-detail card-section">
                 <!-- 게시글 헤더 -->
                 <div class="post-header">
                     <h2 class="post-title" id="postTitle">제목 1</h2>
@@ -27,7 +29,7 @@
                 <!-- 게시글 메타 정보 -->
                 <div class="post-meta">
                     <div class="author-info">
-                        <div class="author-avatar">👤</div>
+                        <div class="author-avatar" id="authorAvatar">👤</div>
                         <span class="author-name" id="authorName">더미 작성자 1</span>
                     </div>
                     <span class="post-date" id="postDate">2021-01-01 00:00:00</span>
@@ -72,15 +74,15 @@
             </article>
 
             <!-- 댓글 섹션 -->
-            <section class="comments-section">
+            <section class="comments-section card-section">
                 <h3 class="comments-title">댓글</h3>
                 
                 <!-- 댓글 입력 -->
                 <div class="comment-input-section">
                     <textarea 
-                        class="comment-input" 
+                        class="comment-input text-input" 
                         id="commentInput" 
-                        placeholder="댓글을 남겨주세요!"
+                        placeholder="댓글을 남겨주세요."
                         rows="3"
                     ></textarea>
                     <div id="commentSubmitBtn"></div>

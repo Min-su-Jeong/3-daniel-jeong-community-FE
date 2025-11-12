@@ -1,8 +1,9 @@
 /**
- * 숫자 포맷팅
- * @param {number} num - 포맷팅할 숫자
- * @returns {string} - 포맷팅된 문자열
+ * 숫자 포맷팅 유틸리티
+ * 큰 숫자를 K/M 단위로 축약 표시
  */
+
+// 숫자를 K/M 단위로 축약 표시 (1000 이상 K, 1000000 이상 M)
 export function formatNumber(num) {
     if (num >= 1000000) {
         return Math.floor(num / 1000000) + 'M';
@@ -12,11 +13,7 @@ export function formatNumber(num) {
     return num.toString();
 }
 
-/**
- * 날짜 포맷팅 (YYYY-MM-DD HH:mm:ss 형식)
- * @param {Date} date - 포맷팅할 날짜 객체
- * @returns {string} - 포맷팅된 날짜 문자열
- */
+// 날짜를 YYYY-MM-DD HH:mm:ss 형식으로 포맷팅
 export function formatDate(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');

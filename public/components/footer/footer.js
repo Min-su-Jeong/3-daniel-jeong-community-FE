@@ -1,25 +1,25 @@
-import { API_SERVER_URI } from '../../utils/constants.js';
+import { API_SERVER_URI } from '../../utils/constants/api.js';
 
 class AppFooter extends HTMLElement {
     constructor() {
         super();
-        this._shadow = this.attachShadow({ mode: 'open' });
+        this.attachShadow({ mode: 'open' });
     }
 
     connectedCallback() { 
-        this._render(); 
+        this.render(); 
     }
 
-    _render() {
+    render() {
         const copyrightText = this.getAttribute('copyright-text') || '© 2025 아무말대잔치 Community. All rights reserved';
 
-
-        this._shadow.innerHTML = '';
+        // Shadow DOM 초기화 (replaceChildren으로 모든 자식 제거)
+        this.shadowRoot.replaceChildren();
 
         const styleLink = document.createElement('link');
         styleLink.rel = 'stylesheet';
         styleLink.href = '/components/footer/footer.css';
-        this._shadow.appendChild(styleLink);
+        this.shadowRoot.appendChild(styleLink);
 
 
         const footer = document.createElement('footer');
@@ -59,7 +59,7 @@ class AppFooter extends HTMLElement {
         footerContent.appendChild(footerLinks);
         footer.appendChild(divider);
         footer.appendChild(footerContent);
-        this._shadow.appendChild(footer);
+        this.shadowRoot.appendChild(footer);
     }
 
 }

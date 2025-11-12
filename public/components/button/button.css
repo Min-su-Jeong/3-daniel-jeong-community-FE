@@ -1,12 +1,13 @@
+/* 버튼 기본 스타일 */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 16px 24px;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg) var(--spacing-2xl);
     border: none;
-    border-radius: 12px;
-    font-size: 16px;
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-lg);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -16,12 +17,15 @@
     overflow: hidden;
     z-index: var(--z-button);
     letter-spacing: -0.3px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-xs);
+    font-family: inherit;
 }
 
-.btn:disabled {
-    opacity: 0.6;
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.5;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .btn.loading {
@@ -30,119 +34,127 @@
 
 /* 버튼 크기 */
 .btn-small {
-    padding: 12px 20px;
-    font-size: 14px;
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: var(--font-size-md);
     border-radius: 10px;
 }
 
 .btn-medium {
-    padding: 16px 24px;
-    font-size: 16px;
-    border-radius: 12px;
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    font-size: var(--font-size-lg);
+    border-radius: var(--border-radius-md);
 }
 
 .btn-large {
-    padding: 20px 32px;
-    font-size: 18px;
+    padding: var(--spacing-xl) var(--spacing-3xl);
+    font-size: var(--font-size-2xl);
     border-radius: 14px;
 }
 
-/* Primary 버튼 */
+/* 버튼 Variant */
 .btn.btn-primary {
-    background: #0064ff;
-    color: white;
+    background: var(--primary-color);
+    color: var(--white);
     border: none;
-    box-shadow: 0 2px 8px rgba(0, 100, 255, 0.3);
+    box-shadow: var(--shadow-md);
+}
+
+.btn.btn-primary:disabled,
+.btn.btn-primary.disabled {
+    background: #95a5a6;
+    color: var(--white);
+    box-shadow: none;
+    opacity: 0.6;
 }
 
 .btn.btn-primary:hover:not(:disabled) {
-    background: #0052cc;
+    background: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 100, 255, 0.4);
+    box-shadow: var(--shadow-lg);
 }
 
 .btn.btn-primary:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0, 100, 255, 0.3);
+    box-shadow: var(--shadow-xs);
 }
 
 .btn.btn-primary:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 100, 255, 0.2);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-/* Secondary 버튼 */
 .btn-secondary {
-    background: #ffffff;
-    color: #495057;
-    border: 1px solid #e9ecef;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: var(--white);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-xs);
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #ffffff;
-    color: #0064ff;
-    border-color: #0064ff;
+    background: var(--white);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 100, 255, 0.2);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-secondary:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-xs);
 }
 
-.btn-danger {
-    background: #ff4757;
-    color: white;
+/* 위험 버튼 (삭제 등) */
+.btn.btn-danger {
+    background: var(--red);
+    color: var(--white);
     border: none;
-    box-shadow: none;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
-.btn-danger:hover:not(:disabled) {
-    background: #ff3742;
+.btn.btn-danger:disabled,
+.btn.btn-danger.disabled {
+    background: #95a5a6;
+    color: var(--white);
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+.btn.btn-danger:hover:not(:disabled) {
+    background: var(--red-hover);
     transform: translateY(-1px);
-    box-shadow: none;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
-.btn-danger:active:not(:disabled) {
+.btn.btn-danger:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: none;
+    box-shadow: var(--shadow-xs);
 }
 
-.btn-success {
-    background: #2ed573;
-    color: white;
-    border: none;
-    box-shadow: 0 2px 8px rgba(46, 213, 115, 0.3);
+.btn.btn-danger:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
 }
 
-.btn-success:hover:not(:disabled) {
-    background: #26d065;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(46, 213, 115, 0.4);
-}
-
-.btn-success:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(46, 213, 115, 0.3);
-}
-
+/* 버튼 내부 요소 */
 .btn-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: var(--font-size-2xl);
+}
+
+.btn-text {
+    display: inline-block;
 }
 
 .btn-spinner {
-    width: 16px;
-    height: 16px;
+    width: var(--icon-size-md);
+    height: var(--icon-size-md);
     border: 2px solid transparent;
     border-top: 2px solid currentColor;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-    margin-left: 8px;
+    margin-left: var(--spacing-sm);
 }
 
 @keyframes spin {
@@ -150,7 +162,7 @@
     100% { transform: rotate(360deg); }
 }
 
-/* 자연스러운 버튼 클릭 효과 */
+/* 버튼 클릭 효과 */
 .btn::before {
     content: '';
     position: absolute;
@@ -172,96 +184,71 @@
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 성공 버튼 애니메이션 */
-.btn-success-animation {
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-success-animation .btn-text {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-block;
-}
-
-.btn-success-animation .btn-icon {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%) scale(0);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-.btn-success-animation.success .btn-text {
-    transform: translateX(-20px);
-    opacity: 0;
-}
-
-.btn-success-animation.success .btn-icon {
-    transform: translateY(-50%) scale(1);
-    opacity: 1;
-}
-
-.btn-success-animation.success {
-    background: #2ed573 !important;
-    transform: scale(1.05);
-    box-shadow: 0 4px 20px rgba(46, 213, 115, 0.4);
-}
-
-/* 체크 아이콘 애니메이션 */
-@keyframes checkmark {
-    0% {
-        transform: translateY(-50%) scale(0);
-        opacity: 0;
-    }
-    50% {
-        transform: translateY(-50%) scale(1.2);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-50%) scale(1);
-        opacity: 1;
-    }
-}
-
-.btn-success-animation.success .btn-icon {
-    animation: checkmark 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 /* 버튼 그룹 */
 .button-group {
     display: flex;
-    gap: 12px;
-    margin-top: 24px;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-2xl);
 }
 
 .button-group .btn {
     flex: 1;
 }
 
+/* 이미지 삭제 버튼 */
+.btn-remove-image {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
+    font-family: inherit;
+    min-height: 32px;
+}
+
+.btn-remove-image.visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.btn-remove-image:hover {
+    background: var(--red);
+    color: var(--white);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.btn-remove-image:active {
+    transform: translateY(0);
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
     .btn {
-        padding: 14px 20px;
-        font-size: 15px;
+        padding: 14px var(--spacing-xl);
+        font-size: var(--font-size-base);
         border-radius: 10px;
     }
     
     .btn-small {
-        padding: 10px 16px;
-        font-size: 13px;
+        padding: 10px var(--spacing-lg);
+        font-size: var(--font-size-sm);
     }
     
     .btn-large {
-        padding: 18px 28px;
-        font-size: 17px;
+        padding: var(--spacing-2xl) 28px;
+        font-size: var(--font-size-xl);
     }
     
     .button-group {
         flex-direction: column;
-        gap: 12px;
+        gap: var(--spacing-md);
     }
     
     .button-group .btn {

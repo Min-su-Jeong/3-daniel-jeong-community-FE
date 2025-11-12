@@ -1,102 +1,158 @@
-import { PageLayout } from '../../components/layout/page-layout.js';
-import { Button } from '../../components/button/button.js';
-import { validateNickname, setupFormValidation } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements, navigateTo } from '../../utils/common/dom.js';
-import { ToastUtils } from '../../components/toast/toast.js';
-import { Modal } from '../../components/modal/modal.js';
-import { validateImageFiles, createImagePreviews } from '../../utils/common/image.js';
-import { IMAGE_CONSTANTS } from '../../utils/constants.js';
+import { PageLayout, Button, ToastUtils, Modal, createFormHandler } from '../../components/index.js';
+import { 
+    validateNickname, 
+    setupFormValidation, 
+    getElementValue, 
+    setElementValue, 
+    initializeElements, 
+    navigateTo, 
+    renderProfileImage as renderProfileImageUtil,
+    createProfilePlaceholder,
+    setupProfileImage,
+    getUserFromStorage, 
+    saveUserToStorage, 
+    dispatchUserUpdatedEvent, 
+    removeUserFromStorage,
+    getSubmitButton
+} from '../../utils/common/index.js';
+import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
+import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
+import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
+import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
+import { updateUser, deleteUser, uploadImage, logout } from '../../api/index.js';
 
-// DOM 요소들 초기화
-let elements = {};
+const elements = initializeElements({
+    buttonGroup: 'buttonGroup',
+    userEditForm: 'userEditForm',
+    nickname: 'nickname',
+    profileImage: 'profileImage',
+    profileImageInput: 'profileImageInput',
+    removeImageBtn: 'removeImageBtn',
+    withdrawalLink: 'withdrawalLink'
+});
 
-function initializePageElements() {
-    const elementIds = {
-        buttonGroup: 'buttonGroup',
-        userEditForm: 'userEditForm',
-        nickname: 'nickname',
-        profileImage: 'profileImage',
-        changeImageBtn: 'changeImageBtn',
-        profileImageInput: 'profileImageInput',
-        withdrawalLink: 'withdrawalLink'
-    };
-    
-    elements = initializeElements(elementIds);
+let originalNickname = '';
+let originalProfileImageKey = null;
+let user = null;
+let editButton = null;
+
+// 프로필 이미지 렌더링 (유틸리티 함수 래퍼)
+function renderProfileImage(container, imageKey) {
+    if (!container) return;
+    renderProfileImageUtil(container, imageKey);
 }
 
-// 회원정보수정 페이지 버튼 생성
+// 삭제 버튼 표시 상태 업데이트
+function updateRemoveButtonVisibility(show) {
+    if (!elements.removeImageBtn) return;
+    elements.removeImageBtn.classList.toggle('visible', show);
+}
+
 function createUserEditButtons() {
     if (!elements.buttonGroup) return;
     
-    elements.buttonGroup.innerHTML = '';
-    
-    // 수정하기 버튼
-    const editButton = new Button({
+    Button.clearGroup(elements.buttonGroup);
+    editButton = Button.create(elements.buttonGroup, {
         text: '수정하기',
         type: 'submit',
         variant: 'primary',
-        size: 'medium'
+        size: 'medium',
+        disabled: true
     });
-    
-    editButton.appendTo(elements.buttonGroup);
 }
 
-// 프로필 이미지 변경 처리
+/**
+ * 닉네임 필드 헬퍼 텍스트 초기화 (기본 텍스트로 복원)
+ */
+function resetHelperText() {
+    const helperText = elements.nickname?.nextElementSibling;
+    if (!helperText?.classList.contains('helper-text')) return;
+    
+    elements.nickname.classList.remove('success', 'error', 'warning');
+    helperText.classList.remove('success', 'error', 'warning');
+    helperText.textContent = helperText.dataset.defaultText || '';
+}
+
+/**
+ * 제출 버튼 활성화 상태 업데이트 (닉네임/이미지 변경 여부 확인)
+ */
+function updateSubmitButtonState() {
+    if (!editButton) return;
+    
+    const currentNickname = getElementValue(elements.nickname, '').trim();
+    const nicknameChanged = currentNickname !== originalNickname;
+    const imageChanged = !!elements.profileImageInput?.files[0];
+    const hasOriginalImage = !!originalProfileImageKey;
+    const hasCurrentImage = !!elements.profileImage.querySelector('img');
+    const imageRemoved = hasOriginalImage && !hasCurrentImage && !imageChanged;
+    
+    if (!nicknameChanged) {
+        resetHelperText();
+    }
+    
+    const nicknameValid = nicknameChanged ? validateNickname(currentNickname).isValid : true;
+    const canSubmit = (nicknameChanged && nicknameValid) || imageChanged || imageRemoved;
+    
+    editButton.setDisabled(!canSubmit);
+}
+
+/**
+ * 원본 프로필 이미지 복원 (변경 취소 시)
+ */
+function restoreOriginalImage() {
+    clearImageContainer();
+    
+    if (originalProfileImageKey) {
+        renderProfileImage(elements.profileImage, originalProfileImageKey);
+        updateRemoveButtonVisibility(true);
+    } else {
+        createProfilePlaceholder(elements.profileImage);
+        updateRemoveButtonVisibility(false);
+    }
+    
+    elements.profileImageInput.value = '';
+    updateSubmitButtonState();
+}
+
+// 이미지 컨테이너 초기화
+function clearImageContainer() {
+    while (elements.profileImage.firstChild) {
+        elements.profileImage.removeChild(elements.profileImage.firstChild);
+    }
+}
+
+/**
+ * 프로필 이미지 제거 (placeholder 표시)
+ */
+function removeProfileImage() {
+    clearImageContainer();
+    createProfilePlaceholder(elements.profileImage);
+    updateRemoveButtonVisibility(false);
+    elements.profileImageInput.value = '';
+    updateSubmitButtonState();
+}
+
+// 프로필 이미지 변경 처리 (파일 선택, 검증, 미리보기)
 function setupProfileImageChange() {
-    if (!elements.changeImageBtn || !elements.profileImageInput || !elements.profileImage) return;
-    
-    elements.changeImageBtn.addEventListener('click', () => {
-        elements.profileImageInput.click();
-    });
-    
-    elements.profileImageInput.addEventListener('change', async (event) => {
-        const files = Array.from(event.target.files);
-        if (files.length === 0) return;
-        
-        // 이미지 파일 유효성 검사
-        const { validFiles, errors } = validateImageFiles(files, IMAGE_CONSTANTS.MAX_IMAGE_SIZE, IMAGE_CONSTANTS.SUPPORTED_TYPES, 1);
-        
-        // 에러가 있으면 표시
-        if (errors.length > 0) {
-            errors.forEach(error => ToastUtils.error(error));
-            return;
-        }
-        
-        if (validFiles.length === 0) return;
-        
-        try {
-            // 이미지 미리보기 생성
-            const { previews, errors: previewErrors } = await createImagePreviews(validFiles);
-            
-            if (previewErrors.length > 0) {
-                previewErrors.forEach(({ error }) => ToastUtils.error(error.message));
-                return;
-            }
-            
-            if (previews.length > 0) {
-                const { url } = previews[0];
-                const img = document.createElement('img');
-                img.src = url;
-                img.alt = '프로필 이미지';
-                
-                elements.profileImage.innerHTML = '';
-                elements.profileImage.appendChild(img);
-            }
-        } catch (error) {
-            console.error('프로필 이미지 처리 실패:', error);
-            ToastUtils.error('이미지 처리 중 오류가 발생했습니다.');
-        }
+    setupProfileImage({
+        imageContainer: elements.profileImage,
+        imageInput: elements.profileImageInput,
+        removeButton: elements.removeImageBtn,
+        onRemove: removeProfileImage,
+        onImageChange: updateSubmitButtonState
     });
 }
 
-// 폼 유효성 검사 설정
+/**
+ * 폼 필드 유효성 검사 설정 (닉네임 실시간 검증)
+ */
 function setupFormFields() {
     setupFormValidation('userEditForm', [
         {
             id: 'nickname',
             validation: validateNickname,
             options: {
-                successMessage: '사용 가능한 닉네임입니다',
+                successMessage: VALIDATION_MESSAGE.NICKNAME_AVAILABLE,
                 defaultText: '',
                 minLength: 2,
                 maxLength: 10
@@ -104,86 +160,210 @@ function setupFormFields() {
         }
     ]);
     
-    // TODO: API 연결 시 닉네임 중복 검사 추가
+    // 닉네임 입력 시 버튼 상태 업데이트 (유효성 검사 후)
+    elements.nickname?.addEventListener('input', () => {
+        // 다음 틱에서 실행하여 setupFormValidation의 검증이 완료된 후 버튼 상태 업데이트
+        setTimeout(updateSubmitButtonState, 0);
+    });
 }
 
-// 회원 탈퇴 처리
+// 회원 탈퇴 처리 (API 호출, 로그아웃, 저장소 정리, 홈으로 이동)
+async function removeUser(userId) {
+    try {
+        await deleteUser(userId);
+        await logout();
+        
+        removeUserFromStorage();
+        dispatchUserUpdatedEvent();
+        
+        ToastUtils.success(TOAST_MESSAGE.USER_DELETE_SUCCESS);
+        setTimeout(() => navigateTo('/'), 2000);
+    } catch (error) {
+        ToastUtils.error(error.message || TOAST_MESSAGE.USER_DELETE_FAILED);
+    }
+}
+
+/**
+ * 회원 탈퇴 링크 이벤트 설정 (확인 모달 2단계)
+ */
 function setupWithdrawal() {
     if (!elements.withdrawalLink) return;
 
     elements.withdrawalLink.addEventListener('click', (event) => {
         event.preventDefault();
         
-        // 첫 번째 확인 모달
-        const firstModal = new Modal({
-            title: '회원 탈퇴',
-            content: '회원 탈퇴를 진행하시겠습니까?<br>탈퇴된 계정은 복구할 수 없습니다.',
-            confirmText: '탈퇴',
+        if (!user) {
+            ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
+            return;
+        }
+        
+        const confirmModal = new Modal({
+            title: MODAL_MESSAGE.TITLE_DELETE,
+            subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
+            content: MODAL_MESSAGE.WITHDRAWAL_CONFIRM,
+            confirmText: '탈퇴 신청',
             confirmType: 'danger',
+            showCancel: true,
+            cancelText: '취소',
             onConfirm: () => {
-                // 두 번째 최종 확인 모달
-                const finalModal = new Modal({
-                    title: '회원 탈퇴 확인',
-                    content: '정말로 회원 탈퇴를 진행하시겠습니까?<br><strong>계정과 관련된 모든 정보가 영구적으로 삭제됩니다.</strong>',
-                    confirmText: '탈퇴',
+                const reconfirmModal = new Modal({
+                    title: MODAL_MESSAGE.TITLE_DELETE,
+                    subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
+                    content: MODAL_MESSAGE.WITHDRAWAL_RECONFIRM,
+                    confirmText: '탈퇴 신청',
                     confirmType: 'danger',
                     cancelText: '취소',
-                    onConfirm: () => {
-                        // TODO: 회원 탈퇴 API 호출
-                        ToastUtils.success('회원 탈퇴가 완료되었습니다.');
-                        navigateTo('/post-list');
-                    }
+                    onConfirm: () => removeUser(user.id)
                 });
-                finalModal.show();
+                reconfirmModal.show();
             }
         });
-        firstModal.show();
+        confirmModal.show();
     });
 }
 
-// 폼 제출 처리
+async function loadUserData() {
+    user = getUserFromStorage();
+    
+    if (!user) {
+        ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
+        navigateTo('/login');
+        return;
+    }
+    
+    originalNickname = user.nickname || '';
+    originalProfileImageKey = user.profileImageKey || null;
+    
+    setElementValue(elements.nickname, originalNickname);
+    clearImageContainer();
+    
+    if (originalProfileImageKey) {
+        renderProfileImage(elements.profileImage, originalProfileImageKey);
+        updateRemoveButtonVisibility(true);
+    } else {
+        createProfilePlaceholder(elements.profileImage);
+        updateRemoveButtonVisibility(false);
+    }
+    
+    elements.profileImageInput.value = '';
+    
+    const emailInput = document.querySelector('input[type="email"]');
+    if (emailInput) {
+        emailInput.value = user.email || '';
+    }
+    
+    updateSubmitButtonState();
+}
+
+async function uploadProfileImage(userId, file) {
+    const response = await uploadImage('PROFILE', userId, file);
+    if (!response?.data?.objectKey) {
+        throw new Error(TOAST_MESSAGE.PROFILE_IMAGE_UPLOAD_FAILED);
+    }
+    return response.data.objectKey;
+}
+
+function updateProfileImageDisplay(imageKey) {
+    clearImageContainer();
+    
+    if (imageKey) {
+        renderProfileImage(elements.profileImage, imageKey);
+        updateRemoveButtonVisibility(true);
+    } else {
+        createProfilePlaceholder(elements.profileImage);
+        updateRemoveButtonVisibility(false);
+    }
+}
+
+// 프로필 이미지 키 결정 (삭제/업로드/유지)
+async function determineProfileImageKey(profileImageFile) {
+    const hasOriginalImage = !!originalProfileImageKey;
+    const hasCurrentImage = !!elements.profileImage.querySelector('img');
+    const isImageRemoved = hasOriginalImage && !hasCurrentImage && !profileImageFile;
+    
+    if (isImageRemoved) {
+        return '';
+    }
+    
+    if (profileImageFile) {
+        return await uploadProfileImage(user.id, profileImageFile);
+    }
+    
+    return user.profileImageKey || null;
+}
+
+// 사용자 정보 업데이트 후 상태 동기화
+function syncUserState(updatedUser, nickname) {
+    user = updatedUser;
+    const isRemembered = localStorage.getItem('user') !== null;
+    saveUserToStorage(user, isRemembered);
+    
+    originalNickname = nickname;
+    originalProfileImageKey = user.profileImageKey || null;
+    
+    updateProfileImageDisplay(user.profileImageKey || null);
+    elements.profileImageInput.value = '';
+    updateSubmitButtonState();
+    dispatchUserUpdatedEvent();
+}
+
 function setupFormSubmission() {
     if (!elements.userEditForm) return;
     
-    elements.userEditForm.onsubmit = async function(event) {
-        event.preventDefault();
-
-        const nickname = getElementValue(elements.nickname, '');
-        const profileImage = elements.profileImageInput.files[0];
-        
-        const submitButton = elements.buttonGroup.querySelector('.btn-primary');
-        PageLayout.showLoading(submitButton, '수정 중...');
-        
-        try {
-            // TODO: 회원정보 수정 API 호출
-            console.log('회원정보 수정 시도:', { nickname, profileImage });
+    createFormHandler({
+        form: elements.userEditForm,
+        loadingText: '수정 중...',
+        successMessage: TOAST_MESSAGE.USER_UPDATE_SUCCESS,
+        submitButtonSelector: getSubmitButton(elements.buttonGroup),
+        validate: () => {
+            if (!user) {
+                ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
+                return false;
+            }
+            return true;
+        },
+        onSubmit: async () => {
+            const nickname = getElementValue(elements.nickname, '').trim();
+            const profileImageFile = elements.profileImageInput?.files[0];
             
-            // 임시 성공 처리
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const profileImageKey = await determineProfileImageKey(profileImageFile);
+            const updatePayload = { nickname };
             
-            console.log('회원정보 수정 성공');
-            ToastUtils.success('회원정보가 수정되었습니다!');
+            const hasImageChange = profileImageKey !== (user.profileImageKey || null);
+            if (hasImageChange) {
+                updatePayload.profileImageKey = profileImageKey;
+            }
             
-            // 2초 후 이전 페이지로 이동
-            setTimeout(() => {
-                history.back();
-            }, 2000);
+            const response = await updateUser(user.id, updatePayload);
             
-        } catch (error) {
-            ToastUtils.error('회원정보 수정에 실패했습니다.');
-        } finally {
-            PageLayout.hideLoading(submitButton, '수정하기');
+            if (!response?.data) {
+                throw new Error(TOAST_MESSAGE.USER_UPDATE_FAILED);
+            }
+            
+            syncUserState(response.data, nickname);
+            return { success: true };
+        },
+        onSuccess: () => {
+            setTimeout(() => navigateTo('/'), 1200);
         }
-    };
+    });
 }
 
-// DOMContentLoaded 이벤트 리스너
-document.addEventListener('DOMContentLoaded', function() {
+// Placeholder 및 Helper Text 설정
+function setupPlaceholdersAndHelperTexts() {
+    if (elements.nickname) elements.nickname.placeholder = PLACEHOLDER.NICKNAME;
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    setupPlaceholdersAndHelperTexts();
     PageLayout.initializePage();
-    initializePageElements();
     createUserEditButtons();
     setupProfileImageChange();
     setupFormFields();
     setupWithdrawal();
     setupFormSubmission();
+    
+    window.handleBackNavigation = () => navigateTo('/');
+    
+    await loadUserData();
 });

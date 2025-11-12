@@ -1,7 +1,4 @@
-/**
- * Toast 컴포넌트
- * @param {Object} options - Toast 설정 옵션
- */
+// Toast 컴포넌트
 export class Toast {
     constructor(options = {}) {
         this.options = {
@@ -80,7 +77,9 @@ export class Toast {
 
         // 애니메이션 적용
         requestAnimationFrame(() => {
-            this.toastElement.classList.add('show');
+            if (this.toastElement) {
+                this.toastElement.classList.add('show');
+            }
         });
 
         // 이벤트 리스너 설정
@@ -120,7 +119,7 @@ export class Toast {
         if (closeBtn) closeBtn.addEventListener('click', () => this.hide());
         
         this.toastElement.addEventListener('click', (e) => {
-            if (e.target === this.toastElement || e.target.classList.contains('toast-content')) {
+            if (e.target === this.toastElement || (e.target && e.target.classList && e.target.classList.contains('toast-content'))) {
                 this.hide();
             }
         });
@@ -131,6 +130,7 @@ export class Toast {
      */
     setupAutoClose() {
         if (this.options.duration <= 0) return;
+        if (!this.toastElement) return;
         
         if (this.options.showProgress) {
             const progressBar = this.toastElement.querySelector('.toast-progress');
