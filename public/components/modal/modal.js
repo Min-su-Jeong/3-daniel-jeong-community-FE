@@ -1,5 +1,24 @@
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
+
+// HTML 문자열을 DocumentFragment로 변환하여 삽입
+function parseHTML(htmlString) {
+    if (!htmlString) {
+        return document.createDocumentFragment();
+    }
+    
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const fragment = document.createDocumentFragment();
+    
+    // body의 모든 자식 노드를 fragment로 이동
+    Array.from(doc.body.childNodes).forEach(node => {
+        fragment.appendChild(node.cloneNode(true));
+    });
+    
+    return fragment;
+}
+
 /**
  * 모달 컴포넌트 클래스
  * 확인/취소 다이얼로그, 배경 스크롤 방지, 애니메이션 지원
@@ -44,13 +63,13 @@ export class Modal {
         
         const title = document.createElement('h3');
         title.className = 'modal-title';
-        title.textContent = this.options.title;
+        title.appendChild(parseHTML(this.options.title));
         header.appendChild(title);
         
         if (this.options.subtitle) {
             const subtitle = document.createElement('p');
             subtitle.className = 'modal-subtitle';
-            subtitle.textContent = this.options.subtitle;
+            subtitle.appendChild(parseHTML(this.options.subtitle));
             header.appendChild(subtitle);
         }
         
@@ -60,8 +79,8 @@ export class Modal {
         if (this.options.content) {
             const content = document.createElement('div');
             content.className = 'modal-content';
-            // textContent 사용으로 XSS 방지
-            content.textContent = this.options.content;
+            // DOMParser를 사용하여 HTML 문자열을 파싱하여 안전하게 삽입
+            content.appendChild(parseHTML(this.options.content));
             modal.appendChild(content);
         }
         
