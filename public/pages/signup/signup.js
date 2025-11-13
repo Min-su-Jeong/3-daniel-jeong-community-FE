@@ -87,10 +87,12 @@ function configureDuplicateChecks() {
 }
 
 // 비밀번호 변경 시 비밀번호 확인 필드 재검증 설정
+// 비밀번호가 변경되면 비밀번호 확인 필드도 자동으로 재검증하여 일치 여부 확인
 function syncPasswordConfirmation() {
     if (!elements.password || !elements.confirmPassword) return;
     
     elements.password.addEventListener('input', () => {
+        // 비밀번호 확인 필드에 값이 있으면 재검증 트리거
         if (elements.confirmPassword.value.trim() !== '') {
             elements.confirmPassword.dispatchEvent(new Event('input'));
         }

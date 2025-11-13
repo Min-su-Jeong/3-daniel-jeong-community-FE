@@ -47,10 +47,11 @@ export class Modal {
     }
 
     // 모달 표시 (DOM 생성, 이벤트 리스너 등록, 배경 스크롤 방지)
+    // 이미 표시 중이면 무시, 기존 모달이 있으면 먼저 제거 후 새로 생성
     show() {
         if (this.isVisible) return;
         
-        this.hide();
+        this.hide(); // 기존 모달이 있으면 제거
         this.createModalStructure();
         this.setupEventListeners();
         this.applyModalStyles();

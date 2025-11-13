@@ -254,28 +254,34 @@ function updateProfileImageDisplay(imageKey) {
 }
 
 // 프로필 이미지 키 결정 (삭제/업로드/유지)
+// 사용자가 이미지를 삭제했는지, 새로 업로드했는지, 그대로 유지하는지 판단하여 적절한 값 반환
 async function determineProfileImageKey(profileImageFile) {
     const hasOriginalImage = !!originalProfileImageKey;
     const hasCurrentImage = !!elements.profileImage.querySelector('img');
+    // 원본 이미지가 있었는데 현재 이미지가 없고 새 파일도 없으면 삭제된 것으로 판단
     const isImageRemoved = hasOriginalImage && !hasCurrentImage && !profileImageFile;
     
     if (isImageRemoved) {
-        return '';
+        return ''; // 빈 문자열은 이미지 삭제를 의미
     }
     
     if (profileImageFile) {
         return await uploadProfileImage(user.id, profileImageFile);
     }
     
+    // 이미지 변경 없음: 기존 이미지 키 유지
     return user.profileImageKey || null;
 }
 
 // 사용자 정보 업데이트 후 상태 동기화
+// 서버에서 받은 업데이트된 사용자 정보로 로컬 상태와 UI를 동기화
 function syncUserState(updatedUser, nickname) {
     user = updatedUser;
+    // rememberMe 상태 확인 (localStorage에 있으면 true)
     const isRemembered = localStorage.getItem('user') !== null;
     saveUserToStorage(user, isRemembered);
     
+    // 원본 값 업데이트 (다음 수정 시 변경 여부 확인용)
     originalNickname = nickname;
     originalProfileImageKey = user.profileImageKey || null;
     

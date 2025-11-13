@@ -7,8 +7,9 @@ import { getCurrentUserInfo } from '../../utils/common/user.js';
 import { getPosts } from '../../api/index.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
+import { debounce } from '../../utils/common/debounce-helper.js';
 
-const SCROLL_THRESHOLD = 200; // 무한 스크롤 트리거 거리 (px)
+const SCROLL_THRESHOLD = 400; // 무한 스크롤 트리거 거리 (px)
 const TITLE_MAX_LENGTH = 26;  // 게시글 제목 최대 길이
 const PAGE_SIZE = 10;         // 페이지당 게시글 수
 
@@ -45,12 +46,9 @@ function updateCurrentUserProfileImages() {
     const { userId, profileImageKey } = getCurrentUserInfo();
     if (!userId) return;
     
-    const postCards = elements.postsContainer.querySelectorAll('.post-card');
+    const postCards = elements.postsContainer.querySelectorAll(`[data-author-id="${userId}"]`);
     postCards.forEach(card => {
-        const authorId = card.dataset.authorId;
-        if (authorId === String(userId)) {
             updateProfileImageForCard(card, profileImageKey);
-        }
     });
 }
 
@@ -82,6 +80,7 @@ function initTypingAnimation() {
 }
 
 // 뒤로가기 시 최신 데이터 반영을 위한 목록 새로고침
+// 페이지네이션 상태 초기화 후 게시글 목록 재로드
 function refreshList() {
     cursor = null;
     hasMorePosts = true;
@@ -126,12 +125,15 @@ function createWritePostButton() {
 }
 
 // 페이지 복원 시 목록 새로고침 처리
+// 브라우저 뒤로가기/앞으로가기로 돌아올 때 최신 데이터를 보여주기 위해 새로고침
 function handlePageShow(event) {
+    // 초기 로드는 제외 (중복 로드 방지)
     if (isInitialLoad) {
         isInitialLoad = false;
         return;
     }
     
+    // 브라우저 캐시에서 복원되었거나 뒤로가기/앞으로가기인 경우 새로고침
     const navType = performance.getEntriesByType('navigation')[0]?.type;
     if (event.persisted || navType === 'back_forward') {
         refreshList();
@@ -147,8 +149,11 @@ function handleScroll() {
     }
 }
 
+// 스크롤 이벤트 debounce 적용
+const debouncedHandleScroll = debounce(handleScroll, 50);
+
 function bindEvents() {
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', debouncedHandleScroll, { passive: true });
     window.addEventListener('pageshow', handlePageShow);
 }
 

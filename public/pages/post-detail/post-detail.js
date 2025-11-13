@@ -10,6 +10,7 @@ import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
+import { debounce } from '../../utils/common/debounce-helper.js';
 
 let isLiked = false;
 let isLikePending = false;
@@ -91,6 +92,7 @@ const initElements = () => {
 };
 
 // 게시글 이미지 렌더링
+// 이미지가 1개면 단일 이미지로, 2개 이상이면 갤러리 형태로 표시
 const renderPostImages = (imageKeys) => {
     if (!elements.postImage || !imageKeys?.length) {
         if (elements.postImage) {
@@ -104,6 +106,7 @@ const renderPostImages = (imageKeys) => {
     elements.postImage.replaceChildren();
     
     const isSingleImage = imageKeys.length === 1;
+    // 단일 이미지는 postImage 컨테이너를 직접 사용, 여러 이미지는 갤러리 컨테이너 생성
     const container = isSingleImage ? elements.postImage : document.createElement('div');
     
     if (!isSingleImage) {
@@ -118,6 +121,7 @@ const renderPostImages = (imageKeys) => {
             imageItem.className = 'post-image-item';
             imageItem.onerror = () => imageItem.remove();
         } else {
+            // 갤러리 형태: 각 이미지를 감싸는 컨테이너 생성
             imageItem.className = 'post-image-item-container';
             const image = document.createElement('img');
             image.src = `${API_SERVER_URI}/files/${imageKey}`;
@@ -163,10 +167,11 @@ const displayPostData = (post) => {
     updateLikeUI(typeof post.isLiked === 'boolean' ? post.isLiked : false);
 };
 
-// 댓글 찾기 헬퍼
+// 댓글 찾기 헬퍼 (재귀적으로 댓글과 대댓글을 탐색)
 const findComment = (commentList, targetId) => {
     for (const comment of commentList) {
         if (comment.id === targetId) return comment;
+        // 대댓글이 있으면 재귀적으로 탐색
         if (comment.replies?.length) {
             const foundComment = findComment(comment.replies, targetId);
             if (foundComment) return foundComment;
@@ -175,13 +180,14 @@ const findComment = (commentList, targetId) => {
     return null;
 };
 
-// 댓글 삭제 헬퍼
+// 댓글 삭제 헬퍼 (재귀적으로 댓글과 대댓글을 탐색하여 삭제)
 const removeComment = (commentList, targetId) => {
     for (let i = 0; i < commentList.length; i++) {
         if (commentList[i].id === targetId) {
             commentList.splice(i, 1);
             return true;
         }
+        // 대댓글이 있으면 재귀적으로 탐색
         if (commentList[i].replies?.length && removeComment(commentList[i].replies, targetId)) {
             return true;
         }
@@ -189,8 +195,9 @@ const removeComment = (commentList, targetId) => {
     return false;
 };
 
-// 댓글 데이터 변환
+// 댓글 데이터 변환 (API 응답 형식을 통일된 형식으로 변환)
 const transformComment = (commentData) => {
+    // parentId 정규화: 0은 null로 변환 
     const parentId = commentData.parentId || commentData.parent_id;
     const normalizedParentId = (parentId && parentId !== 0) ? parentId : null;
     const commentAuthorId = commentData.author?.id || commentData.author?.userId || null;
@@ -215,12 +222,14 @@ const transformComment = (commentData) => {
     };
 };
 
-// 댓글 계층 구조 구성
+// 댓글 계층 구조 구성 (평면 배열을 부모-자식 관계로 변환)
 const buildCommentHierarchy = (allComments) => {
+    // 댓글 ID를 키로 하는 Map 생성 
     const commentMap = new Map(allComments.map(comment => [comment.id, comment]));
     const rootComments = [];
 
     allComments.forEach(comment => {
+        // 부모 댓글이 있으면 부모의 replies에 추가, 없으면 루트 댓글에 추가
         if (comment.parentId && commentMap.has(comment.parentId)) {
             const parentComment = commentMap.get(comment.parentId);
             parentComment.replies.push(comment);
@@ -232,13 +241,15 @@ const buildCommentHierarchy = (allComments) => {
     return rootComments;
 };
 
-// 댓글 정렬
+// 댓글 정렬 (작성일시 기준 오름차순, 대댓글도 재귀적으로 정렬)
 const sortComments = (commentList) => {
     commentList.sort((commentA, commentB) => new Date(commentA.date) - new Date(commentB.date));
+    // 대댓글이 있으면 재귀적으로 정렬
     commentList.forEach(comment => comment.replies.length && sortComments(comment.replies));
 };
 
 // 댓글 데이터 처리 및 렌더링
+// API 응답 데이터를 변환 -> 계층 구조 구성 -> 정렬 -> 렌더링 순서로 처리
 const processComments = (commentsData) => {
     const allComments = commentsData.map(transformComment);
     const rootComments = buildCommentHierarchy(allComments);
@@ -266,16 +277,18 @@ const handleDeletePost = async () => {
 
     try {
         const response = await deletePostApi(currentPostId);
-        if (response.success) {
-            Toast.success(TOAST_MESSAGE.POST_DELETE_SUCCESS);
-            setTimeout(() => navigateTo('/post-list'), 1000);
+        if (!response.success) {
+            throw new Error(response.message || TOAST_MESSAGE.POST_DELETE_FAILED);
         }
+        
+        Toast.success(TOAST_MESSAGE.POST_DELETE_SUCCESS);
+        setTimeout(() => navigateTo('/post-list'), 1000);
     } catch (error) {
         Toast.error(error.message || TOAST_MESSAGE.POST_DELETE_FAILED);
     }
 };
 
-// 좋아요 토글 처리
+// 좋아요 토글 처리 (낙관적 업데이트 패턴 사용)
 const toggleLike = async () => {
     if (isLikePending) return;
     if (!currentUserId) {
@@ -283,12 +296,14 @@ const toggleLike = async () => {
         return;
     }
 
+    // 낙관적 업데이트: 서버 응답 전에 UI 업데이트
     const previousLiked = isLiked;
     const nextLiked = !previousLiked;
     const nextLikeCount = nextLiked ? likeCountValue + 1 : Math.max(0, likeCountValue - 1);
 
     updateLikeUI(nextLiked);
     updateLikeCount(nextLikeCount);
+    // 클릭 피드백 애니메이션
     elements.likeBtn.style.transform = 'scale(1.1)';
     setTimeout(() => { elements.likeBtn.style.transform = 'scale(1)'; }, 200);
 
@@ -409,15 +424,17 @@ const createCommentElement = (comment, depth = 0) => {
 };
 
 // 댓글 입력 처리 (버튼 활성화/비활성화)
-const handleCommentInput = () => {
+const handleCommentInput = debounce(() => {
     if (!elements.commentInput || !elements.commentSubmitBtn) return;
     const hasCommentContent = getElementValue(elements.commentInput).trim().length > 0;
     elements.commentSubmitBtn.setDisabled(!hasCommentContent);
-};
+}, 150);
 
 // 댓글 입력값 가져오기
+// parentId가 있으면 답글 입력창에서, 없으면 일반 댓글 입력창에서 값을 가져옴
 function getCommentInput(parentId) {
     if (parentId) {
+        // 답글 입력창에서 값 가져오기
         const inputElement = document.querySelector(`#replyInput-${parentId} .reply-input`);
         return {
             content: inputElement?.value.trim() || '',
@@ -425,6 +442,7 @@ function getCommentInput(parentId) {
         };
     }
     
+    // 일반 댓글 입력창에서 값 가져오기
     if (!elements.commentInput) {
         console.error('commentInput element not found');
         return null;
@@ -436,7 +454,8 @@ function getCommentInput(parentId) {
     };
 }
 
-// 댓글 객체 생성
+// 댓글 객체 생성 (API 응답 데이터를 댓글 객체로 변환)
+// 새로 등록한 댓글이므로 현재 사용자의 프로필 이미지 키를 우선 사용
 function mapCommentData(responseData, parentId) {
     const { profileImageKey } = getCurrentUserInfo();
     const authorImageKey = profileImageKey || extractProfileImageKey(responseData.author) || null;
@@ -449,31 +468,37 @@ function mapCommentData(responseData, parentId) {
         authorImageKey: authorImageKey,
         date: responseData.createdAt ? formatDate(new Date(responseData.createdAt)) : formatDate(new Date()),
         content: responseData.content || '',
-        isEditable: true,
+        isEditable: true, // 새로 등록한 댓글이므로 수정 가능
         replies: []
     };
 }
 
 // 댓글을 댓글 목록에 추가
+// parentId가 있으면 해당 부모 댓글의 replies에 추가, 없으면 루트 댓글 목록에 추가
 function addComment(newComment, parentId) {
     if (parentId) {
+        // 답글인 경우: 부모 댓글 찾기
         const parentComment = findComment(comments, parentId);
         if (parentComment) {
             parentComment.replies.push(newComment);
             return;
         }
     }
+    // 일반 댓글인 경우: 루트 댓글 목록에 추가
     comments.push(newComment);
 }
 
 // 입력 필드 초기화
+// 댓글 등록 후 입력 필드를 초기화하고, 답글 입력창인 경우 닫기
 function resetCommentInput(inputElement, parentId) {
     if (parentId) {
+        // 답글 입력창인 경우: 입력값 초기화 후 답글 입력창 닫기
         if (inputElement) inputElement.value = '';
         toggleReplyInput(parentId);
         return;
     }
     
+    // 일반 댓글 입력창인 경우: 입력값 초기화 및 제출 버튼 비활성화
     if (elements.commentInput) {
         setElementValue(elements.commentInput, '');
     }
@@ -483,6 +508,7 @@ function resetCommentInput(inputElement, parentId) {
 }
 
 // 댓글 등록 처리
+// parentId가 있으면 답글, 없으면 일반 댓글로 등록
 const submitComment = async (parentId = null) => {
     const inputData = getCommentInput(parentId);
     if (!inputData || !inputData.content) return;
@@ -498,6 +524,7 @@ const submitComment = async (parentId = null) => {
         
         if (!responseData) return;
         
+        // 응답 데이터를 댓글 객체로 변환하여 댓글 목록에 추가
         const newComment = mapCommentData(responseData, parentId);
         addComment(newComment, parentId);
         
@@ -559,11 +586,12 @@ const toggleReplyInput = (commentId) => {
         return;
     }
     
-    document.querySelectorAll('.reply-input-container').forEach(containerElement => {
+    // 다른 댓글의 답글 입력창은 모두 닫기 (한 번에 하나의 답글 입력창만 열리도록)
+    const allContainers = document.querySelectorAll('.reply-input-container');
+    allContainers.forEach(containerElement => {
         if (containerElement.id === `replyInput-${commentId}`) return;
         
         containerElement.style.display = 'none';
-        // 기존 내용 제거
         containerElement.replaceChildren();
     });
     
@@ -608,6 +636,8 @@ const editComment = (commentId) => {
 
     editingCommentId = commentId;
     const contentElement = element.querySelector('.comment-content');
+    if (!contentElement) return;
+    
     const { editForm, textarea } = createCommentEditForm(commentId, comment.content);
     
     // 기존 내용 제거
@@ -622,7 +652,10 @@ const saveCommentEdit = async (commentId) => {
     const element = document.querySelector(`[data-comment-id="${commentId}"]`);
     if (!element) return;
 
-    const newContent = element.querySelector('.comment-edit-input').value.trim();
+    const editInput = element.querySelector('.comment-edit-input');
+    if (!editInput) return;
+    
+    const newContent = editInput.value.trim();
     if (!newContent) {
         Modal.alert({ title: MODAL_MESSAGE.TITLE_INPUT_ERROR, subtitle: VALIDATION_MESSAGE.COMMENT_REQUIRED });
         return;
@@ -631,6 +664,7 @@ const saveCommentEdit = async (commentId) => {
     try {
         const response = await updateComment(currentPostId, commentId, newContent);
         const comment = findComment(comments, commentId);
+        
         if (comment && response.data) {
             comment.content = response.data.content || newContent;
         }
@@ -659,6 +693,20 @@ const deleteComment = async (commentId) => {
     }
 };
 
+// 댓글 데이터 로드 및 처리
+// 게시글 상세 조회 응답에 댓글이 포함되어 있으면 사용, 없으면 별도 API 호출
+async function loadComments(postId, postComments) {
+    if (postComments && Array.isArray(postComments)) {
+        processComments(postComments);
+        return;
+    }
+    
+    // 게시글 응답에 댓글이 없으면 별도로 댓글 목록 조회
+    const commentsResponse = await getComments(postId, 0, 1000);
+    const commentsData = commentsResponse.data?.content || commentsResponse.data || [];
+    processComments(commentsData);
+}
+
 // 게시글 데이터 초기화 및 로드
 const initPostData = async () => {
     const postId = getUrlParam('id');
@@ -675,6 +723,7 @@ const initPostData = async () => {
     try {
         const response = await getPostById(postId);
         const post = response.data;
+        
         if (!post) {
             Toast.error(TOAST_MESSAGE.POST_NOT_FOUND);
             navigateTo('/post-list');
@@ -685,13 +734,7 @@ const initPostData = async () => {
         displayPostData(post);
         createActionButtons(post.author?.id || post.author?.userId || null);
         
-        if (post.comments && Array.isArray(post.comments)) {
-            processComments(post.comments);
-        } else {
-            const commentsResponse = await getComments(postId, 0, 1000);
-            const commentsData = commentsResponse.data?.content || commentsResponse.data || [];
-            processComments(commentsData);
-        }
+        await loadComments(postId, post.comments);
     } catch (error) {
         Toast.error(error.message || TOAST_MESSAGE.POST_LOAD_FAILED);
         navigateTo('/post-list');

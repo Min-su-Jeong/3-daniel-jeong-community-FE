@@ -10,7 +10,6 @@ import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
-// 페이지 DOM 요소 캐시
 let elements = {};
 
 // 페이지 DOM 요소 초기화 (ID로 요소 일괄 조회)
@@ -97,6 +96,7 @@ function setupPlaceholdersForLogin() {
 }
 
 // 로그인 후 리다이렉트 처리
+// 로그인이 필요한 페이지에서 로그인 페이지로 이동했을 때, 로그인 후 원래 페이지로 돌아가기
 function redirectAfterLogin() {
     const redirectPath = sessionStorage.getItem('redirectAfterLogin');
     if (redirectPath) {

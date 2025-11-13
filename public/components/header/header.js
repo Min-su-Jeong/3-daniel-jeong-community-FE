@@ -193,11 +193,12 @@ function setupDropdownCloseListener() {
             
             const activeDropdown = shadowRoot.querySelector('.profile-dropdown.active');
             const userProfile = shadowRoot.querySelector('.user-profile');
-            if (activeDropdown && userProfile) {
-                const path = e.composedPath();
-                if (!path.includes(userProfile)) {
-                    activeDropdown.classList.remove('active');
-                }
+            
+            if (!activeDropdown || !userProfile) return;
+            
+            const path = e.composedPath();
+            if (!path.includes(userProfile)) {
+                activeDropdown.classList.remove('active');
             }
         });
     });

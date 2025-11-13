@@ -45,7 +45,8 @@ function init() {
     });
 }
 
-// 게시글 생성
+// 게시글 생성 (이미지 없이 먼저 생성하여 postId 획득)
+// 이미지 업로드에 postId가 필요하므로 게시글을 먼저 생성
 async function createPostDraft(user, formData) {
     const createResponse = await createPost({
         userId: user.id,
@@ -67,6 +68,7 @@ async function createPostDraft(user, formData) {
 }
 
 // 이미지 업로드 및 게시글 업데이트
+// 생성된 게시글에 이미지를 업로드한 후 게시글 정보 업데이트
 async function uploadAndUpdatePost(postId, formData, selectedImages) {
     const imageObjectKeys = await uploadImages(selectedImages, postId, 'POST');
     

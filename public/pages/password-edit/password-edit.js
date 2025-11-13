@@ -54,9 +54,11 @@ function updateCurrentPasswordUI(isValid) {
 }
 
 // 현재 비밀번호 실시간 검증 설정
+// 입력 필드에서 포커스가 벗어날 때(blur) API로 현재 비밀번호 일치 여부 확인
 function setupCurrentPasswordValidation() {
     if (!elements.currentPassword) return;
     
+    // debounce 적용하여 타이핑 중 불필요한 API 호출 방지
     const verifyDebounced = debounce(async (password) => {
         const helper = elements.currentPassword.nextElementSibling;
         

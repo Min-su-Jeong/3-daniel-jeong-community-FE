@@ -48,7 +48,19 @@ async function init() {
     await loadPostData();
 }
 
+// 세션 스토리지에서 게시글 데이터 파싱
+function parseSessionData(sessionData) {
+    try {
+        return JSON.parse(sessionData);
+    } catch (error) {
+        // 파싱 실패 시 null 반환
+        return null;
+    }
+}
+
 // 게시글 데이터 로드
+// 세션 스토리지에 저장된 데이터가 있으면 사용 (뒤로가기 후 재진입 시 API 호출 방지)
+// 없으면 API로 게시글 데이터 조회
 async function loadPostData() {
     try {
         postId = getUrlParam('id');
@@ -59,17 +71,12 @@ async function loadPostData() {
             return;
         }
         
-        let postData = null;
-        
-        // 세션 스토리지에서 데이터 확인
+        // 세션 스토리지에서 데이터 확인 (뒤로가기 후 재진입 시 사용)
         const sessionData = sessionStorage.getItem('editPostData');
+        let postData = sessionData ? parseSessionData(sessionData) : null;
+        
         if (sessionData) {
-            try {
-                postData = JSON.parse(sessionData);
                 sessionStorage.removeItem('editPostData');
-            } catch (error) {
-                // 파싱 실패 시 무시
-            }
         }
         
         // 세션 스토리지에 데이터가 없으면 API 호출
@@ -114,17 +121,18 @@ async function fetchPostData(postId) {
 }
 
 // 이미지 objectKey 배열 준비 (기존 이미지 + 새로 업로드한 이미지)
+// 수정 모드에서 기존 이미지는 objectKey만 사용하고, 새로 추가한 이미지만 업로드
 async function getImageObjectKeys(selectedImages) {
     const imageObjectKeys = [];
     
-    // 기존 이미지의 objectKey 추가
+    // 기존 이미지의 objectKey 추가 (서버에 이미 존재하는 이미지)
     selectedImages.forEach((imageData) => {
         if (imageData.isExisting && imageData.objectKey) {
             imageObjectKeys.push(imageData.objectKey);
         }
     });
     
-    // 새로운 이미지 업로드
+    // 새로 추가한 이미지만 업로드
     const newImageFiles = selectedImages.filter(img => img.file && !img.isExisting);
     if (newImageFiles.length > 0) {
         const uploadedKeys = await uploadImages(newImageFiles, postId, 'PATCH');

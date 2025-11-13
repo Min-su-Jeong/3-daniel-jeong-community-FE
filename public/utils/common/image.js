@@ -194,7 +194,7 @@ const createImageElement = (imageKey, altText, fallbackText, container) => {
     return image;
 };
 
-// 프로필 이미지 재렌더링 필요 여부 판단 (불필요한 DOM 조작 방지)
+// 프로필 이미지 재렌더링 필요 여부 판단
 const shouldRerenderImage = (container, imageKey, fallbackText) => {
     const existingImage = container.querySelector('img');
     const currentImageUrl = existingImage?.src;
@@ -228,10 +228,9 @@ export function renderProfileImage(container, imageKey, fallbackText = DEFAULT_F
         return;
     }
 
-    // 기존 내용 제거 (이미지 캐시 무효화를 위해)
+    // 기존 내용 제거
     const existingImage = container.querySelector('img');
     if (existingImage) {
-        // 이미지 요소의 src를 제거하여 브라우저 캐시 무효화
         existingImage.src = '';
         existingImage.onload = null;
         existingImage.onerror = null;
@@ -293,46 +292,43 @@ export function setupProfileImagePreview({ imageContainer, imageInput, removeBut
         const { validFiles, errors } = validateImageFiles([file], IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 1);
         
         if (errors.length > 0) {
-            // 에러는 콜백으로 처리하거나 호출자가 처리하도록 함
             imageInput.value = '';
             return;
         }
 
-        if (validFiles.length > 0) {
-            try {
-                const { previews, errors: previewErrors } = await createImagePreviews(validFiles);
-                
-                if (previewErrors.length > 0) {
-                    imageInput.value = '';
-                    return;
-                }
+        if (validFiles.length === 0) return;
 
-                if (previews.length > 0) {
-                    const preview = previews[0];
-                    
-                    imageContainer.replaceChildren();
-                    
-                    const img = document.createElement('img');
-                    img.src = preview.url;
-                    img.alt = '프로필 이미지';
-                    imageContainer.appendChild(img);
-                    
-                    if (removeButton) {
-                        removeButton.classList.add('visible');
-                    }
-                    
-                    if (onChange) {
-                        onChange(preview.url);
-                    }
-                }
-            } catch (error) {
+        try {
+            const { previews, errors: previewErrors } = await createImagePreviews(validFiles);
+            
+            if (previewErrors.length > 0 || previews.length === 0) {
                 imageInput.value = '';
+                return;
             }
+
+            const preview = previews[0];
+            imageContainer.replaceChildren();
+            
+            const img = document.createElement('img');
+            img.src = preview.url;
+            img.alt = '프로필 이미지';
+            imageContainer.appendChild(img);
+            
+            if (removeButton) {
+                removeButton.classList.add('visible');
+            }
+            
+            if (onChange) {
+                onChange(preview.url);
+            }
+        } catch (error) {
+            imageInput.value = '';
         }
     });
 }
 
 // 여러 이미지 파일 업로드
+// 순차적으로 업로드하여 서버 부하를 줄이고, 하나라도 실패하면 전체 실패 처리
 export async function uploadImages(imageFiles, resourceId, imageType = 'POST') {
     const uploadedKeys = [];
     
