@@ -1,5 +1,8 @@
-import { login, restoreUser } from '../../api/index.js';
-import { PageLayout, Button, Modal, Toast } from '../../components/index.js';
+import { login, restoreUser } from '../../api/auth.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { Button } from '../../components/button/button.js';
+import { Modal } from '../../components/modal/modal.js';
+import { Toast } from '../../components/toast/toast.js';
 import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements, setupPlaceholders } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';

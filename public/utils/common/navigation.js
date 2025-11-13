@@ -2,7 +2,7 @@
  * 페이지 네비게이션 유틸리티
  * URL 이동 및 파라미터 처리
  */
-import { Modal } from '../../components/index.js';
+import { Modal } from '../../components/modal/modal.js';
 import { MODAL_MESSAGE } from '../constants/modal.js';
 
 // 페이지 이동 (쿼리 파라미터 자동 추가)

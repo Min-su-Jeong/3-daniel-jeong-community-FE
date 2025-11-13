@@ -4,7 +4,7 @@
  */
 
 import { validateImageFiles, createImagePreviews, updateImageGalleryCount, setupImageUploadEvents } from '../../utils/common/image.js';
-import { Toast } from '../index.js';
+import { Toast } from '../toast/toast.js';
 import { IMAGE_CONSTANTS } from '../../utils/constants/api.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 

@@ -1,10 +1,15 @@
-import { Button, Modal, PageLayout, Toast } from '../../components/index.js';
+import { Button } from '../../components/button/button.js';
+import { Modal } from '../../components/modal/modal.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { Toast } from '../../components/toast/toast.js';
 import { formatNumber, formatDate } from '../../utils/common/format.js';
 import { initializeElements, getElementValue, setElementValue } from '../../utils/common/element.js';
 import { navigateTo, getUrlParam } from '../../utils/common/navigation.js';
 import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
 import { getCurrentUserInfo } from '../../utils/common/user.js';
-import { getPostById, deletePost as deletePostApi, addPostLike, removePostLike, getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../api/index.js';
+import { getPostById, deletePost as deletePostApi } from '../../api/posts.js';
+import { addPostLike, removePostLike } from '../../api/post-like.js';
+import { getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../api/comments.js';
 import { API_SERVER_URI } from '../../utils/constants/api.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';

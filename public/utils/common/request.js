@@ -1,8 +1,9 @@
 import { API_SERVER_URI, METHOD } from '../constants/api.js';
 import { TOAST_MESSAGE } from '../constants/toast.js';
 import { MODAL_MESSAGE } from '../constants/modal.js';
-import { Modal, Toast } from '../../components/index.js';
-import { logout } from '../../api/index.js';
+import { Modal } from '../../components/modal/modal.js';
+import { Toast } from '../../components/toast/toast.js';
+import { logout } from '../../api/auth.js';
 import { navigateTo } from './navigation.js';
 import { removeUserFromStorage, dispatchUserUpdatedEvent } from './user.js';
 

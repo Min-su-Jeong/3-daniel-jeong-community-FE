@@ -1,5 +1,8 @@
-import { signup, checkEmail, checkNickname } from '../../api/index.js';
-import { PageLayout, Button, Toast, createFormHandler } from '../../components/index.js';
+import { signup, checkEmail, checkNickname } from '../../api/auth.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { Button } from '../../components/button/button.js';
+import { Toast } from '../../components/toast/toast.js';
+import { createFormHandler } from '../../components/form/form-handler.js';
 import { validateEmail, validatePassword, validateNickname, setupFormValidation, setupDuplicateCheck } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements, getSubmitButton, setupPlaceholders, setupHelperTexts } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';

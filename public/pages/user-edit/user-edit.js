@@ -1,4 +1,8 @@
-import { PageLayout, Button, Toast, Modal, createFormHandler } from '../../components/index.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { Button } from '../../components/button/button.js';
+import { Toast } from '../../components/toast/toast.js';
+import { Modal } from '../../components/modal/modal.js';
+import { createFormHandler } from '../../components/form/form-handler.js';
 import { validateNickname, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, setElementValue, initializeElements, getSubmitButton, setupPlaceholders } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
@@ -9,7 +13,9 @@ import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
-import { updateUser, deleteUser, uploadImage, logout } from '../../api/index.js';
+import { updateUser, deleteUser } from '../../api/users.js';
+import { uploadImage } from '../../api/images.js';
+import { logout } from '../../api/auth.js';
 
 const elements = initializeElements({
     buttonGroup: 'buttonGroup',
