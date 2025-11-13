@@ -1,4 +1,5 @@
-import { signup, checkEmail, checkNickname } from '../../api/auth.js';
+import { signup } from '../../api/auth.js';
+import { checkEmail, checkNickname } from '../../api/users.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { Toast } from '../../components/toast/toast.js';

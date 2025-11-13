@@ -1,4 +1,5 @@
-import { login, restoreUser } from '../../api/auth.js';
+import { login } from '../../api/auth.js';
+import { restoreUser } from '../../api/users.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { Modal } from '../../components/modal/modal.js';
