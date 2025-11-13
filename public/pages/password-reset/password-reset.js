@@ -1,5 +1,7 @@
-import { PageLayout, Button, ToastUtils } from '../../components/index.js';
-import { validateEmail, validatePassword, setupFormValidation, getElementValue, initializeElements, navigateTo } from '../../utils/common/index.js';
+import { PageLayout, Button, Toast } from '../../components/index.js';
+import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
+import { getElementValue, initializeElements } from '../../utils/common/element.js';
+import { navigateTo } from '../../utils/common/navigation.js';
 import { sendPasswordResetCode, verifyPasswordResetCode, resetPasswordById, checkEmail } from '../../api/index.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
@@ -123,7 +125,7 @@ elements.emailForm.onsubmit = async (e) => {
     const email = getElementValue(elements.email, '').trim();
     
     if (!validateEmail(email)) {
-        ToastUtils.error(TOAST_MESSAGE.EMAIL_INVALID_FORMAT);
+        Toast.error(TOAST_MESSAGE.EMAIL_INVALID_FORMAT);
         return;
     }
     if (isSendingCode) return;
@@ -131,20 +133,20 @@ elements.emailForm.onsubmit = async (e) => {
     try {
         const emailCheckResponse = await checkEmail(email);
         if (emailCheckResponse?.data?.available) {
-            ToastUtils.error(TOAST_MESSAGE.EMAIL_NOT_FOUND);
+            Toast.error(TOAST_MESSAGE.EMAIL_NOT_FOUND);
             return;
         }
         
         const emailSubmitButton = elements.emailButtonGroup?.querySelector('.btn-primary');
         const restore = disableControls([elements.email, emailSubmitButton]);
-        const loadingToast = ToastUtils.info(TOAST_MESSAGE.VERIFICATION_CODE_SENDING, '인증번호 발송 중', { duration: 0 });
+        const loadingToast = Toast.info(TOAST_MESSAGE.VERIFICATION_CODE_SENDING, '인증번호 발송 중', { duration: 0 });
         isSendingCode = true;
         
         try {
             const response = await sendPasswordResetCode(email);
             userId = response.data;
             loadingToast.hide();
-            ToastUtils.success(TOAST_MESSAGE.VERIFICATION_CODE_SENT, '인증번호 발송 완료');
+            Toast.success(TOAST_MESSAGE.VERIFICATION_CODE_SENT, '인증번호 발송 완료');
             showStep(2);
             createButton('verificationButtonGroup', '인증번호 확인');
             elements.verificationCode.value = '';
@@ -154,13 +156,13 @@ elements.emailForm.onsubmit = async (e) => {
             setTimeout(() => setupVerificationButton(), 100);
         } catch (error) {
             loadingToast.hide();
-            ToastUtils.error(error.message || TOAST_MESSAGE.VERIFICATION_CODE_SEND_FAILED);
+            Toast.error(error.message || TOAST_MESSAGE.VERIFICATION_CODE_SEND_FAILED);
         } finally {
             restore();
             isSendingCode = false;
         }
     } catch (error) {
-        ToastUtils.error(error.message || TOAST_MESSAGE.GENERIC_ERROR);
+        Toast.error(error.message || TOAST_MESSAGE.GENERIC_ERROR);
     }
 };
 
@@ -176,17 +178,17 @@ function setupVerificationButton() {
         const code = getElementValue(elements.verificationCode, '').trim();
         
         if (!code) {
-            ToastUtils.error(TOAST_MESSAGE.VERIFICATION_CODE_REQUIRED);
+            Toast.error(TOAST_MESSAGE.VERIFICATION_CODE_REQUIRED);
             return;
         }
         
         if (code.length !== 6 || !/^\d+$/.test(code)) {
-            ToastUtils.error(TOAST_MESSAGE.VERIFICATION_CODE_INVALID);
+            Toast.error(TOAST_MESSAGE.VERIFICATION_CODE_INVALID);
             return;
         }
         
         if (!userId) {
-            ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
+            Toast.error(TOAST_MESSAGE.USER_LOAD_FAILED);
             showStep(1);
             return;
         }
@@ -201,12 +203,12 @@ function setupVerificationButton() {
             updateVerificationStatus(true);
             verifyButton.disabled = true;
             elements.verificationCode.disabled = true;
-            ToastUtils.success(TOAST_MESSAGE.VERIFICATION_CODE_VERIFIED);
+            Toast.success(TOAST_MESSAGE.VERIFICATION_CODE_VERIFIED);
             showStep(3);
             createButton('resetButtonGroup', '비밀번호 재설정');
             setupPasswordValidation();
         } catch (error) {
-            ToastUtils.error(error.message || TOAST_MESSAGE.VERIFICATION_CODE_MISMATCH);
+            Toast.error(error.message || TOAST_MESSAGE.VERIFICATION_CODE_MISMATCH);
         } finally {
             restore();
             isVerifyingCode = false;
@@ -228,7 +230,7 @@ elements.passwordForm.onsubmit = async (e) => {
     if (isResettingPassword) return;
     
     if (!isVerified) {
-        ToastUtils.error(TOAST_MESSAGE.VERIFICATION_REQUIRED);
+        Toast.error(TOAST_MESSAGE.VERIFICATION_REQUIRED);
         showStep(2);
         return;
     }
@@ -237,17 +239,17 @@ elements.passwordForm.onsubmit = async (e) => {
     const confirmPassword = getElementValue(elements.confirmPassword, '').trim();
     
     if (!validatePassword(newPassword).isValid) {
-        ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_INVALID);
+        Toast.error(VALIDATION_MESSAGE.NEW_PASSWORD_INVALID);
         return;
     }
     
     if (newPassword !== confirmPassword) {
-        ToastUtils.error(TOAST_MESSAGE.PASSWORD_MISMATCH);
+        Toast.error(TOAST_MESSAGE.PASSWORD_MISMATCH);
         return;
     }
     
     if (!userId) {
-        ToastUtils.error(TOAST_MESSAGE.RETRY_REQUIRED);
+        Toast.error(TOAST_MESSAGE.RETRY_REQUIRED);
         showStep(1);
         return;
     }
@@ -258,10 +260,10 @@ elements.passwordForm.onsubmit = async (e) => {
 
     try {
         const response = await resetPasswordById(userId, newPassword, confirmPassword);
-        ToastUtils.success(TOAST_MESSAGE.PASSWORD_RESET_SUCCESS);
+        Toast.success(TOAST_MESSAGE.PASSWORD_RESET_SUCCESS);
         setTimeout(() => { navigateTo('/login'); }, 1200);
     } catch (error) {
-        ToastUtils.error(error.message || TOAST_MESSAGE.PASSWORD_RESET_FAILED);
+        Toast.error(error.message || TOAST_MESSAGE.PASSWORD_RESET_FAILED);
     } finally {
         restore();
         isResettingPassword = false;

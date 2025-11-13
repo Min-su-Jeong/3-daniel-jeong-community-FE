@@ -3,6 +3,8 @@
  * 파일 검증, 미리보기 생성, 프로필 이미지 렌더링 등 이미지 관련 로직 통합
  */
 import { IMAGE_CONSTANTS, API_SERVER_URI } from '../constants/api.js';
+import { uploadImage } from '../../api/index.js';
+import { TOAST_MESSAGE } from '../constants/toast.js';
 
 const BYTES_PER_MB = 1024 * 1024;
 const DEFAULT_FALLBACK_TEXT = '👤';
@@ -235,9 +237,7 @@ export function renderProfileImage(container, imageKey, fallbackText = DEFAULT_F
         existingImage.onerror = null;
     }
     
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
-    }
+    container.replaceChildren();
 
     if (imageKey) {
         const image = createImageElement(imageKey, altText, fallbackText, container);
@@ -252,9 +252,7 @@ export function renderProfileImage(container, imageKey, fallbackText = DEFAULT_F
 export function createProfilePlaceholder(container) {
     if (!container) return;
     
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
-    }
+    container.replaceChildren();
     
     const plusIcon = document.createElement('span');
     plusIcon.className = 'plus-icon';
@@ -312,9 +310,7 @@ export function setupProfileImagePreview({ imageContainer, imageInput, removeBut
                 if (previews.length > 0) {
                     const preview = previews[0];
                     
-                    while (imageContainer.firstChild) {
-                        imageContainer.removeChild(imageContainer.firstChild);
-                    }
+                    imageContainer.replaceChildren();
                     
                     const img = document.createElement('img');
                     img.src = preview.url;
@@ -334,4 +330,25 @@ export function setupProfileImagePreview({ imageContainer, imageInput, removeBut
             }
         }
     });
+}
+
+// 여러 이미지 파일 업로드
+export async function uploadImages(imageFiles, resourceId, imageType = 'POST') {
+    const uploadedKeys = [];
+    
+    for (const imageData of imageFiles) {
+        try {
+            const response = await uploadImage(imageType, resourceId, imageData.file);
+            
+            if (response.success && response.data && response.data.objectKey) {
+                uploadedKeys.push(response.data.objectKey);
+            } else {
+                throw new Error(TOAST_MESSAGE.IMAGE_UPLOAD_FAILED);
+            }
+        } catch (error) {
+            throw new Error(`${TOAST_MESSAGE.IMAGE_UPLOAD_FAILED}: ${error.message}`);
+        }
+    }
+    
+    return uploadedKeys;
 }

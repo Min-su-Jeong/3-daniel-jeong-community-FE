@@ -37,3 +37,37 @@ export function getSubmitButton(buttonGroup) {
     return group?.querySelector('.btn-primary') || null;
 }
 
+// Placeholder 설정
+export function setupPlaceholders(fieldConfigs) {
+    fieldConfigs.forEach(({ element, placeholder }) => {
+        if (element && placeholder) {
+            element.placeholder = placeholder;
+        }
+    });
+}
+
+// Helper Text 설정 (요소의 nextElementSibling)
+export function setupHelperTexts(fieldConfigs) {
+    fieldConfigs.forEach(({ element, helperText }) => {
+        if (!element || !helperText) return;
+        
+        const helper = element.nextElementSibling;
+        if (!helper?.classList.contains('helper-text')) return;
+        
+        helper.textContent = helperText;
+        if (helper.dataset) {
+            helper.dataset.defaultText = helperText;
+        }
+    });
+}
+
+// 독립 Helper Text 요소 설정
+export function setupStandaloneHelperText(helperElement, helperText) {
+    if (!helperElement || !helperText) return;
+    
+    helperElement.textContent = helperText;
+    if (helperElement.dataset) {
+        helperElement.dataset.defaultText = helperText;
+    }
+}
+

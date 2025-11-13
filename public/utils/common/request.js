@@ -1,16 +1,17 @@
 import { API_SERVER_URI, METHOD } from '../constants/api.js';
 import { TOAST_MESSAGE } from '../constants/toast.js';
 import { MODAL_MESSAGE } from '../constants/modal.js';
-import { Modal, ToastUtils } from '../../components/index.js';
+import { Modal, Toast } from '../../components/index.js';
 import { logout } from '../../api/index.js';
-import { navigateTo, removeUserFromStorage, dispatchUserUpdatedEvent } from './index.js';
+import { navigateTo } from './navigation.js';
+import { removeUserFromStorage, dispatchUserUpdatedEvent } from './user.js';
 
 /**
  * HTTP 요청 공통 유틸리티
  * 세션 관리, 에러 처리, 요청/응답 파싱 등 API 통신 로직 통합
  */
 
-/** 세션 만료 모달 중복 표시 방지 플래그 */
+// 세션 만료 모달 중복 표시 방지 플래그
 let isShowingExpiredModal = false;
 
 /**
@@ -45,12 +46,12 @@ async function handleRefreshToken() {
             throw new Error('Refresh failed');
         }
         
-        ToastUtils.success(TOAST_MESSAGE.SESSION_RENEWED);
+        Toast.success(TOAST_MESSAGE.SESSION_RENEWED);
         isShowingExpiredModal = false;
         dispatchUserUpdatedEvent();
         return true;
     } catch (error) {
-        ToastUtils.error(TOAST_MESSAGE.SESSION_RENEW_FAILED);
+        Toast.error(TOAST_MESSAGE.SESSION_RENEW_FAILED);
         await handleLogout();
         return false;
     }

@@ -39,27 +39,25 @@ export function removeUserFromStorage() {
     sessionStorage.removeItem('user');
 }
 
-// 로그인 상태 확인 (저장소에 사용자 정보 존재 여부)
-export function isUserLoggedIn() {
-    return getUserFromStorage() !== null;
-}
-
 // 사용자 정보 업데이트 커스텀 이벤트 발생 (전역 리스너에 알림)
 export function dispatchUserUpdatedEvent() {
     window.dispatchEvent(new CustomEvent('userUpdated'));
 }
 
-// 현재 사용자 정보 조회 (getUserFromStorage 별칭)
-export function getCurrentUser() {
-    return getUserFromStorage();
-}
-
 // 로그인 필수 체크 (사용자 ID 존재 여부 확인)
 export function requireLogin(message = '로그인이 필요합니다.') {
-    const user = getCurrentUser();
+    const user = getUserFromStorage();
     if (!user || !user.id) {
         return { isLoggedIn: false, user: null };
     }
     return { isLoggedIn: true, user };
 }
 
+// 현재 사용자 정보 조회 (userId, profileImageKey만 반환)
+export function getCurrentUserInfo() {
+    const currentUser = getUserFromStorage();
+    return {
+        userId: currentUser?.id || null,
+        profileImageKey: currentUser?.profileImageKey || null
+    };
+}

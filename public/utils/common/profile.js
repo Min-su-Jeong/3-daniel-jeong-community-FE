@@ -1,5 +1,7 @@
-// 프로필 이미지 관리 공통 유틸리티
-// 회원가입/회원정보수정 페이지에서 공통으로 사용하는 프로필 이미지 관련 로직
+/**
+ * 프로필 이미지 관리 공통 유틸리티
+ * 회원가입/회원정보수정 페이지에서 공통으로 사용하는 프로필 이미지 관련 로직
+ */
 
 import { 
     validateImageFiles, 
@@ -8,7 +10,7 @@ import {
 } from './image.js';
 import { IMAGE_CONSTANTS } from '../constants/api.js';
 import { TOAST_MESSAGE } from '../constants/toast.js';
-import { ToastUtils } from '../../components/index.js';
+import { Toast } from '../../components/index.js';
 
 // 프로필 이미지 설정 (미리보기, 삭제 버튼 처리)
 export function setupProfileImage({ 
@@ -59,12 +61,12 @@ export function validateProfileImage(profileImage) {
     );
     
     if (errors.length > 0) {
-        errors.forEach(error => ToastUtils.error(error));
+        errors.forEach(error => Toast.error(error));
         return false;
     }
     
     if (validFiles.length === 0) {
-        ToastUtils.error(TOAST_MESSAGE.IMAGE_INVALID);
+        Toast.error(TOAST_MESSAGE.IMAGE_INVALID);
         return false;
     }
     

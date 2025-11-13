@@ -1,5 +1,13 @@
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
+/**
+ * 모달 컴포넌트
+ * 확인/취소 다이얼로그, 배경 스크롤 방지, 애니메이션 지원
+ */
+
+const ANIMATION_DELAY = 10;
+const ANIMATION_DURATION = 300;
+const ESCAPE_KEY = 'Escape';
 
 // HTML 문자열을 DocumentFragment로 변환하여 삽입
 function parseHTML(htmlString) {
@@ -11,7 +19,6 @@ function parseHTML(htmlString) {
     const doc = parser.parseFromString(htmlString, 'text/html');
     const fragment = document.createDocumentFragment();
     
-    // body의 모든 자식 노드를 fragment로 이동
     Array.from(doc.body.childNodes).forEach(node => {
         fragment.appendChild(node.cloneNode(true));
     });
@@ -19,10 +26,6 @@ function parseHTML(htmlString) {
     return fragment;
 }
 
-/**
- * 모달 컴포넌트 클래스
- * 확인/취소 다이얼로그, 배경 스크롤 방지, 애니메이션 지원
- */
 export class Modal {
     constructor(options = {}) {
         this.options = {
@@ -40,24 +43,43 @@ export class Modal {
         
         this.modalElement = null;
         this.isVisible = false;
+        this.escapeKeyHandler = null;
     }
 
-    /**
-     * 모달 표시 (DOM 생성, 이벤트 리스너 등록, 배경 스크롤 방지)
-     */
+    // 모달 표시 (DOM 생성, 이벤트 리스너 등록, 배경 스크롤 방지)
     show() {
         if (this.isVisible) return;
         
         this.hide();
-        
-        // DOM API로 모달 생성
+        this.createModalStructure();
+        this.setupEventListeners();
+        this.applyModalStyles();
+        this.scheduleAnimation();
+    }
+
+    // 모달 DOM 구조 생성
+    createModalStructure() {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         
         const modal = document.createElement('div');
         modal.className = 'modal';
         
-        // 헤더
+        modal.appendChild(this.createHeader());
+        
+        if (this.options.content) {
+            modal.appendChild(this.createContent());
+        }
+        
+        modal.appendChild(this.createActions());
+        
+        overlay.appendChild(modal);
+        this.modalElement = overlay;
+        document.body.appendChild(this.modalElement);
+    }
+
+    // 모달 헤더 생성
+    createHeader() {
         const header = document.createElement('div');
         header.className = 'modal-header';
         
@@ -73,109 +95,164 @@ export class Modal {
             header.appendChild(subtitle);
         }
         
-        modal.appendChild(header);
-        
-        // 컨텐츠
-        if (this.options.content) {
-            const content = document.createElement('div');
-            content.className = 'modal-content';
-            // DOMParser를 사용하여 HTML 문자열을 파싱하여 안전하게 삽입
-            content.appendChild(parseHTML(this.options.content));
-            modal.appendChild(content);
-        }
-        
-        // 액션 버튼
+        return header;
+    }
+
+    // 모달 컨텐츠 생성
+    createContent() {
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        content.appendChild(parseHTML(this.options.content));
+        return content;
+    }
+
+    // 모달 액션 버튼 생성
+    createActions() {
         const actions = document.createElement('div');
         actions.className = 'modal-actions';
         
         if (this.options.showCancel) {
-            const cancelBtn = document.createElement('button');
-            cancelBtn.className = 'btn-cancel';
-            cancelBtn.textContent = this.options.cancelText;
-            actions.appendChild(cancelBtn);
+            actions.appendChild(this.createCancelButton());
         }
         
-        const confirmBtn = document.createElement('button');
-        confirmBtn.className = this.options.confirmType !== 'primary' 
-            ? `btn-confirm ${this.options.confirmType}` 
-            : 'btn-confirm';
-        confirmBtn.textContent = this.options.confirmText;
-        actions.appendChild(confirmBtn);
+        actions.appendChild(this.createConfirmButton());
         
-        modal.appendChild(actions);
-        overlay.appendChild(modal);
-        
-        this.modalElement = overlay;
-        document.body.appendChild(this.modalElement);
-        
-        this.setupEventListeners();
-        
-        this.modalElement.classList.add('show');
-        document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
-        this.isVisible = true;
-        
-        // 애니메이션을 위한 지연
-        setTimeout(() => {
-            this.modalElement.classList.add('visible');
-        }, 10);
+        return actions;
     }
 
-    /**
-     * 모달 숨김 (애니메이션 후 DOM 제거, 배경 스크롤 복구)
-     */
+    // 취소 버튼 생성
+    createCancelButton() {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn-cancel';
+        cancelBtn.textContent = this.options.cancelText;
+        return cancelBtn;
+    }
+
+    // 확인 버튼 생성
+    createConfirmButton() {
+        const confirmBtn = document.createElement('button');
+        const confirmClass = this.options.confirmType !== 'primary' 
+            ? `btn-confirm ${this.options.confirmType}` 
+            : 'btn-confirm';
+        confirmBtn.className = confirmClass;
+        confirmBtn.textContent = this.options.confirmText;
+        return confirmBtn;
+    }
+
+    // 모달 스타일 적용 (배경 스크롤 방지)
+    applyModalStyles() {
+        this.modalElement.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        this.isVisible = true;
+    }
+
+    // 애니메이션 스케줄링
+    scheduleAnimation() {
+        setTimeout(() => {
+            if (this.modalElement) {
+                this.modalElement.classList.add('visible');
+            }
+        }, ANIMATION_DELAY);
+    }
+
+    // 모달 숨김 (애니메이션 후 DOM 제거, 배경 스크롤 복구)
     hide() {
         if (!this.isVisible || !this.modalElement) return;
         
         this.modalElement.classList.remove('visible');
+        this.removeEscapeKeyListener();
         
-        // 애니메이션 완료 후 DOM 제거
         setTimeout(() => {
-            if (this.modalElement && this.modalElement.parentNode) {
-                this.modalElement.parentNode.removeChild(this.modalElement);
-            }
-            this.modalElement = null;
-            document.body.style.overflow = '';
-            this.isVisible = false;
-        }, 300);
+            this.removeModalFromDOM();
+            this.resetModalState();
+        }, ANIMATION_DURATION);
     }
 
-    /**
-     * 모달 이벤트 리스너 설정 (확인/취소 버튼, 배경 클릭, ESC 키)
-     */
+    // 모달 DOM 제거
+    removeModalFromDOM() {
+        if (this.modalElement?.parentNode) {
+            this.modalElement.parentNode.removeChild(this.modalElement);
+        }
+    }
+
+    // 모달 상태 초기화
+    resetModalState() {
+        this.modalElement = null;
+        document.body.style.overflow = '';
+        this.isVisible = false;
+    }
+
+    // 모달 이벤트 리스너 설정 (확인/취소 버튼, 배경 클릭, ESC 키)
     setupEventListeners() {
         if (!this.modalElement) return;
         
+        this.setupConfirmButtonListener();
+        this.setupCancelButtonListener();
+        this.setupOverlayClickListener();
+        this.setupEscapeKeyListener();
+    }
+
+    // 확인 버튼 이벤트 리스너 설정
+    setupConfirmButtonListener() {
         const confirmBtn = this.modalElement.querySelector('.btn-confirm');
         if (confirmBtn) {
             confirmBtn.addEventListener('click', () => {
-                if (this.options.onConfirm) {
-                    this.options.onConfirm();
-                }
-                this.hide();
+                this.handleConfirm();
             });
         }
-        
+    }
+
+    // 취소 버튼 이벤트 리스너 설정
+    setupCancelButtonListener() {
         const cancelBtn = this.modalElement.querySelector('.btn-cancel');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => {
-                if (this.options.onCancel) {
-                    this.options.onCancel();
-                }
-                this.hide();
+                this.handleCancel();
             });
         }
-        
+    }
+
+    // 배경 클릭 이벤트 리스너 설정
+    setupOverlayClickListener() {
         this.modalElement.addEventListener('click', (e) => {
             if (e.target === this.modalElement) {
                 this.hide();
             }
         });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isVisible) {
+    }
+
+    // ESC 키 이벤트 리스너 설정
+    setupEscapeKeyListener() {
+        this.escapeKeyHandler = (e) => {
+            if (e.key === ESCAPE_KEY && this.isVisible) {
                 this.hide();
             }
-        });
+        };
+        document.addEventListener('keydown', this.escapeKeyHandler);
+    }
+
+    // ESC 키 리스너 제거
+    removeEscapeKeyListener() {
+        if (this.escapeKeyHandler) {
+            document.removeEventListener('keydown', this.escapeKeyHandler);
+            this.escapeKeyHandler = null;
+        }
+    }
+
+    // 확인 버튼 클릭 처리
+    handleConfirm() {
+        if (this.options.onConfirm) {
+            this.options.onConfirm();
+        }
+        this.hide();
+    }
+
+    // 취소 버튼 클릭 처리
+    handleCancel() {
+        if (this.options.onCancel) {
+            this.options.onCancel();
+        }
+        this.hide();
     }
 
     // 확인 모달 (Promise 반환)
@@ -186,11 +263,7 @@ export class Modal {
             ...options
         });
         
-        return new Promise((resolve) => {
-            modal.options.onConfirm = () => resolve(true);
-            modal.options.onCancel = () => resolve(false);
-            modal.show();
-        });
+        return Modal.createPromiseModal(modal, true);
     }
 
     // 삭제 확인 모달
@@ -203,11 +276,7 @@ export class Modal {
             ...options
         });
         
-        return new Promise((resolve) => {
-            modal.options.onConfirm = () => resolve(true);
-            modal.options.onCancel = () => resolve(false);
-            modal.show();
-        });
+        return Modal.createPromiseModal(modal, true);
     }
 
     // 성공 모달
@@ -221,10 +290,7 @@ export class Modal {
             ...options
         });
         
-        return new Promise((resolve) => {
-            modal.options.onConfirm = () => resolve();
-            modal.show();
-        });
+        return Modal.createPromiseModal(modal, false);
     }
 
     // 알림 모달
@@ -236,8 +302,14 @@ export class Modal {
             ...options
         });
         
+        return Modal.createPromiseModal(modal, false);
+    }
+
+    // Promise 기반 모달 생성 헬퍼
+    static createPromiseModal(modal, resolveOnConfirm = true) {
         return new Promise((resolve) => {
-            modal.options.onConfirm = () => resolve();
+            modal.options.onConfirm = () => resolve(resolveOnConfirm ? true : undefined);
+            modal.options.onCancel = () => resolve(false);
             modal.show();
         });
     }

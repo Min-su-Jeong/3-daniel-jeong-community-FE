@@ -1,6 +1,6 @@
 import { Modal } from '../modal/modal.js';
 import { logout } from '../../api/auth.js';
-import { ToastUtils } from '../toast/toast.js';
+import { Toast } from '../toast/toast.js';
 import { renderProfileImage } from '../../utils/common/image.js';
 import { getUserFromStorage, removeUserFromStorage, dispatchUserUpdatedEvent } from '../../utils/common/user.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
@@ -15,11 +15,7 @@ function renderProfileIcon(icon, user) {
     renderProfileImage(icon, profileImageKey, '👤', user?.nickname || '프로필');
 }
 
-/**
- * 로그아웃 후 페이지 이동 처리
- * - 게시글 목록 페이지면 상태만 업데이트
- * - 다른 페이지면 홈으로 이동
- */
+// 로그아웃 후 페이지 이동 처리
 function handlePostLogoutNavigation() {
     const currentPath = window.location.pathname;
     const isPostListPage = currentPath === '/' || currentPath === HOME_PATH;
@@ -31,24 +27,24 @@ function handlePostLogoutNavigation() {
     }
 }
 
-/**
- * 로그아웃 처리
- * - API 호출 후 저장소 정리 및 이벤트 발생
- * - 에러 발생 시에도 저장소 정리 및 페이지 이동
- */
+// 로그아웃 처리
 async function handleLogout() {
     try {
         await logout();
-        removeUserFromStorage();
-        dispatchUserUpdatedEvent();
-        ToastUtils.success(TOAST_MESSAGE.LOGOUT_SUCCESS);
+        cleanupUserSession();
+        Toast.success(TOAST_MESSAGE.LOGOUT_SUCCESS);
         handlePostLogoutNavigation();
     } catch (error) {
-        removeUserFromStorage();
-        dispatchUserUpdatedEvent();
-        ToastUtils.error(TOAST_MESSAGE.LOGOUT_FAILED);
+        cleanupUserSession();
+        Toast.error(TOAST_MESSAGE.LOGOUT_FAILED);
         handlePostLogoutNavigation();
     }
+}
+
+// 사용자 세션 정리
+function cleanupUserSession() {
+    removeUserFromStorage();
+    dispatchUserUpdatedEvent();
 }
 
 // 드롭다운 메뉴 아이템 생성
@@ -65,30 +61,48 @@ function createDropdownUserInfo(user) {
     const userInfo = document.createElement('div');
     userInfo.className = 'dropdown-user-info';
     
+    userInfo.appendChild(createUserProfileImage(user));
+    userInfo.appendChild(createUserDetails(user));
+    
+    return userInfo;
+}
+
+// 사용자 프로필 이미지 생성
+function createUserProfileImage(user) {
     const profileImage = document.createElement('div');
     profileImage.className = 'dropdown-profile-image';
     renderProfileIcon(profileImage, user);
-    
+    return profileImage;
+}
+
+// 사용자 상세 정보 생성
+function createUserDetails(user) {
     const userDetails = document.createElement('div');
     userDetails.className = 'dropdown-user-details';
     
+    userDetails.appendChild(createUserName(user));
+    
+    if (user?.email) {
+        userDetails.appendChild(createUserEmail(user));
+    }
+    
+    return userDetails;
+}
+
+// 사용자 이름 생성
+function createUserName(user) {
     const userName = document.createElement('div');
     userName.className = 'dropdown-user-name';
     userName.textContent = `${user?.nickname || '사용자'}님`;
-    
+    return userName;
+}
+
+// 사용자 이메일 생성
+function createUserEmail(user) {
     const userEmail = document.createElement('div');
     userEmail.className = 'dropdown-user-email';
     userEmail.textContent = user?.email || '';
-    
-    userDetails.appendChild(userName);
-    if (user?.email) {
-        userDetails.appendChild(userEmail);
-    }
-    
-    userInfo.appendChild(profileImage);
-    userInfo.appendChild(userDetails);
-    
-    return userInfo;
+    return userEmail;
 }
 
 // 프로필 드롭다운 메뉴 생성 및 이벤트 바인딩
@@ -97,25 +111,40 @@ function createDropdownMenu(userProfile, isLoggedIn, user) {
     dropdown.className = 'profile-dropdown';
     
     if (isLoggedIn && user) {
-        dropdown.classList.add('has-user-info');
-        // 사용자 정보 섹션 추가
-        const userInfo = createDropdownUserInfo(user);
-        dropdown.appendChild(userInfo);
-        
-        // 구분선 추가
-        const divider = document.createElement('div');
-        divider.className = 'dropdown-divider';
-        dropdown.appendChild(divider);
-        
-        dropdown.appendChild(createDropdownMenuItem('user-edit', '회원정보수정'));
-        dropdown.appendChild(createDropdownMenuItem('password-edit', '비밀번호수정'));
-        dropdown.appendChild(createDropdownMenuItem('logout', '로그아웃', 'logout-item'));
+        populateLoggedInDropdown(dropdown, user);
     } else {
-        dropdown.appendChild(createDropdownMenuItem('login', '로그인'));
+        populateLoggedOutDropdown(dropdown);
     }
     
     userProfile.appendChild(dropdown);
-    
+    setupDropdownEventListeners(userProfile, dropdown);
+    setupDropdownCloseListener();
+}
+
+// 로그인 상태 드롭다운 구성
+function populateLoggedInDropdown(dropdown, user) {
+    dropdown.classList.add('has-user-info');
+    dropdown.appendChild(createDropdownUserInfo(user));
+    dropdown.appendChild(createDropdownDivider());
+    dropdown.appendChild(createDropdownMenuItem('user-edit', '회원정보수정'));
+    dropdown.appendChild(createDropdownMenuItem('password-edit', '비밀번호수정'));
+    dropdown.appendChild(createDropdownMenuItem('logout', '로그아웃', 'logout-item'));
+}
+
+// 로그아웃 상태 드롭다운 구성
+function populateLoggedOutDropdown(dropdown) {
+    dropdown.appendChild(createDropdownMenuItem('login', '로그인'));
+}
+
+// 드롭다운 구분선 생성
+function createDropdownDivider() {
+    const divider = document.createElement('div');
+    divider.className = 'dropdown-divider';
+    return divider;
+}
+
+// 드롭다운 이벤트 리스너 설정
+function setupDropdownEventListeners(userProfile, dropdown) {
     userProfile.addEventListener('click', (e) => {
         e.stopPropagation();
         dropdown.classList.toggle('active');
@@ -129,8 +158,6 @@ function createDropdownMenu(userProfile, isLoggedIn, user) {
         dropdown.classList.remove('active');
         handleDropdownAction(action);
     });
-    
-    setupDropdownCloseListener();
 }
 
 // 드롭다운 메뉴 액션 처리
@@ -204,11 +231,7 @@ class AppHeader extends HTMLElement {
         this.renderAsync(); 
     }
     
-    /**
-     * 뒤로가기 버튼 클릭 처리
-     * - 커스텀 핸들러가 있으면 우선 사용
-     * - 없으면 기본 history.back() 사용
-     */
+    // 뒤로가기 버튼 클릭 처리 (커스텀 핸들러 우선, 없으면 기본 history.back())
     onBack() {
         if (window.handleBackNavigation) {
             window.handleBackNavigation();
@@ -217,14 +240,11 @@ class AppHeader extends HTMLElement {
         }
     }
     
-    /**
-     * 헤더 비동기 렌더링
-     */
+    // 헤더 비동기 렌더링
     async renderAsync() {
         const showBack = this.hasAttribute('show-back');
         const showProfile = this.hasAttribute('show-profile');
 
-        // Shadow DOM 초기화 (replaceChildren으로 모든 자식 제거)
         this.shadowRoot.replaceChildren();
         this.shadowRoot.appendChild(this.createStyleLink());
         
@@ -232,9 +252,7 @@ class AppHeader extends HTMLElement {
         this.shadowRoot.appendChild(header);
     }
     
-    /**
-     * 스타일시트 링크 생성
-     */
+    // 스타일시트 링크 생성
     createStyleLink() {
         const styleLink = document.createElement('link');
         styleLink.rel = 'stylesheet';
@@ -247,57 +265,56 @@ class AppHeader extends HTMLElement {
         const header = document.createElement('header');
         header.className = 'header';
         
-        const left = this.createLeftSection(showBack);
-        const center = this.createCenterSection();
-        const right = await this.createRightSection(showProfile);
-        
-        header.appendChild(left);
-        header.appendChild(center);
-        header.appendChild(right);
+        header.appendChild(this.createLeftSection(showBack));
+        header.appendChild(this.createCenterSection());
+        header.appendChild(await this.createRightSection(showProfile));
         
         return header;
     }
     
-    /**
-     * 헤더 왼쪽 섹션 생성 (뒤로가기 버튼)
-     */
+    // 헤더 왼쪽 섹션 생성 (뒤로가기 버튼)
     createLeftSection(showBack) {
         const left = document.createElement('div');
         left.className = 'header-left';
         
         if (showBack) {
-            const backButton = document.createElement('button');
-            backButton.className = 'back-btn';
-            backButton.setAttribute('aria-label', '뒤로가기');
-            backButton.textContent = '←';
-            backButton.addEventListener('click', this.onBack);
-            left.appendChild(backButton);
+            left.appendChild(this.createBackButton());
         }
         
         return left;
     }
+
+    // 뒤로가기 버튼 생성
+    createBackButton() {
+        const backButton = document.createElement('button');
+        backButton.className = 'back-btn';
+        backButton.setAttribute('aria-label', '뒤로가기');
+        backButton.textContent = '←';
+        backButton.addEventListener('click', this.onBack);
+        return backButton;
+    }
     
-    /**
-     * 헤더 중앙 섹션 생성 (로고)
-     */
+    // 헤더 중앙 섹션 생성 (로고)
     createCenterSection() {
         const center = document.createElement('div');
         center.className = 'header-center';
         
+        center.appendChild(this.createLogo());
+        return center;
+    }
+
+    // 로고 요소 생성
+    createLogo() {
         const title = document.createElement('h1');
         title.className = 'logo';
         title.textContent = LOGO_TEXT;
         title.addEventListener('click', () => {
             window.location.href = HOME_PATH;
         });
-        
-        center.appendChild(title);
-        return center;
+        return title;
     }
     
-    /**
-     * 헤더 오른쪽 섹션 생성 (프로필 메뉴)
-     */
+    // 헤더 오른쪽 섹션 생성 (프로필 메뉴)
     async createRightSection(showProfile) {
         const right = document.createElement('div');
         right.className = 'header-right';
@@ -310,24 +327,26 @@ class AppHeader extends HTMLElement {
         return right;
     }
     
-    /**
-     * 사용자 프로필 요소 생성
-     * - 프로필 아이콘 및 드롭다운 메뉴 포함
-     */
+    // 사용자 프로필 요소 생성
     async createUserProfile() {
         const userProfile = document.createElement('div');
         userProfile.className = 'user-profile';
         
-        const icon = document.createElement('div');
-        icon.className = 'profile-icon';
-        
         const user = getUserFromStorage();
-        renderProfileIcon(icon, user);
-        
+        const icon = this.createProfileIcon(user);
         userProfile.appendChild(icon);
+        
         createDropdownMenu(userProfile, !!user, user);
         
         return userProfile;
+    }
+
+    // 프로필 아이콘 생성
+    createProfileIcon(user) {
+        const icon = document.createElement('div');
+        icon.className = 'profile-icon';
+        renderProfileIcon(icon, user);
+        return icon;
     }
 }
 

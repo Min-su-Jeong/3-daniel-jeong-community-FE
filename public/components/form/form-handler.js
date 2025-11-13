@@ -2,8 +2,8 @@
  * Form 제출 처리 공통 유틸리티
  */
 
-import { PageLayout, ToastUtils } from '../index.js';
-import { getElementValue } from '../../utils/common/index.js';
+import { PageLayout, Toast } from '../index.js';
+import { getElementValue } from '../../utils/common/element.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 
 // Form 제출 핸들러 생성 (로딩/에러/성공 처리 자동화)
@@ -52,73 +52,92 @@ export function createFormHandler(options) {
             return;
         }
 
-        // 커스텀 유효성 검사
-        if (validate) {
-            const validationResult = await validate();
-            if (validationResult !== true) {
-                if (typeof validationResult === 'string') {
-                    ToastUtils.error(validationResult);
-                }
-                return;
-            }
+        if (!await validateFormSubmission(validate)) {
+            return;
         }
 
         isSubmitting = true;
-
-        // 로딩 상태 표시
+        const previousStates = disableFormInputs(formElement, submitButton);
+        
         if (submitButton) {
             PageLayout.showLoading(submitButton, loadingText);
         }
 
-        // 입력 필드 비활성화
+        try {
+            await processFormSubmission(formElement, onSubmit, successMessage, onSuccess);
+        } catch (error) {
+            handleFormError(error, onError, formElement);
+        } finally {
+            restoreFormState(submitButton, previousStates, originalButtonText);
+            isSubmitting = false;
+        }
+    };
+
+    // 폼 제출 유효성 검사
+    async function validateFormSubmission(validate) {
+        if (!validate) return true;
+
+        const validationResult = await validate();
+        if (validationResult !== true) {
+            if (typeof validationResult === 'string') {
+                Toast.error(validationResult);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    // 폼 입력 필드 비활성화
+    function disableFormInputs(formElement, submitButton) {
         const inputs = formElement.querySelectorAll('input, textarea, select, button');
         const previousStates = Array.from(inputs).map(input => ({
             element: input,
             disabled: input.disabled
         }));
+        
         inputs.forEach(input => {
             if (input !== submitButton) {
                 input.disabled = true;
             }
         });
+        
+        return previousStates;
+    }
 
-        try {
-            // Form 데이터 수집
-            const formData = collectFormData(formElement);
-            
-            // 제출 처리
-            const result = await onSubmit(formData, formElement);
+    // 폼 제출 처리
+    async function processFormSubmission(formElement, onSubmit, successMessage, onSuccess) {
+        const formData = collectFormData(formElement);
+        const result = await onSubmit(formData, formElement);
 
-            // 성공 처리
-            if (successMessage) {
-                ToastUtils.success(successMessage);
-            }
-
-            if (onSuccess) {
-                await onSuccess(result, formData);
-            }
-
-        } catch (error) {
-            const errorMessage = error.message || TOAST_MESSAGE.GENERIC_ERROR;
-            ToastUtils.error(errorMessage);
-
-            if (onError) {
-                onError(error, formElement);
-            }
-        } finally {
-            // 로딩 상태 해제
-            if (submitButton) {
-                PageLayout.hideLoading(submitButton, originalButtonText);
-            }
-
-            // 입력 필드 활성화
-            previousStates.forEach(({ element, disabled }) => {
-                element.disabled = disabled;
-            });
-
-            isSubmitting = false;
+        if (successMessage) {
+            Toast.success(successMessage);
         }
-    };
+
+        if (onSuccess) {
+            await onSuccess(result, formData);
+        }
+    }
+
+    // 폼 에러 처리
+    function handleFormError(error, onError, formElement) {
+        const errorMessage = error.message || TOAST_MESSAGE.GENERIC_ERROR;
+        Toast.error(errorMessage);
+
+        if (onError) {
+            onError(error, formElement);
+        }
+    }
+
+    // 폼 상태 복구
+    function restoreFormState(submitButton, previousStates, originalButtonText) {
+        if (submitButton) {
+            PageLayout.hideLoading(submitButton, originalButtonText);
+        }
+
+        previousStates.forEach(({ element, disabled }) => {
+            element.disabled = disabled;
+        });
+    }
 
     // 이벤트 리스너 등록
     formElement.addEventListener('submit', handleSubmit);
@@ -136,15 +155,16 @@ export function collectFormData(formElement) {
 
     // FormData에서 객체로 변환
     for (const [key, value] of formDataObj.entries()) {
-        if (formData[key]) {
-            // 배열로 처리 (같은 name을 가진 필드들)
-            if (Array.isArray(formData[key])) {
-                formData[key].push(value);
-            } else {
-                formData[key] = [formData[key], value];
-            }
-        } else {
+        if (!formData[key]) {
             formData[key] = value;
+            continue;
+        }
+        
+        // 배열로 처리 (같은 name을 가진 필드들)
+        if (Array.isArray(formData[key])) {
+            formData[key].push(value);
+        } else {
+            formData[key] = [formData[key], value];
         }
     }
 

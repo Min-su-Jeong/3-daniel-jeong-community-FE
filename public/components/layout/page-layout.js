@@ -12,9 +12,7 @@ export class PageLayout {
         };
     }
 
-    /**
-     * 페이지 초기화 공통 로직
-     */
+    // 페이지 초기화 공통 로직
     static initializePage() {
         // 말풍선 애니메이션 초기화
         if (window.BubbleAnimation) {

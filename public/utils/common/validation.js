@@ -56,15 +56,6 @@ export function validateNickname(nickname) {
     return { isValid: true, message: '' };
 }
 
-// 게시글 제목 길이 검증 (최대 26자)
-export function validateTitle(title) {
-    if (title.length === 0) return { isValid: true, message: '' };
-    if (title.length > 26) return { isValid: false, message: '제목은 26자 이하여야 합니다' };
-
-    return { isValid: true, message: '' };
-}
-
-
 // 입력 필드 검증 상태 UI 업데이트 (성공/에러 스타일 적용)
 export function updateFieldValidation(input, helperText, isValid, errorMessage, successMessage) {
     input.classList.remove('success', 'error', 'warning');
@@ -117,24 +108,25 @@ export function setupFormValidation(formId, fields) {
         
         // 붙여넣기 처리
         input.addEventListener('paste', (e) => {
-            if (preventSpaces || preventEmojis || allowedChars) {
-                e.preventDefault();
-                let pastedText = (e.clipboardData || window.clipboardData).getData('text');
-                if (preventSpaces) pastedText = pastedText.replace(/\s/g, '');
-                if (preventEmojis) {
-                    const emojiRegex = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u;
-                    pastedText = pastedText.replace(emojiRegex, '');
-                }
-                if (allowedChars) pastedText = pastedText.replace(new RegExp(`[^${allowedChars.source}]`, 'g'), '');
-                
-                const start = input.selectionStart;
-                const end = input.selectionEnd;
-                const currentValue = input.value;
-                const newValue = currentValue.substring(0, start) + pastedText + currentValue.substring(end);
-                input.value = newValue;
-                input.setSelectionRange(start + pastedText.length, start + pastedText.length);
-                input.dispatchEvent(new Event('input'));
+            if (!preventSpaces && !preventEmojis && !allowedChars) return;
+            
+            e.preventDefault();
+            let pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            
+            if (preventSpaces) pastedText = pastedText.replace(/\s/g, '');
+            if (preventEmojis) {
+                const emojiRegex = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u;
+                pastedText = pastedText.replace(emojiRegex, '');
             }
+            if (allowedChars) pastedText = pastedText.replace(new RegExp(`[^${allowedChars.source}]`, 'g'), '');
+            
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const currentValue = input.value;
+            const newValue = currentValue.substring(0, start) + pastedText + currentValue.substring(end);
+            input.value = newValue;
+            input.setSelectionRange(start + pastedText.length, start + pastedText.length);
+            input.dispatchEvent(new Event('input'));
         });
         
         // 실시간 검증

@@ -1,13 +1,9 @@
-import { PageLayout, Button, ToastUtils, createFormHandler } from '../../components/index.js';
-import { 
-    validatePassword, 
-    setupFormValidation, 
-    getElementValue, 
-    initializeElements, 
-    navigateTo, 
-    debounce, 
-    getUserFromStorage 
-} from '../../utils/common/index.js';
+import { PageLayout, Button, Toast, createFormHandler } from '../../components/index.js';
+import { validatePassword, setupFormValidation } from '../../utils/common/validation.js';
+import { getElementValue, initializeElements } from '../../utils/common/element.js';
+import { navigateTo } from '../../utils/common/navigation.js';
+import { debounce } from '../../utils/common/debounce-helper.js';
+import { getUserFromStorage } from '../../utils/common/user.js';
 import { updatePassword, checkCurrentPassword } from '../../api/index.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
@@ -142,31 +138,31 @@ async function validateFormData() {
     
     for (const { condition, error } of validations) {
         if (condition) {
-            ToastUtils.error(error);
+            Toast.error(error);
             return false;
         }
     }
     
     const isCurrentValid = await verifyCurrentPassword(currentPassword);
     if (!isCurrentValid) {
-        ToastUtils.error(VALIDATION_MESSAGE.CURRENT_PASSWORD_MISMATCH);
+        Toast.error(VALIDATION_MESSAGE.CURRENT_PASSWORD_MISMATCH);
         elements.currentPassword?.focus();
         return false;
     }
     
     const passwordValidation = validatePassword(newPassword);
     if (!passwordValidation.isValid) {
-        ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_INVALID);
+        Toast.error(VALIDATION_MESSAGE.NEW_PASSWORD_INVALID);
         return false;
     }
     
     if (newPassword !== confirmPassword) {
-        ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_MISMATCH);
+        Toast.error(VALIDATION_MESSAGE.NEW_PASSWORD_MISMATCH);
         return false;
     }
     
     if (currentPassword === newPassword) {
-        ToastUtils.error(VALIDATION_MESSAGE.NEW_PASSWORD_SAME_AS_CURRENT);
+        Toast.error(VALIDATION_MESSAGE.NEW_PASSWORD_SAME_AS_CURRENT);
         return false;
     }
     

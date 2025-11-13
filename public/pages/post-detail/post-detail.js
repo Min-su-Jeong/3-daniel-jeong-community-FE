@@ -1,5 +1,9 @@
-import { Button, Modal, PageLayout, ToastUtils } from '../../components/index.js';
-import { formatNumber, formatDate, initializeElements, getElementValue, setElementValue, navigateTo, getUrlParam, renderProfileImage, extractProfileImageKey, getCurrentUser, getUserFromStorage } from '../../utils/common/index.js';
+import { Button, Modal, PageLayout, Toast } from '../../components/index.js';
+import { formatNumber, formatDate } from '../../utils/common/format.js';
+import { initializeElements, getElementValue, setElementValue } from '../../utils/common/element.js';
+import { navigateTo, getUrlParam } from '../../utils/common/navigation.js';
+import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
+import { getCurrentUserInfo } from '../../utils/common/user.js';
 import { getPostById, deletePost as deletePostApi, addPostLike, removePostLike, getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../api/index.js';
 import { API_SERVER_URI } from '../../utils/constants/api.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
@@ -38,7 +42,7 @@ const updateCommentCount = (delta) => {
 };
 
 // DOM 요소 생성 헬퍼 함수
-const createEl = (tag, className = '', text = '') => {
+const createElement = (tag, className = '', text = '') => {
     const element = document.createElement(tag);
     if (className) element.className = className;
     if (text) element.textContent = text;
@@ -90,27 +94,26 @@ const initElements = () => {
 const renderPostImages = (imageKeys) => {
     if (!elements.postImage || !imageKeys?.length) {
         if (elements.postImage) {
-            while (elements.postImage.firstChild) {
-                elements.postImage.removeChild(elements.postImage.firstChild);
-            }
+            elements.postImage.replaceChildren();
             elements.postImage.style.display = 'none';
         }
         return;
     }
 
     elements.postImage.style.display = 'block';
-    while (elements.postImage.firstChild) {
-        elements.postImage.removeChild(elements.postImage.firstChild);
-    }
+    elements.postImage.replaceChildren();
     
-    const container = imageKeys.length === 1 ? elements.postImage : document.createElement('div');
-    if (imageKeys.length > 1) {
+    const isSingleImage = imageKeys.length === 1;
+    const container = isSingleImage ? elements.postImage : document.createElement('div');
+    
+    if (!isSingleImage) {
         container.className = 'post-image-gallery';
     }
     
     imageKeys.forEach(imageKey => {
-        const imageItem = imageKeys.length === 1 ? document.createElement('img') : document.createElement('div');
-        if (imageKeys.length === 1) {
+        const imageItem = isSingleImage ? document.createElement('img') : document.createElement('div');
+        
+        if (isSingleImage) {
             imageItem.src = `${API_SERVER_URI}/files/${imageKey}`;
             imageItem.className = 'post-image-item';
             imageItem.onerror = () => imageItem.remove();
@@ -125,7 +128,7 @@ const renderPostImages = (imageKeys) => {
         container.appendChild(imageItem);
     });
     
-    if (imageKeys.length > 1) {
+    if (!isSingleImage) {
         elements.postImage.appendChild(container);
     }
 };
@@ -141,8 +144,8 @@ const displayPostData = (post) => {
     const postAuthorId = post.author?.id || post.author?.userId;
     let profileImageKey = extractProfileImageKey(post.author);
     if (postAuthorId && currentUserId && postAuthorId === currentUserId) {
-        const currentUser = getUserFromStorage();
-        profileImageKey = currentUser?.profileImageKey || profileImageKey;
+        const { profileImageKey: currentUserProfileImageKey } = getCurrentUserInfo();
+        profileImageKey = currentUserProfileImageKey || profileImageKey;
     }
     
     if (elements.authorAvatar) {
@@ -195,8 +198,8 @@ const transformComment = (commentData) => {
     // 현재 사용자가 작성한 댓글인 경우 최신 프로필 이미지 사용
     let profileImageKey = extractProfileImageKey(commentData.author);
     if (commentAuthorId && currentUserId && commentAuthorId === currentUserId) {
-        const currentUser = getUserFromStorage();
-        profileImageKey = currentUser?.profileImageKey || profileImageKey;
+        const { profileImageKey: currentUserProfileImageKey } = getCurrentUserInfo();
+        profileImageKey = currentUserProfileImageKey || profileImageKey;
     }
     
     return {
@@ -264,11 +267,11 @@ const handleDeletePost = async () => {
     try {
         const response = await deletePostApi(currentPostId);
         if (response.success) {
-            ToastUtils.success(TOAST_MESSAGE.POST_DELETE_SUCCESS);
+            Toast.success(TOAST_MESSAGE.POST_DELETE_SUCCESS);
             setTimeout(() => navigateTo('/post-list'), 1000);
         }
     } catch (error) {
-        ToastUtils.error(error.message || TOAST_MESSAGE.POST_DELETE_FAILED);
+        Toast.error(error.message || TOAST_MESSAGE.POST_DELETE_FAILED);
     }
 };
 
@@ -301,7 +304,7 @@ const toggleLike = async () => {
     } catch (error) {
         updateLikeUI(previousLiked);
         updateLikeCount(likeCountValue);
-        ToastUtils.error(error.message || TOAST_MESSAGE.LIKE_FAILED);
+        Toast.error(error.message || TOAST_MESSAGE.LIKE_FAILED);
     } finally {
         isLikePending = false;
     }
@@ -311,9 +314,7 @@ const toggleLike = async () => {
 const renderComments = () => {
     if (!elements.commentsList) return;
     // 기존 댓글 제거
-    while (elements.commentsList.firstChild) {
-        elements.commentsList.removeChild(elements.commentsList.firstChild);
-    }
+    elements.commentsList.replaceChildren();
     comments.forEach(comment => {
         const commentElement = createCommentElement(comment, 0);
         elements.commentsList.appendChild(commentElement);
@@ -322,27 +323,27 @@ const renderComments = () => {
 
 // 댓글 헤더 생성
 const createCommentHeader = (comment) => {
-    const header = createEl('div', 'comment-header');
+    const header = createElement('div', 'comment-header');
     
-    const authorDiv = createEl('div', 'comment-author');
-    const avatarElement = createEl('div', 'author-avatar');
+    const authorDiv = createElement('div', 'comment-author');
+    const avatarElement = createElement('div', 'author-avatar');
     
     // 현재 사용자가 작성한 댓글인 경우 최신 프로필 이미지 사용
     let profileImageKey = comment.authorImageKey || null;
     if (comment.authorId && currentUserId && comment.authorId === currentUserId) {
-        const currentUser = getUserFromStorage();
-        profileImageKey = currentUser?.profileImageKey || profileImageKey;
+        const { profileImageKey: currentUserProfileImageKey } = getCurrentUserInfo();
+        profileImageKey = currentUserProfileImageKey || profileImageKey;
     }
     
     renderProfileImage(avatarElement, profileImageKey);
     authorDiv.appendChild(avatarElement);
-    authorDiv.appendChild(createEl('span', 'author-name', comment.author));
+    authorDiv.appendChild(createElement('span', 'author-name', comment.author));
     
-    const metaDiv = createEl('div', 'comment-meta');
-    metaDiv.appendChild(createEl('span', 'comment-date', comment.date));
+    const metaDiv = createElement('div', 'comment-meta');
+    metaDiv.appendChild(createElement('span', 'comment-date', comment.date));
     
     if (comment.isEditable) {
-        const actionsDiv = createEl('div', 'comment-actions');
+        const actionsDiv = createElement('div', 'comment-actions');
         actionsDiv.id = `commentActions-${comment.id}`;
         metaDiv.appendChild(actionsDiv);
     }
@@ -354,13 +355,13 @@ const createCommentHeader = (comment) => {
 
 // 답글 버튼 및 입력창 생성
 const createReplySection = (commentId) => {
-    const footer = createEl('div', 'comment-footer');
-    const replyBtn = createEl('button', 'reply-btn', '답글');
+    const footer = createElement('div', 'comment-footer');
+    const replyBtn = createElement('button', 'reply-btn', '답글');
     replyBtn.id = `replyBtn-${commentId}`;
     replyBtn.addEventListener('click', () => toggleReplyInput(commentId));
     footer.appendChild(replyBtn);
     
-    const replyInputContainer = createEl('div', 'reply-input-container');
+    const replyInputContainer = createElement('div', 'reply-input-container');
     replyInputContainer.id = `replyInput-${commentId}`;
     replyInputContainer.style.display = 'none';
     
@@ -369,12 +370,12 @@ const createReplySection = (commentId) => {
 
 // 댓글 요소 생성
 const createCommentElement = (comment, depth = 0) => {
-    const commentElement = createEl('div', depth > 0 ? 'comment-item comment-reply' : 'comment-item');
+    const commentElement = createElement('div', depth > 0 ? 'comment-item comment-reply' : 'comment-item');
     commentElement.dataset.commentId = comment.id;
     commentElement.dataset.depth = depth;
     
     commentElement.appendChild(createCommentHeader(comment));
-    commentElement.appendChild(createEl('div', 'comment-content', comment.content));
+    commentElement.appendChild(createElement('div', 'comment-content', comment.content));
     
     if (depth === 0 && currentUserId) {
         const { footer, replyInputContainer } = createReplySection(comment.id);
@@ -382,7 +383,7 @@ const createCommentElement = (comment, depth = 0) => {
         commentElement.appendChild(replyInputContainer);
     }
     
-    const repliesContainer = createEl('div', 'replies-container');
+    const repliesContainer = createElement('div', 'replies-container');
     repliesContainer.id = `replies-${comment.id}`;
     commentElement.appendChild(repliesContainer);
     
@@ -414,82 +415,115 @@ const handleCommentInput = () => {
     elements.commentSubmitBtn.setDisabled(!hasCommentContent);
 };
 
-// 댓글 등록 처리
-const submitComment = async (parentId = null) => {
-    let content;
-    let inputElement;
-    
+// 댓글 입력값 가져오기
+function getCommentInput(parentId) {
     if (parentId) {
-        inputElement = document.querySelector(`#replyInput-${parentId} .reply-input`);
-        content = inputElement?.value.trim() || '';
-    } else {
-        if (!elements.commentInput) {
-            console.error('commentInput element not found');
-            return;
-        }
-        inputElement = elements.commentInput;
-        content = getElementValue(elements.commentInput).trim();
+        const inputElement = document.querySelector(`#replyInput-${parentId} .reply-input`);
+        return {
+            content: inputElement?.value.trim() || '',
+            inputElement
+        };
     }
     
-    if (!content) return;
+    if (!elements.commentInput) {
+        console.error('commentInput element not found');
+        return null;
+    }
+    
+    return {
+        content: getElementValue(elements.commentInput).trim(),
+        inputElement: elements.commentInput
+    };
+}
+
+// 댓글 객체 생성
+function mapCommentData(responseData, parentId) {
+    const { profileImageKey } = getCurrentUserInfo();
+    const authorImageKey = profileImageKey || extractProfileImageKey(responseData.author) || null;
+    
+    return {
+        id: responseData.commentId || responseData.id,
+        parentId: parentId || null,
+        author: responseData.author?.nickname || responseData.author?.name || '작성자',
+        authorId: currentUserId,
+        authorImageKey: authorImageKey,
+        date: responseData.createdAt ? formatDate(new Date(responseData.createdAt)) : formatDate(new Date()),
+        content: responseData.content || '',
+        isEditable: true,
+        replies: []
+    };
+}
+
+// 댓글을 댓글 목록에 추가
+function addComment(newComment, parentId) {
+    if (parentId) {
+        const parentComment = findComment(comments, parentId);
+        if (parentComment) {
+            parentComment.replies.push(newComment);
+            return;
+        }
+    }
+    comments.push(newComment);
+}
+
+// 입력 필드 초기화
+function resetCommentInput(inputElement, parentId) {
+    if (parentId) {
+        if (inputElement) inputElement.value = '';
+        toggleReplyInput(parentId);
+        return;
+    }
+    
+    if (elements.commentInput) {
+        setElementValue(elements.commentInput, '');
+    }
+    if (elements.commentSubmitBtn) {
+        elements.commentSubmitBtn.setDisabled(true);
+    }
+}
+
+// 댓글 등록 처리
+const submitComment = async (parentId = null) => {
+    const inputData = getCommentInput(parentId);
+    if (!inputData || !inputData.content) return;
+    
     if (!currentUserId) {
         await checkLoginAndRedirect('회원만 댓글을 작성할 수 있습니다. <br>로그인 페이지로 이동하시겠습니까?');
         return;
     }
 
     try {
-        const response = await createComment(currentPostId, currentUserId, content, parentId);
+        const response = await createComment(currentPostId, currentUserId, inputData.content, parentId);
         const responseData = response.data;
         
-        if (responseData) {
-            const user = getCurrentUser();
-            // 현재 사용자가 작성한 댓글이므로 최신 프로필 이미지 사용
-            const profileImageKey = user?.profileImageKey || extractProfileImageKey(responseData.author) || null;
-            const newComment = {
-                id: responseData.commentId || responseData.id,
-                parentId: parentId || null,
-                author: responseData.author?.nickname || responseData.author?.name || user?.nickname || '작성자',
-                authorId: currentUserId,
-                authorImageKey: profileImageKey,
-                date: responseData.createdAt ? formatDate(new Date(responseData.createdAt)) : formatDate(new Date()),
-                content: responseData.content || content,
-                isEditable: true,
-                replies: []
-            };
-            
-            const parentComment = parentId ? findComment(comments, parentId) : null;
-            parentComment ? parentComment.replies.push(newComment) : comments.push(newComment);
-        }
-
-        if (parentId) {
-            if (inputElement) inputElement.value = '';
-            toggleReplyInput(parentId);
-        } else {
-            if (elements.commentInput) {
-                setElementValue(elements.commentInput, '');
-            }
-            if (elements.commentSubmitBtn) {
-                elements.commentSubmitBtn.setDisabled(true);
-            }
-        }
+        if (!responseData) return;
+        
+        const newComment = mapCommentData(responseData, parentId);
+        addComment(newComment, parentId);
+        
+        resetCommentInput(inputData.inputElement, parentId);
         
         renderComments();
         updateCommentCount(1);
-        ToastUtils.success(parentId ? TOAST_MESSAGE.COMMENT_REPLY_SUCCESS : TOAST_MESSAGE.COMMENT_CREATE_SUCCESS);
+        
+        const successMessage = parentId 
+            ? TOAST_MESSAGE.COMMENT_REPLY_SUCCESS 
+            : TOAST_MESSAGE.COMMENT_CREATE_SUCCESS;
+        Toast.success(successMessage);
     } catch (error) {
-        ToastUtils.error(error.message || TOAST_MESSAGE.COMMENT_CREATE_FAILED);
+        Toast.error(error.message || TOAST_MESSAGE.COMMENT_CREATE_FAILED);
     }
 };
 
 // 답글 입력창 생성
 const createReplyInputForm = (commentId) => {
-    const inputWrapper = createEl('div', 'reply-input-wrapper');
+    const inputWrapper = createElement('div', 'reply-input-wrapper');
     
-    const textarea = createEl('textarea', 'reply-input text-input');
+    const textarea = createElement('textarea', 'reply-input text-input');
     textarea.placeholder = PLACEHOLDER.REPLY;
     textarea.rows = 2;
     
-    const actionsContainer = createEl('div', 'reply-actions');
+    const actionsContainer = createElement('div', 'reply-actions');
     actionsContainer.id = `replyActions-${commentId}`;
     
     createButtons(
@@ -521,36 +555,33 @@ const toggleReplyInput = (commentId) => {
     if (isVisible) {
         container.style.display = 'none';
         // 기존 내용 제거
-        while (container.firstChild) {
-            container.removeChild(container.firstChild);
-        }
-    } else {
-        document.querySelectorAll('.reply-input-container').forEach(containerElement => {
-            if (containerElement.id !== `replyInput-${commentId}`) {
-                containerElement.style.display = 'none';
-                // 기존 내용 제거
-                while (containerElement.firstChild) {
-                    containerElement.removeChild(containerElement.firstChild);
-                }
-            }
-        });
-        
-        container.style.display = 'block';
-        const { inputWrapper, textarea } = createReplyInputForm(commentId);
-        container.appendChild(inputWrapper);
-        textarea.focus();
+        container.replaceChildren();
+        return;
     }
+    
+    document.querySelectorAll('.reply-input-container').forEach(containerElement => {
+        if (containerElement.id === `replyInput-${commentId}`) return;
+        
+        containerElement.style.display = 'none';
+        // 기존 내용 제거
+        containerElement.replaceChildren();
+    });
+    
+    container.style.display = 'block';
+    const { inputWrapper, textarea } = createReplyInputForm(commentId);
+    container.appendChild(inputWrapper);
+    textarea.focus();
 };
 
 // 댓글 수정 폼 생성
 const createCommentEditForm = (commentId, content) => {
-    const editForm = createEl('div', 'comment-edit-form');
+    const editForm = createElement('div', 'comment-edit-form');
     
-    const textarea = createEl('textarea', 'comment-edit-input text-input');
+    const textarea = createElement('textarea', 'comment-edit-input text-input');
     textarea.placeholder = PLACEHOLDER.COMMENT;
     textarea.value = content;
     
-    const actionsContainer = createEl('div', 'comment-edit-actions');
+    const actionsContainer = createElement('div', 'comment-edit-actions');
     actionsContainer.id = `editActions-${commentId}`;
     
     createButtons(
@@ -580,11 +611,7 @@ const editComment = (commentId) => {
     const { editForm, textarea } = createCommentEditForm(commentId, comment.content);
     
     // 기존 내용 제거
-    while (contentElement.firstChild) {
-        contentElement.removeChild(contentElement.firstChild);
-    }
-    
-    contentElement.appendChild(editForm);
+    contentElement.replaceChildren(editForm);
     
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
@@ -610,9 +637,9 @@ const saveCommentEdit = async (commentId) => {
 
         editingCommentId = null;
         renderComments();
-        ToastUtils.success(TOAST_MESSAGE.COMMENT_UPDATE_SUCCESS);
+        Toast.success(TOAST_MESSAGE.COMMENT_UPDATE_SUCCESS);
     } catch (error) {
-        ToastUtils.error(error.message || TOAST_MESSAGE.COMMENT_UPDATE_FAILED);
+        Toast.error(error.message || TOAST_MESSAGE.COMMENT_UPDATE_FAILED);
     }
 };
 
@@ -626,9 +653,9 @@ const deleteComment = async (commentId) => {
         removeComment(comments, commentId);
         renderComments();
         updateCommentCount(-1);
-        ToastUtils.success(TOAST_MESSAGE.COMMENT_DELETE_SUCCESS);
+        Toast.success(TOAST_MESSAGE.COMMENT_DELETE_SUCCESS);
     } catch (error) {
-        ToastUtils.error(error.message || TOAST_MESSAGE.COMMENT_DELETE_FAILED);
+        Toast.error(error.message || TOAST_MESSAGE.COMMENT_DELETE_FAILED);
     }
 };
 
@@ -636,20 +663,20 @@ const deleteComment = async (commentId) => {
 const initPostData = async () => {
     const postId = getUrlParam('id');
     if (!postId) {
-        ToastUtils.error(TOAST_MESSAGE.POST_ID_MISSING);
+        Toast.error(TOAST_MESSAGE.POST_ID_MISSING);
         navigateTo('/post-list');
         return;
     }
 
     currentPostId = postId;
-    const user = getCurrentUser();
-    currentUserId = user?.id || null;
+    const { userId } = getCurrentUserInfo();
+    currentUserId = userId;
 
     try {
         const response = await getPostById(postId);
         const post = response.data;
         if (!post) {
-            ToastUtils.error(TOAST_MESSAGE.POST_NOT_FOUND);
+            Toast.error(TOAST_MESSAGE.POST_NOT_FOUND);
             navigateTo('/post-list');
             return;
         }
@@ -666,7 +693,7 @@ const initPostData = async () => {
             processComments(commentsData);
         }
     } catch (error) {
-        ToastUtils.error(error.message || TOAST_MESSAGE.POST_LOAD_FAILED);
+        Toast.error(error.message || TOAST_MESSAGE.POST_LOAD_FAILED);
         navigateTo('/post-list');
     }
 };
@@ -675,8 +702,7 @@ const initPostData = async () => {
 const updateCurrentUserProfileImages = () => {
     if (!currentUserId) return;
     
-    const currentUser = getUserFromStorage();
-    const updatedProfileImageKey = currentUser?.profileImageKey || null;
+    const { profileImageKey: updatedProfileImageKey } = getCurrentUserInfo();
     
     // 현재 사용자가 작성한 게시글의 프로필 이미지 업데이트
     if (currentPost && elements.authorAvatar) {
@@ -743,24 +769,23 @@ const initPage = async () => {
 
 // 페이지 나갔다가 돌아올 때 상태 복원 방지
 window.addEventListener('pageshow', async (event) => {
-    if (event.persisted) {
-        // 복원될 때 댓글 데이터가 없으면 다시 로드
-        if (!comments || comments.length === 0) {
-            await initPostData();
-        } else {
-            // 수정 모드나 답글 입력창이 열려있으면 닫기
-            if (editingCommentId) {
-                editingCommentId = null;
-                renderComments();
-            }
+    if (!event.persisted) return;
+    
+    // 복원될 때 댓글 데이터가 없으면 다시 로드
+    if (!comments || comments.length === 0) {
+        await initPostData();
+    } else {
+        // 수정 모드나 답글 입력창이 열려있으면 닫기
+        if (editingCommentId) {
+            editingCommentId = null;
+            renderComments();
         }
-        document.querySelectorAll('.reply-input-container').forEach(container => {
-            container.style.display = 'none';
-            while (container.firstChild) {
-                container.removeChild(container.firstChild);
-            }
-        });
     }
+    
+    document.querySelectorAll('.reply-input-container').forEach(container => {
+        container.style.display = 'none';
+        container.replaceChildren();
+    });
 });
 
 document.addEventListener('DOMContentLoaded', initPage);
