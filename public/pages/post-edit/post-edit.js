@@ -185,6 +185,9 @@ async function handlePostUpdate() {
         
         Toast.success(TOAST_MESSAGE.POST_UPDATE_SUCCESS);
         setTimeout(() => {
+            // 수정 후 상세 페이지 진입 시 뒤로가기가 메인 페이지로 가도록 히스토리 수정
+            window.history.replaceState(null, '', '/post-list');
+            // 상세 페이지로 이동
             navigateTo(`/post-detail?id=${postId}`);
         }, 1200);
     } catch (error) {
