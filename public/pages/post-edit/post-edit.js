@@ -2,10 +2,11 @@ import { initializeElements, setupPlaceholders, setupStandaloneHelperText } from
 import { navigateTo, getUrlParam, handlePostEditorBackNavigation } from '../../utils/common/navigation.js';
 import { getCurrentUserInfo } from '../../utils/common/user.js';
 import { uploadImages } from '../../utils/common/image.js';
+import { IMAGE_CONSTANTS } from '../../utils/constants/image.js';
 import { Toast } from '../../components/toast/toast.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { PostEditor } from '../../components/post-editor/post-editor.js';
-import { IMAGE_CONSTANTS, API_SERVER_URI } from '../../utils/constants/api.js';
+import { API_SERVER_URI } from '../../utils/constants/api.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
