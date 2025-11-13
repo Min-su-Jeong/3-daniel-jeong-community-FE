@@ -1,20 +1,10 @@
-import { PageLayout, Button, ToastUtils, Modal, createFormHandler } from '../../components/index.js';
-import { 
-    validateNickname, 
-    setupFormValidation, 
-    getElementValue, 
-    setElementValue, 
-    initializeElements, 
-    navigateTo, 
-    renderProfileImage as renderProfileImageUtil,
-    createProfilePlaceholder,
-    setupProfileImage,
-    getUserFromStorage, 
-    saveUserToStorage, 
-    dispatchUserUpdatedEvent, 
-    removeUserFromStorage,
-    getSubmitButton
-} from '../../utils/common/index.js';
+import { PageLayout, Button, Toast, Modal, createFormHandler } from '../../components/index.js';
+import { validateNickname, setupFormValidation } from '../../utils/common/validation.js';
+import { getElementValue, setElementValue, initializeElements, getSubmitButton, setupPlaceholders } from '../../utils/common/element.js';
+import { navigateTo } from '../../utils/common/navigation.js';
+import { renderProfileImage, createProfilePlaceholder } from '../../utils/common/image.js';
+import { setupProfileImage } from '../../utils/common/profile.js';
+import { getUserFromStorage, saveUserToStorage, dispatchUserUpdatedEvent, removeUserFromStorage } from '../../utils/common/user.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
@@ -36,12 +26,6 @@ let originalProfileImageKey = null;
 let user = null;
 let editButton = null;
 
-// 프로필 이미지 렌더링 (유틸리티 함수 래퍼)
-function renderProfileImage(container, imageKey) {
-    if (!container) return;
-    renderProfileImageUtil(container, imageKey);
-}
-
 // 삭제 버튼 표시 상태 업데이트
 function updateRemoveButtonVisibility(show) {
     if (!elements.removeImageBtn) return;
@@ -61,9 +45,7 @@ function createUserEditButtons() {
     });
 }
 
-/**
- * 닉네임 필드 헬퍼 텍스트 초기화 (기본 텍스트로 복원)
- */
+// 닉네임 필드 헬퍼 텍스트 초기화 (기본 텍스트로 복원)
 function resetHelperText() {
     const helperText = elements.nickname?.nextElementSibling;
     if (!helperText?.classList.contains('helper-text')) return;
@@ -73,9 +55,7 @@ function resetHelperText() {
     helperText.textContent = helperText.dataset.defaultText || '';
 }
 
-/**
- * 제출 버튼 활성화 상태 업데이트 (닉네임/이미지 변경 여부 확인)
- */
+// 제출 버튼 활성화 상태 업데이트 (닉네임/이미지 변경 여부 확인)
 function updateSubmitButtonState() {
     if (!editButton) return;
     
@@ -96,9 +76,7 @@ function updateSubmitButtonState() {
     editButton.setDisabled(!canSubmit);
 }
 
-/**
- * 원본 프로필 이미지 복원 (변경 취소 시)
- */
+// 원본 프로필 이미지 복원 (변경 취소 시)
 function restoreOriginalImage() {
     clearImageContainer();
     
@@ -116,14 +94,10 @@ function restoreOriginalImage() {
 
 // 이미지 컨테이너 초기화
 function clearImageContainer() {
-    while (elements.profileImage.firstChild) {
-        elements.profileImage.removeChild(elements.profileImage.firstChild);
-    }
+    elements.profileImage.replaceChildren();
 }
 
-/**
- * 프로필 이미지 제거 (placeholder 표시)
- */
+// 프로필 이미지 제거 (placeholder 표시)
 function removeProfileImage() {
     clearImageContainer();
     createProfilePlaceholder(elements.profileImage);
@@ -143,9 +117,7 @@ function setupProfileImageChange() {
     });
 }
 
-/**
- * 폼 필드 유효성 검사 설정 (닉네임 실시간 검증)
- */
+// 폼 필드 유효성 검사 설정 (닉네임 실시간 검증)
 function setupFormFields() {
     setupFormValidation('userEditForm', [
         {
@@ -176,16 +148,43 @@ async function removeUser(userId) {
         removeUserFromStorage();
         dispatchUserUpdatedEvent();
         
-        ToastUtils.success(TOAST_MESSAGE.USER_DELETE_SUCCESS);
+        Toast.success(TOAST_MESSAGE.USER_DELETE_SUCCESS);
         setTimeout(() => navigateTo('/'), 2000);
     } catch (error) {
-        ToastUtils.error(error.message || TOAST_MESSAGE.USER_DELETE_FAILED);
+        Toast.error(error.message || TOAST_MESSAGE.USER_DELETE_FAILED);
     }
 }
 
-/**
- * 회원 탈퇴 링크 이벤트 설정 (확인 모달 2단계)
- */
+// 회원 탈퇴 재확인 모달 표시
+function showWithdrawalReconfirmModal() {
+    const reconfirmModal = new Modal({
+        title: MODAL_MESSAGE.TITLE_DELETE,
+        subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
+        content: MODAL_MESSAGE.WITHDRAWAL_RECONFIRM,
+        confirmText: '탈퇴 신청',
+        confirmType: 'danger',
+        cancelText: '취소',
+        onConfirm: () => removeUser(user.id)
+    });
+    reconfirmModal.show();
+}
+
+// 회원 탈퇴 확인 모달 표시
+function showWithdrawalConfirmModal() {
+    const confirmModal = new Modal({
+        title: MODAL_MESSAGE.TITLE_DELETE,
+        subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
+        content: MODAL_MESSAGE.WITHDRAWAL_CONFIRM,
+        confirmText: '탈퇴 신청',
+        confirmType: 'danger',
+        showCancel: true,
+        cancelText: '취소',
+        onConfirm: showWithdrawalReconfirmModal
+    });
+    confirmModal.show();
+}
+
+// 회원 탈퇴 링크 이벤트 설정 (확인 모달 2단계)
 function setupWithdrawal() {
     if (!elements.withdrawalLink) return;
 
@@ -193,32 +192,11 @@ function setupWithdrawal() {
         event.preventDefault();
         
         if (!user) {
-            ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
+            Toast.error(TOAST_MESSAGE.USER_LOAD_FAILED);
             return;
         }
         
-        const confirmModal = new Modal({
-            title: MODAL_MESSAGE.TITLE_DELETE,
-            subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
-            content: MODAL_MESSAGE.WITHDRAWAL_CONFIRM,
-            confirmText: '탈퇴 신청',
-            confirmType: 'danger',
-            showCancel: true,
-            cancelText: '취소',
-            onConfirm: () => {
-                const reconfirmModal = new Modal({
-                    title: MODAL_MESSAGE.TITLE_DELETE,
-                    subtitle: MODAL_MESSAGE.SUBTITLE_USER_DELETE,
-                    content: MODAL_MESSAGE.WITHDRAWAL_RECONFIRM,
-                    confirmText: '탈퇴 신청',
-                    confirmType: 'danger',
-                    cancelText: '취소',
-                    onConfirm: () => removeUser(user.id)
-                });
-                reconfirmModal.show();
-            }
-        });
-        confirmModal.show();
+        showWithdrawalConfirmModal();
     });
 }
 
@@ -226,7 +204,7 @@ async function loadUserData() {
     user = getUserFromStorage();
     
     if (!user) {
-        ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
+        Toast.error(TOAST_MESSAGE.USER_LOAD_FAILED);
         navigateTo('/login');
         return;
     }
@@ -276,28 +254,34 @@ function updateProfileImageDisplay(imageKey) {
 }
 
 // 프로필 이미지 키 결정 (삭제/업로드/유지)
+// 사용자가 이미지를 삭제했는지, 새로 업로드했는지, 그대로 유지하는지 판단하여 적절한 값 반환
 async function determineProfileImageKey(profileImageFile) {
     const hasOriginalImage = !!originalProfileImageKey;
     const hasCurrentImage = !!elements.profileImage.querySelector('img');
+    // 원본 이미지가 있었는데 현재 이미지가 없고 새 파일도 없으면 삭제된 것으로 판단
     const isImageRemoved = hasOriginalImage && !hasCurrentImage && !profileImageFile;
     
     if (isImageRemoved) {
-        return '';
+        return ''; // 빈 문자열은 이미지 삭제를 의미
     }
     
     if (profileImageFile) {
         return await uploadProfileImage(user.id, profileImageFile);
     }
     
+    // 이미지 변경 없음: 기존 이미지 키 유지
     return user.profileImageKey || null;
 }
 
 // 사용자 정보 업데이트 후 상태 동기화
+// 서버에서 받은 업데이트된 사용자 정보로 로컬 상태와 UI를 동기화
 function syncUserState(updatedUser, nickname) {
     user = updatedUser;
+    // rememberMe 상태 확인 (localStorage에 있으면 true)
     const isRemembered = localStorage.getItem('user') !== null;
     saveUserToStorage(user, isRemembered);
     
+    // 원본 값 업데이트 (다음 수정 시 변경 여부 확인용)
     originalNickname = nickname;
     originalProfileImageKey = user.profileImageKey || null;
     
@@ -317,7 +301,7 @@ function setupFormSubmission() {
         submitButtonSelector: getSubmitButton(elements.buttonGroup),
         validate: () => {
             if (!user) {
-                ToastUtils.error(TOAST_MESSAGE.USER_LOAD_FAILED);
+                Toast.error(TOAST_MESSAGE.USER_LOAD_FAILED);
                 return false;
             }
             return true;
@@ -351,7 +335,9 @@ function setupFormSubmission() {
 
 // Placeholder 및 Helper Text 설정
 function setupPlaceholdersAndHelperTexts() {
-    if (elements.nickname) elements.nickname.placeholder = PLACEHOLDER.NICKNAME;
+    setupPlaceholders([
+        { element: elements.nickname, placeholder: PLACEHOLDER.NICKNAME }
+    ]);
 }
 
 document.addEventListener('DOMContentLoaded', async function() {

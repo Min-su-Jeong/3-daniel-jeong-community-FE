@@ -6,7 +6,7 @@
 export { Button } from './button/button.js';
 export { Modal } from './modal/modal.js';
 export { PageLayout } from './layout/page-layout.js';
-export { ToastUtils } from './toast/toast.js';
+export { Toast } from './toast/toast.js';
 export * from './form/form-handler.js';
 export * from './post-editor/post-editor.js';
 

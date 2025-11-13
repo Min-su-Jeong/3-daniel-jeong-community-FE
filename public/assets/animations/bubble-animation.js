@@ -83,27 +83,27 @@ class BubbleAnimation {
         
         // 중복되지 않는 텍스트 선택
         let randomText;
-        let textAttempts = 0;
         const maxTextAttempts = 20;
         
-        do {
+        for (let textAttempts = 0; textAttempts < maxTextAttempts; textAttempts++) {
             randomText = BUBBLE_TEXTS[Math.floor(Math.random() * BUBBLE_TEXTS.length)];
-            textAttempts++;
-        } while (this.usedTexts.has(randomText) && textAttempts < maxTextAttempts);
+            if (!this.usedTexts.has(randomText)) {
+                break;
+            }
+        }
         
         this.usedTexts.add(randomText);
         bubble.textContent = randomText;
         
         // 랜덤 위치 설정
         let randomPosition;
-        let positionAttempts = 0;
         const maxPositionAttempts = 20;
         
         // 위치 범위 정의
         const leftRange = { min: 5, max: 30 };
         const rightRange = { min: 65, max: 90 };
         
-        do {
+        for (let positionAttempts = 0; positionAttempts < maxPositionAttempts; positionAttempts++) {
             // 지정된 쪽 또는 랜덤 선택
             if (side === 'left') {
                 randomPosition = Math.random() * (leftRange.max - leftRange.min) + leftRange.min;
@@ -114,8 +114,12 @@ class BubbleAnimation {
                 const range = isLeft ? leftRange : rightRange;
                 randomPosition = Math.random() * (range.max - range.min) + range.min;
             }
-            positionAttempts++;
-        } while (Array.from(this.usedPositions).some(pos => Math.abs(pos - randomPosition) < 15) && positionAttempts < maxPositionAttempts);
+            
+            const isPositionValid = !Array.from(this.usedPositions).some(pos => Math.abs(pos - randomPosition) < 15);
+            if (isPositionValid) {
+                break;
+            }
+        }
         
         this.usedPositions.add(randomPosition);
         bubble.style.left = `${randomPosition}%`;
@@ -161,9 +165,7 @@ class BubbleAnimation {
         });
         
         // 기존 말풍선 제거
-        while (this.bubblesContainer.firstChild) {
-            this.bubblesContainer.removeChild(this.bubblesContainer.firstChild);
-        }
+        this.bubblesContainer.replaceChildren();
         
         // Set 초기화
         this.usedTexts.clear();

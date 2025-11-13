@@ -1,16 +1,17 @@
 import { API_SERVER_URI, METHOD } from '../constants/api.js';
 import { TOAST_MESSAGE } from '../constants/toast.js';
 import { MODAL_MESSAGE } from '../constants/modal.js';
-import { Modal, ToastUtils } from '../../components/index.js';
+import { Modal, Toast } from '../../components/index.js';
 import { logout } from '../../api/index.js';
-import { navigateTo, removeUserFromStorage, dispatchUserUpdatedEvent } from './index.js';
+import { navigateTo } from './navigation.js';
+import { removeUserFromStorage, dispatchUserUpdatedEvent } from './user.js';
 
 /**
  * HTTP 요청 공통 유틸리티
  * 세션 관리, 에러 처리, 요청/응답 파싱 등 API 통신 로직 통합
  */
 
-/** 세션 만료 모달 중복 표시 방지 플래그 */
+// 세션 만료 모달 중복 표시 방지 플래그
 let isShowingExpiredModal = false;
 
 /**
@@ -29,6 +30,7 @@ async function handleLogout() {
 }
 
 // Refresh 토큰으로 세션 갱신 (성공 시 모달 닫고 이벤트 발생, 실패 시 로그아웃)
+// request 함수를 사용하지 않는 이유: 순환 참조 방지 (request -> handleSessionExpired -> handleRefreshToken -> request)
 async function handleRefreshToken() {
     try {
         const refreshResponse = await fetch(`${API_SERVER_URI}/auth/refresh`, {
@@ -45,12 +47,12 @@ async function handleRefreshToken() {
             throw new Error('Refresh failed');
         }
         
-        ToastUtils.success(TOAST_MESSAGE.SESSION_RENEWED);
+        Toast.success(TOAST_MESSAGE.SESSION_RENEWED);
         isShowingExpiredModal = false;
         dispatchUserUpdatedEvent();
         return true;
     } catch (error) {
-        ToastUtils.error(TOAST_MESSAGE.SESSION_RENEW_FAILED);
+        Toast.error(TOAST_MESSAGE.SESSION_RENEW_FAILED);
         await handleLogout();
         return false;
     }
@@ -132,6 +134,23 @@ function createError(data, status) {
     return error;
 }
 
+// Fetch 요청 실행 및 에러 처리
+// 중첩 try-catch를 피하기 위해 별도 함수로 분리
+async function executeFetch(urlWithParams, options) {
+    try {
+        return await fetch(urlWithParams, options);
+    } catch (fetchError) {
+        // CORS 에러로 fetch가 실패한 경우 세션 만료로 간주
+        if (fetchError.name === 'TypeError') {
+            await handleSessionExpired();
+        }
+        // 에러에 status 속성 추가
+        const error = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+        error.status = error.status || 0;
+        throw error;
+    }
+}
+
 // 공통 API 요청 처리 (세션 만료 자동 처리, 에러 통일)
 export async function request({
     method = METHOD.POST,
@@ -144,16 +163,7 @@ export async function request({
     const urlWithParams = params ? `${API_SERVER_URI}${url}?${params}` : `${API_SERVER_URI}${url}`;
     
     try {
-        let response;
-        try {
-            response = await fetch(urlWithParams, options);
-        } catch (fetchError) {
-            // CORS 에러로 fetch가 실패한 경우 세션 만료로 간주
-            if (fetchError.name === 'TypeError') {
-                await handleSessionExpired();
-            }
-            throw fetchError;
-        }
+        const response = await executeFetch(urlWithParams, options);
         
         // 401 에러 처리
         if (response.status === 401) {

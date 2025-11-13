@@ -19,6 +19,17 @@ export class Button {
 
     // 버튼 요소를 DOM에 추가
     appendTo(container) {
+        const buttonElement = this.createButtonElement();
+        this.setupButtonContent(buttonElement);
+        this.setupButtonEvents(buttonElement);
+        
+        this.buttonElement = buttonElement;
+        container.appendChild(buttonElement);
+        return buttonElement;
+    }
+
+    // 버튼 요소 생성
+    createButtonElement() {
         const buttonElement = document.createElement('button');
         buttonElement.type = this.options.type;
         buttonElement.className = `btn btn-${this.options.variant} btn-${this.options.size}`;
@@ -31,29 +42,48 @@ export class Button {
         if (this.options.loading) {
             buttonElement.classList.add('loading');
         }
+        
+        return buttonElement;
+    }
 
-        // 아이콘 추가
+    // 버튼 내용 설정 (아이콘, 텍스트, 스피너)
+    setupButtonContent(buttonElement) {
         if (this.options.icon) {
-            const iconSpan = document.createElement('span');
-            iconSpan.className = 'btn-icon';
-            iconSpan.textContent = this.options.icon;
-            buttonElement.appendChild(iconSpan);
+            buttonElement.appendChild(this.createIconElement());
         }
+        
+        buttonElement.appendChild(this.createTextElement());
+        
+        if (this.options.loading) {
+            buttonElement.appendChild(this.createSpinnerElement());
+        }
+    }
 
-        // 텍스트 추가
+    // 아이콘 요소 생성
+    createIconElement() {
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'btn-icon';
+        iconSpan.textContent = this.options.icon;
+        return iconSpan;
+    }
+
+    // 텍스트 요소 생성
+    createTextElement() {
         const textSpan = document.createElement('span');
         textSpan.className = 'btn-text';
         textSpan.textContent = this.options.loading ? '처리중...' : this.options.text;
-        buttonElement.appendChild(textSpan);
+        return textSpan;
+    }
 
-        // 로딩 스피너 추가
-        if (this.options.loading) {
-            const spinnerSpan = document.createElement('span');
-            spinnerSpan.className = 'btn-spinner';
-            buttonElement.appendChild(spinnerSpan);
-        }
-        
-        // 클릭 이벤트 설정
+    // 스피너 요소 생성
+    createSpinnerElement() {
+        const spinnerSpan = document.createElement('span');
+        spinnerSpan.className = 'btn-spinner';
+        return spinnerSpan;
+    }
+
+    // 버튼 이벤트 설정
+    setupButtonEvents(buttonElement) {
         if (this.options.onClick) {
             buttonElement.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -61,10 +91,6 @@ export class Button {
                 this.options.onClick(e);
             });
         }
-        
-        this.buttonElement = buttonElement;
-        container.appendChild(buttonElement);
-        return buttonElement;
     }
 
     // 버튼 옵션 및 DOM 상태 업데이트
@@ -79,24 +105,41 @@ export class Button {
     updateDOMState() {
         if (!this.buttonElement) return;
 
+        this.updateTextContent();
+        this.updateLoadingState();
+    }
+
+    // 텍스트 내용 업데이트
+    updateTextContent() {
         const textSpan = this.buttonElement.querySelector('.btn-text');
         if (textSpan) {
             textSpan.textContent = this.options.loading ? '처리중...' : this.options.text;
         }
+    }
 
+    // 로딩 상태 업데이트
+    updateLoadingState() {
         if (this.options.loading) {
             this.buttonElement.classList.add('loading');
-            if (!this.buttonElement.querySelector('.btn-spinner')) {
-                const spinnerSpan = document.createElement('span');
-                spinnerSpan.className = 'btn-spinner';
-                this.buttonElement.appendChild(spinnerSpan);
-            }
+            this.ensureSpinnerExists();
         } else {
             this.buttonElement.classList.remove('loading');
-            const spinner = this.buttonElement.querySelector('.btn-spinner');
-            if (spinner) {
-                spinner.remove();
-            }
+            this.removeSpinner();
+        }
+    }
+
+    // 스피너 존재 확인 및 추가
+    ensureSpinnerExists() {
+        if (!this.buttonElement.querySelector('.btn-spinner')) {
+            this.buttonElement.appendChild(this.createSpinnerElement());
+        }
+    }
+
+    // 스피너 제거
+    removeSpinner() {
+        const spinner = this.buttonElement.querySelector('.btn-spinner');
+        if (spinner) {
+            spinner.remove();
         }
     }
 
@@ -124,6 +167,27 @@ export class Button {
 
     // 버튼 그룹 생성 (여러 버튼 일괄 생성 및 관리)
     static createGroup(container, configs, options = {}) {
+        const containerElement = Button.resolveContainer(container);
+        if (!containerElement) return null;
+
+        const { clearOnCreate = true, wrapInRow = false } = options;
+
+        if (clearOnCreate) {
+            Button.clearGroup(containerElement);
+        }
+
+        const targetContainer = wrapInRow ? document.createElement('div') : containerElement;
+        const buttons = Button.createButtonsFromConfigs(configs, targetContainer);
+
+        if (wrapInRow && targetContainer !== containerElement) {
+            containerElement.appendChild(targetContainer);
+        }
+
+        return Button.createGroupResult(containerElement, buttons);
+    }
+
+    // 컨테이너 요소 해석
+    static resolveContainer(container) {
         const containerElement = typeof container === 'string' 
             ? document.getElementById(container) 
             : container;
@@ -132,30 +196,27 @@ export class Button {
             console.error('Button container not found');
             return null;
         }
+        
+        return containerElement;
+    }
 
-        const { clearOnCreate = true, wrapInRow = false } = options;
-
-        if (clearOnCreate) {
-            Button.clearGroup(containerElement);
-        }
-
+    // 설정 배열로부터 버튼 생성
+    static createButtonsFromConfigs(configs, container) {
         const buttons = [];
-        const targetContainer = wrapInRow ? document.createElement('div') : containerElement;
-
         configs.forEach(config => {
             const button = new Button(config);
-            const buttonElement = button.appendTo(targetContainer);
+            const buttonElement = button.appendTo(container);
             buttons.push({ button, element: buttonElement, config });
         });
+        return buttons;
+    }
 
-        if (wrapInRow && targetContainer !== containerElement) {
-            containerElement.appendChild(targetContainer);
-        }
-
+    // 그룹 결과 객체 생성
+    static createGroupResult(container, buttons) {
         return {
-            container: containerElement,
+            container,
             buttons,
-            clear: () => Button.clearGroup(containerElement),
+            clear: () => Button.clearGroup(container),
             findButton: (predicate) => buttons.find(({ config }) => predicate(config)),
             getButtons: () => buttons.map(({ element }) => element)
         };
@@ -169,21 +230,13 @@ export class Button {
         
         if (!containerElement) return;
 
-        while (containerElement.firstChild) {
-            containerElement.removeChild(containerElement.firstChild);
-        }
+        containerElement.replaceChildren();
     }
 
     // 단일 버튼 생성 및 컨테이너에 추가
     static create(container, config) {
-        const containerElement = typeof container === 'string' 
-            ? document.getElementById(container) 
-            : container;
-        
-        if (!containerElement) {
-            console.error('Button container not found');
-            return null;
-        }
+        const containerElement = Button.resolveContainer(container);
+        if (!containerElement) return null;
 
         const button = new Button(config);
         button.appendTo(containerElement);

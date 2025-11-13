@@ -3,8 +3,8 @@
  * post-write와 post-edit에서 공통으로 사용되는 로직
  */
 
-import { validateImageFiles, createImagePreviews, updateImageGalleryCount, setupImageUploadEvents } from '../../utils/common/index.js';
-import { ToastUtils } from '../index.js';
+import { validateImageFiles, createImagePreviews, updateImageGalleryCount, setupImageUploadEvents } from '../../utils/common/image.js';
+import { Toast } from '../index.js';
 import { IMAGE_CONSTANTS } from '../../utils/constants/api.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 
@@ -54,9 +54,7 @@ export class PostEditor {
         this.init();
     }
 
-    /**
-     * 에디터 초기화 (이벤트 리스너 및 유효성 검사 설정)
-     */
+    // 에디터 초기화 (이벤트 리스너 및 유효성 검사 설정)
     init() {
         if (this.elements.postImages) {
             this.elements.postImages.accept = IMAGE_CONSTANTS.ACCEPT;
@@ -65,9 +63,7 @@ export class PostEditor {
         this.setupFieldValidation();
     }
 
-    /**
-     * 이벤트 리스너 설정 (폼 입력, 이미지 업로드, 제출 처리)
-     */
+    // 이벤트 리스너 설정 (폼 입력, 이미지 업로드, 제출 처리)
     setupEventListeners() {
         const { postContent, postForm, imageUploadArea, postImages } = this.elements;
 
@@ -94,9 +90,7 @@ export class PostEditor {
         }
     }
 
-    /**
-     * 필드 유효성 검사 설정 (제목 길이 제한, 문자 카운터 업데이트)
-     */
+    // 필드 유효성 검사 설정 (제목 길이 제한, 문자 카운터 업데이트)
     setupFieldValidation() {
         const { postTitle, charCount } = this.elements;
         if (!postTitle || !charCount) return;
@@ -110,9 +104,7 @@ export class PostEditor {
         });
     }
 
-    /**
-     * 제목 문자 카운터 업데이트 (24자 이상 시 경고 표시)
-     */
+    // 제목 문자 카운터 업데이트 (24자 이상 시 경고 표시)
     updateCharCounter() {
         const { postTitle, charCount } = this.elements;
         if (!postTitle || !charCount) return;
@@ -126,49 +118,81 @@ export class PostEditor {
 
     // 이미지 파일 처리 (검증, 미리보기 생성, 갤러리 업데이트)
     async handleImageFiles(files) {
-        const validation = validateImageFiles(
+        const validation = this.validateImageFiles(files);
+        
+        if (!this.isValidationValid(validation)) {
+            return;
+        }
+
+        if (!this.canAddMoreImages(validation.validFiles.length)) {
+            return;
+        }
+
+        await this.processValidImageFiles(validation.validFiles);
+    }
+
+    // 이미지 파일 검증
+    validateImageFiles(files) {
+        return validateImageFiles(
             files,
             IMAGE_CONSTANTS.MAX_IMAGE_SIZE,
             IMAGE_CONSTANTS.MAX_IMAGES
         );
+    }
 
+    // 검증 결과 확인
+    isValidationValid(validation) {
         if (validation.errors.length > 0) {
             validation.errors.forEach(error => {
-                ToastUtils.error(error);
+                Toast.error(error);
             });
-            return;
+            return false;
         }
 
-        if (validation.validFiles.length === 0) return;
-
-        if (this.selectedImages.length + validation.validFiles.length > IMAGE_CONSTANTS.MAX_IMAGES) {
-            ToastUtils.error(`${TOAST_MESSAGE.IMAGE_MAX_EXCEEDED} (최대 ${IMAGE_CONSTANTS.MAX_IMAGES}개)`);
-            return;
+        if (validation.validFiles.length === 0) {
+            return false;
         }
 
+        return true;
+    }
+
+    // 추가 가능한 이미지 개수 확인
+    canAddMoreImages(newFilesCount) {
+        if (this.selectedImages.length + newFilesCount > IMAGE_CONSTANTS.MAX_IMAGES) {
+            Toast.error(`${TOAST_MESSAGE.IMAGE_MAX_EXCEEDED} (최대 ${IMAGE_CONSTANTS.MAX_IMAGES}개)`);
+            return false;
+        }
+        return true;
+    }
+
+    // 유효한 이미지 파일 처리
+    async processValidImageFiles(validFiles) {
         try {
-            const { previews, errors } = await createImagePreviews(validation.validFiles);
+            const { previews, errors } = await createImagePreviews(validFiles);
 
             if (previews.length > 0) {
                 this.selectedImages.push(...previews);
             }
 
             if (errors.length > 0) {
-                ToastUtils.error(TOAST_MESSAGE.IMAGE_PARTIAL_FAILED);
+                Toast.error(TOAST_MESSAGE.IMAGE_PARTIAL_FAILED);
             }
 
             this.updateImageGallery();
-            if (this.onImageChange) {
-                this.onImageChange(this.selectedImages);
-            }
+            this.notifyImageChange();
         } catch (error) {
-            ToastUtils.error(TOAST_MESSAGE.IMAGE_PROCESS_FAILED);
+            Toast.error(TOAST_MESSAGE.IMAGE_PROCESS_FAILED);
         }
     }
 
-    /**
-     * 이미지 갤러리 UI 업데이트 (갤러리 표시/숨김, 미리보기 렌더링)
-     */
+    // 이미지 변경 알림
+    notifyImageChange() {
+        if (this.onImageChange) {
+            this.onImageChange(this.selectedImages);
+        }
+    }
+
+    // 이미지 갤러리 UI 업데이트 (갤러리 표시/숨김, 미리보기 렌더링)
     updateImageGallery() {
         const { imageGallery, imageUploadArea, galleryGrid, galleryCount } = this.elements;
         if (!imageGallery || !imageUploadArea || !galleryGrid) return;
@@ -176,18 +200,30 @@ export class PostEditor {
         const isEmpty = this.selectedImages.length === 0;
         const isFull = this.selectedImages.length >= IMAGE_CONSTANTS.MAX_IMAGES;
 
-        imageGallery.style.display = isEmpty ? 'none' : 'block';
-        imageUploadArea.style.display = isFull ? 'none' : 'block';
+        this.updateGalleryVisibility(imageGallery, imageUploadArea, isEmpty, isFull);
 
         if (isEmpty) return;
 
+        this.updateGalleryCount(galleryCount);
+        this.renderImagePreviews(galleryGrid);
+    }
+
+    // 갤러리 표시/숨김 업데이트
+    updateGalleryVisibility(imageGallery, imageUploadArea, isEmpty, isFull) {
+        imageGallery.style.display = isEmpty ? 'none' : 'block';
+        imageUploadArea.style.display = isFull ? 'none' : 'block';
+    }
+
+    // 갤러리 카운트 업데이트
+    updateGalleryCount(galleryCount) {
         if (galleryCount) {
             updateImageGalleryCount(galleryCount, this.selectedImages);
         }
+    }
 
-        while (galleryGrid.firstChild) {
-            galleryGrid.removeChild(galleryGrid.firstChild);
-        }
+    // 이미지 미리보기 렌더링
+    renderImagePreviews(galleryGrid) {
+        galleryGrid.replaceChildren();
 
         this.selectedImages.forEach((imageData, index) => {
             galleryGrid.appendChild(this.createImagePreviewItem(imageData.url, index));
@@ -227,20 +263,15 @@ export class PostEditor {
     removeImage(index) {
         this.selectedImages.splice(index, 1);
         this.updateImageGallery();
-        
-        const { imageGallery, imageUploadArea, postImages } = this.elements;
-        
-        if (this.selectedImages.length === 0) {
-            if (imageGallery) imageGallery.style.display = 'none';
-            if (imageUploadArea) imageUploadArea.style.display = 'block';
-        } else if (this.selectedImages.length < IMAGE_CONSTANTS.MAX_IMAGES) {
-            if (imageUploadArea) imageUploadArea.style.display = 'block';
-        }
-        
-        if (postImages) postImages.value = '';
+        this.resetImageInput();
+        this.notifyImageChange();
+    }
 
-        if (this.onImageChange) {
-            this.onImageChange(this.selectedImages);
+    // 이미지 입력 필드 초기화
+    resetImageInput() {
+        const { postImages } = this.elements;
+        if (postImages) {
+            postImages.value = '';
         }
     }
 
@@ -253,20 +284,30 @@ export class PostEditor {
         const content = postContent.value.trim();
 
         if (!title || !content) {
-            submitBtn.disabled = true;
-            if (helperText) {
-                helperText.style.display = 'block';
-                helperText.textContent = '제목, 내용을 모두 작성해주세요';
-                helperText.classList.add('error');
-            }
+            this.setFormInvalid(submitBtn, helperText);
             return false;
         }
 
+        this.setFormValid(submitBtn, helperText);
+        return true;
+    }
+
+    // 폼 유효하지 않음 상태 설정
+    setFormInvalid(submitBtn, helperText) {
+        submitBtn.disabled = true;
+        if (helperText) {
+            helperText.style.display = 'block';
+            helperText.textContent = '제목, 내용을 모두 작성해주세요';
+            helperText.classList.add('error');
+        }
+    }
+
+    // 폼 유효함 상태 설정
+    setFormValid(submitBtn, helperText) {
         submitBtn.disabled = false;
         if (helperText) {
             helperText.style.display = 'none';
         }
-        return true;
     }
 
     // 기존 이미지 로드 (수정 모드에서 서버에 저장된 이미지 표시)
@@ -323,4 +364,5 @@ export class PostEditor {
         return this.selectedImages;
     }
 }
+
 
