@@ -13,6 +13,19 @@
     --white: #ffffff;
     --border-light: rgba(0, 0, 0, 0.08);
     --border-primary: rgba(59, 130, 246, 0.2);
+    --header-border: #e5e7eb;
+    --profile-bg: #f3f4f6;
+    --profile-hover-bg: #e5e7eb;
+    --dropdown-bg: #ffffff;
+    --dropdown-border: rgba(0, 0, 0, 0.06);
+    --dropdown-item-border: #f3f4f6;
+    --text-dark: #111827;
+    --text-gray: #1f2937;
+    --text-muted-gray: #6b7280;
+    
+    /* 다크모드 버튼 */
+    --darkmode-button-bg: rgba(255, 255, 255, 0.95);
+    --darkmode-icon-color: #1e293b;
     
     /* 추가 색상 (페이지별로 필요한 경우) */
     --purple: #8b5cf6;
@@ -21,6 +34,57 @@
     --red-hover: #dc2626;
     --green: #10b981;
     --green-hover: #059669;
+    --warning: #f59e0b;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --toast-shadow: 0 8px 32px rgba(59, 130, 246, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+    --toast-close-hover-bg: rgba(0, 0, 0, 0.1);
+    --card-border: rgba(255, 255, 255, 0.2);
+    --card-divider: rgba(255, 255, 255, 0.8);
+    --input-bg: rgba(255, 255, 255, 0.8);
+    --input-bg-focus: rgba(255, 255, 255, 0.95);
+    --input-focus-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    --input-focus-shadow-lg: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    --input-autofill-shadow: 0 0 0 1000px var(--input-bg) inset;
+    --input-autofill-shadow-focus: 0 0 0 1000px var(--input-bg-focus) inset;
+    --like-hover-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    --container-bg: rgba(255, 255, 255, 0.95);
+    --container-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    --container-border: rgba(255, 255, 255, 0.2);
+    --container-divider: rgba(255, 255, 255, 0.8);
+    --link-primary-light: #60a5fa;
+    --link-primary-light-hover: #93c5fd;
+    --link-danger-light: #f87171;
+    --link-danger-light-hover: #fca5a5;
+    --disabled-bg: #95a5a6;
+    --success-bg-light: rgba(16, 185, 129, 0.05);
+    --error-bg-light: rgba(239, 68, 68, 0.05);
+    --warning-bg-light: rgba(245, 158, 11, 0.05);
+    --primary-bg-light: rgba(59, 130, 246, 0.05);
+    --primary-bg-medium: rgba(59, 130, 246, 0.1);
+    --primary-bg-strong: rgba(59, 130, 246, 0.15);
+    --primary-focus-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    --error-focus-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    --error-shadow-sm: 0 2px 8px rgba(239, 68, 68, 0.3);
+    --error-shadow-md: 0 4px 12px rgba(239, 68, 68, 0.4);
+    --header-bg: rgba(255, 255, 255, 0.98);
+    --dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    --dropdown-hover-bg: linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%);
+    --dropdown-active-bg: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.04) 100%);
+    --dropdown-logout-hover-bg: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.03) 100%);
+    --dropdown-logout-active-bg: linear-gradient(90deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.05) 100%);
+    --user-info-gradient: linear-gradient(135deg, rgba(59, 130, 246, 0.10) 0%, rgba(99, 102, 241, 0.08) 25%, rgba(139, 92, 246, 0.10) 50%, rgba(236, 72, 153, 0.08) 75%, rgba(251, 191, 36, 0.06) 100%);
+    --profile-shadow: 0 4px 12px rgba(59, 130, 246, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.8);
+    --remove-image-bg: rgba(0, 0, 0, 0.7);
+    --button-click-bg: rgba(255, 255, 255, 0.2);
+    --post-form-border: rgba(255, 255, 255, 0.2);
+    --post-form-gradient: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+    --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+    --modal-bg: white;
+    --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    --modal-header-border: #f0f0f0;
+    --modal-cancel-bg: #f8fafc;
+    --modal-cancel-hover-bg: #e2e8f0;
+    --modal-cancel-border: #e2e8f0;
     
     /* 크기 */
     --border-radius-sm: 6px;
@@ -138,6 +202,75 @@ body {
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* 다크모드 스타일 */
+.dark {
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --background-primary: #0f172a;
+    --background-secondary: #1e293b;
+    --background-tertiary: #334155;
+    --white: #1e293b;
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-primary: rgba(59, 130, 246, 0.3);
+    --darkmode-button-bg: rgba(30, 41, 59, 0.95);
+    --darkmode-icon-color: #f1f5f9;
+    --header-border: rgba(255, 255, 255, 0.1);
+    --profile-bg: #334155;
+    --profile-hover-bg: #475569;
+    --dropdown-bg: #1e293b;
+    --dropdown-border: rgba(255, 255, 255, 0.1);
+    --dropdown-item-border: rgba(255, 255, 255, 0.1);
+    --text-dark: #f1f5f9;
+    --text-gray: #f1f5f9;
+    --text-muted-gray: #94a3b8;
+    --toast-bg: rgba(30, 41, 59, 0.95);
+    --toast-shadow: 0 8px 32px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --toast-close-hover-bg: rgba(255, 255, 255, 0.1);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --card-divider: rgba(255, 255, 255, 0.1);
+    --input-bg: rgba(30, 41, 59, 0.8);
+    --input-bg-focus: rgba(30, 41, 59, 0.95);
+    --input-focus-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    --input-focus-shadow-lg: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    --input-autofill-shadow: 0 0 0 1000px var(--input-bg) inset;
+    --input-autofill-shadow-focus: 0 0 0 1000px var(--input-bg-focus) inset;
+    --like-hover-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
+    --container-bg: rgba(30, 41, 59, 0.95);
+    --container-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    --container-border: rgba(255, 255, 255, 0.1);
+    --container-divider: rgba(255, 255, 255, 0.1);
+    --link-primary-light: #60a5fa;
+    --link-primary-light-hover: #93c5fd;
+    --link-danger-light: #f87171;
+    --link-danger-light-hover: #fca5a5;
+    --success-bg-light: rgba(16, 185, 129, 0.05);
+    --error-bg-light: rgba(239, 68, 68, 0.05);
+    --warning-bg-light: rgba(245, 158, 11, 0.05);
+    --primary-bg-light: rgba(59, 130, 246, 0.05);
+    --primary-bg-medium: rgba(59, 130, 246, 0.1);
+    --primary-bg-strong: rgba(59, 130, 246, 0.15);
+    --header-bg: rgba(30, 41, 59, 0.98);
+    --dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --dropdown-hover-bg: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+    --dropdown-active-bg: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.04) 100%);
+    --dropdown-logout-hover-bg: linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%);
+    --dropdown-logout-active-bg: linear-gradient(90deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.05) 100%);
+    --user-info-gradient: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(99, 102, 241, 0.15) 25%, rgba(139, 92, 246, 0.2) 50%, rgba(236, 72, 153, 0.15) 75%, rgba(251, 191, 36, 0.12) 100%);
+    --profile-shadow: 0 4px 12px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(30, 41, 59, 0.8);
+    --remove-image-bg: rgba(0, 0, 0, 0.8);
+    --post-form-border: rgba(255, 255, 255, 0.1);
+    --post-form-gradient: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.4), transparent);
+    --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+    --modal-bg: #1e293b;
+    --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    --modal-header-border: rgba(255, 255, 255, 0.1);
+    --modal-cancel-bg: #334155;
+    --modal-cancel-hover-bg: #475569;
+    --modal-cancel-border: rgba(255, 255, 255, 0.1);
 }
 
 /* 공통 애니메이션 */
@@ -229,17 +362,18 @@ body {
 .container {
     width: 100%;
     max-width: 420px;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--container-bg);
     backdrop-filter: blur(20px);
     border-radius: var(--border-radius-xl);
     padding: var(--spacing-5xl) var(--spacing-4xl);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--container-shadow);
+    border: 1px solid var(--container-border);
     animation: slideUp var(--transition-slow);
     position: relative;
     overflow: hidden;
     z-index: var(--z-card);
     margin: 0 auto;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .container::before {
@@ -249,7 +383,7 @@ body {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    background: linear-gradient(90deg, transparent, var(--container-divider), transparent);
 }
 
 /* 페이지 제목 */
@@ -397,4 +531,21 @@ body {
 
 .additional-links .withdrawal-link::after {
     background: var(--red);
+}
+
+/* 다크모드 링크 스타일 */
+.dark .additional-links .link {
+    color: var(--link-primary-light);
+}
+
+.dark .additional-links .link:hover {
+    color: var(--link-primary-light-hover);
+}
+
+.dark .additional-links .withdrawal-link {
+    color: var(--link-danger-light);
+}
+
+.dark .additional-links .withdrawal-link:hover {
+    color: var(--link-danger-light-hover);
 }

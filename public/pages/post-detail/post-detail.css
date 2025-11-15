@@ -39,10 +39,17 @@
     border-radius: var(--border-radius-xl);
     padding: var(--spacing-3xl);
     box-shadow: var(--shadow-card);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--card-border);
     position: relative;
     overflow: hidden;
     z-index: var(--z-card);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .card-section {
+    background: var(--container-bg);
+    border-color: var(--card-border);
+    box-shadow: var(--toast-shadow);
 }
 
 .card-section::before {
@@ -52,7 +59,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    background: linear-gradient(90deg, transparent, var(--card-divider), transparent);
 }
 
 .post-detail {
@@ -299,7 +306,7 @@
 
 .like-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    box-shadow: var(--like-hover-shadow);
     border-color: var(--red);
 }
 
@@ -378,7 +385,7 @@
 
 .text-input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: var(--input-focus-shadow);
 }
 
 .text-input::placeholder {
@@ -401,16 +408,24 @@
     font-weight: 500;
     letter-spacing: -0.2px;
     min-height: 80px;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--input-bg);
     backdrop-filter: blur(10px);
     transition: var(--transition-normal);
+    color: var(--text-primary);
+}
+
+.dark .comment-input {
+    background: var(--input-bg);
+    border-color: var(--border-light);
 }
 
 .comment-input:focus {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    background: var(--input-bg-focus);
+    box-shadow: var(--input-focus-shadow-lg);
     transform: translateY(-1px);
+    border-color: var(--primary-color);
 }
+
 
 .comment-input::placeholder {
     font-weight: 400;
@@ -554,7 +569,7 @@
 
 .reply-btn:hover {
     background: var(--background-secondary);
-    color: var(--primary-color-dark);
+    color: var(--primary-hover);
 }
 
 .reply-btn:active {

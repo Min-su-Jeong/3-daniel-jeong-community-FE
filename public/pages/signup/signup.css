@@ -46,9 +46,9 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--white);
     backdrop-filter: blur(10px);
-    border: 3px dashed rgba(0, 0, 0, 0.1);
+    border: 3px dashed var(--border-light);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -60,9 +60,19 @@
 
 .profile-img:hover {
     border-color: var(--primary-color);
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--white);
     transform: scale(1.05);
-    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.2);
+    box-shadow: var(--shadow-md);
+}
+
+.dark .profile-img {
+    background: var(--input-bg);
+    border-color: var(--border-light);
+}
+
+.dark .profile-img:hover {
+    background: var(--input-bg-focus);
+    border-color: var(--primary-color);
 }
 
 .plus-icon {
