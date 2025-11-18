@@ -63,7 +63,8 @@ function initTypingAnimation() {
     const fullText = handwritingText.textContent || '여러분의 재밌는 이야기를 들려주세요';
     handwritingText.textContent = '';
     handwritingText.classList.remove('typing-complete');
-
+    handwritingText.style.backgroundClip = 'text';
+    
     let currentIndex = 0;
     const typingSpeed = 100; // 타이핑 속도 (ms)
 
