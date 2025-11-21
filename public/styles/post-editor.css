@@ -12,7 +12,7 @@
     border-radius: var(--border-radius-xl);
     padding: var(--spacing-3xl);
     box-shadow: var(--shadow-card);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--post-form-border);
     position: relative;
     overflow: hidden;
 }
@@ -24,7 +24,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+    background: var(--post-form-gradient);
 }
 
 /* 입력 컨테이너 */
@@ -78,13 +78,13 @@
 
 .image-upload-area:hover {
     border-color: var(--primary-color);
-    background: rgba(59, 130, 246, 0.05);
+    background: var(--primary-bg-light);
     transform: translateY(-2px);
 }
 
 .image-upload-area.dragover {
     border-color: var(--primary-color);
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--primary-bg-medium);
     transform: scale(1.02);
 }
 
@@ -194,7 +194,7 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--remove-image-bg);
     color: var(--white);
     border: none;
     font-size: 14px;
@@ -284,6 +284,58 @@
 
 .submit-btn:not(:disabled):hover .btn-icon {
     transform: scale(1.1);
+}
+
+/* 다크모드 스타일 */
+.dark .post-form {
+    background: var(--container-bg);
+    border-color: var(--post-form-border);
+    box-shadow: var(--container-shadow);
+}
+
+.dark .post-form::before {
+    background: var(--post-form-gradient);
+}
+
+.dark .image-upload-area {
+    border-color: var(--border-light);
+    background: var(--input-bg);
+}
+
+.dark .image-upload-area:hover {
+    background: var(--primary-bg-medium);
+}
+
+.dark .image-upload-area.dragover {
+    background: var(--primary-bg-strong);
+}
+
+.dark .image-gallery {
+    background: var(--input-bg);
+    border-color: var(--border-light);
+}
+
+.dark .gallery-count {
+    background: var(--input-bg-focus);
+    color: var(--text-secondary);
+}
+
+.dark .image-preview-item {
+    background: var(--input-bg-focus);
+    border-color: var(--border-light);
+}
+
+.dark .image-preview-item .remove-image {
+    background: var(--remove-image-bg);
+}
+
+.dark .form-actions {
+    border-top-color: var(--border-light);
+}
+
+.dark .submit-btn:disabled {
+    background: var(--input-bg);
+    color: var(--text-muted);
 }
 
 /* 반응형 */

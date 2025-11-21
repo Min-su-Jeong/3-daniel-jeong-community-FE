@@ -11,10 +11,10 @@
 }
 
 .toast {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--toast-bg);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-lg) var(--spacing-xl);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--toast-shadow);
     border-left: 4px solid;
     min-width: 300px;
     max-width: 400px;
@@ -27,6 +27,7 @@
     pointer-events: auto;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
 .toast.show {
@@ -42,8 +43,8 @@
 /* Toast 타입별 스타일 */
 .toast.success { border-left-color: var(--primary-color); }
 .toast.error { border-left-color: var(--red); }
-.toast.warning { border-left-color: #f59e0b; }
-.toast.info { border-left-color: #3b82f6; }
+.toast.warning { border-left-color: var(--warning); }
+.toast.info { border-left-color: var(--primary-color); }
 
 /* Toast 아이콘 */
 .toast-icon {
@@ -60,8 +61,8 @@
 
 .toast.success .toast-icon { background: var(--primary-color); color: var(--white); }
 .toast.error .toast-icon { background: var(--red); color: var(--white); }
-.toast.warning .toast-icon { background: #f59e0b; color: var(--white); }
-.toast.info .toast-icon { background: #3b82f6; color: var(--white); }
+.toast.warning .toast-icon { background: var(--warning); color: var(--white); }
+.toast.info .toast-icon { background: var(--primary-color); color: var(--white); }
 
 /* Toast 내용 */
 .toast-content {
@@ -76,6 +77,11 @@
     font-weight: 600;
     color: var(--text-primary);
     letter-spacing: -0.3px;
+    transition: color 0.3s ease;
+}
+
+.dark .toast-title {
+    color: var(--text-dark);
 }
 
 .toast-message {
@@ -83,7 +89,9 @@
     color: var(--text-secondary);
     line-height: 1.4;
     letter-spacing: -0.2px;
+    transition: color 0.3s ease;
 }
+
 
 /* Toast 닫기 버튼 */
 .toast-close {
@@ -104,8 +112,17 @@
 }
 
 .toast-close:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--toast-close-hover-bg);
     color: var(--text-primary);
+}
+
+.dark .toast-close {
+    color: var(--text-muted-gray);
+}
+
+.dark .toast-close:hover {
+    background: var(--toast-close-hover-bg);
+    color: var(--text-dark);
 }
 
 /* Toast 진행 바 */
@@ -121,8 +138,8 @@
 
 .toast.success .toast-progress { background: var(--primary-color); }
 .toast.error .toast-progress { background: var(--red); }
-.toast.warning .toast-progress { background: #f59e0b; }
-.toast.info .toast-progress { background: #3b82f6; }
+.toast.warning .toast-progress { background: var(--warning); }
+.toast.info .toast-progress { background: var(--primary-color); }
 
 /* 애니메이션 */
 @keyframes slideInRight {

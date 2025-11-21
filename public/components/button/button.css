@@ -61,7 +61,7 @@
 
 .btn.btn-primary:disabled,
 .btn.btn-primary.disabled {
-    background: #95a5a6;
+    background: var(--disabled-bg);
     color: var(--white);
     box-shadow: none;
     opacity: 0.6;
@@ -80,7 +80,7 @@
 
 .btn.btn-primary:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    box-shadow: var(--primary-focus-shadow);
 }
 
 .btn-secondary {
@@ -108,12 +108,12 @@
     background: var(--red);
     color: var(--white);
     border: none;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    box-shadow: var(--error-shadow-sm);
 }
 
 .btn.btn-danger:disabled,
 .btn.btn-danger.disabled {
-    background: #95a5a6;
+    background: var(--disabled-bg);
     color: var(--white);
     box-shadow: none;
     opacity: 0.6;
@@ -122,7 +122,7 @@
 .btn.btn-danger:hover:not(:disabled) {
     background: var(--red-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    box-shadow: var(--error-shadow-md);
 }
 
 .btn.btn-danger:active:not(:disabled) {
@@ -132,7 +132,7 @@
 
 .btn.btn-danger:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    box-shadow: var(--error-focus-shadow);
 }
 
 /* 버튼 내부 요소 */
@@ -171,7 +171,7 @@
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--button-click-bg);
     transform: translate(-50%, -50%);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0;
@@ -221,11 +221,24 @@
     background: var(--red);
     color: var(--white);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    box-shadow: var(--error-shadow-sm);
 }
 
 .btn-remove-image:active {
     transform: translateY(0);
+}
+
+/* 다크모드 스타일 */
+.dark .btn-secondary {
+    background: var(--container-bg);
+    color: var(--text-dark);
+    border-color: var(--card-border);
+}
+
+.dark .btn-secondary:hover:not(:disabled) {
+    background: var(--background-secondary);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 /* 반응형 */

@@ -15,7 +15,7 @@
     background: white;
     border-radius: 30px;
     padding: 12px 24px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-bubble);
     font-size: 1.1rem;
     font-weight: 500;
     white-space: nowrap;
@@ -71,4 +71,16 @@
         bottom: 120vh;
         transform: translateX(0px) scale(1.4);
     }
+}
+
+/* 다크모드 스타일 */
+.dark .bubble {
+    background: var(--container-bg);
+    color: var(--text-dark);
+    box-shadow: var(--shadow-bubble);
+}
+
+.dark .bubble::after {
+    border-top-color: var(--container-bg);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }

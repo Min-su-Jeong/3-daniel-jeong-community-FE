@@ -2,8 +2,9 @@
  * 이미지 처리 공통 유틸리티
  * 파일 검증, 미리보기 생성, 프로필 이미지 렌더링 등 이미지 관련 로직 통합
  */
-import { IMAGE_CONSTANTS, API_SERVER_URI } from '../constants/api.js';
-import { uploadImage } from '../../api/index.js';
+import { API_SERVER_URI } from '../constants/api.js';
+import { IMAGE_CONSTANTS } from '../constants/image.js';
+import { uploadImage } from '../../api/images.js';
 import { TOAST_MESSAGE } from '../constants/toast.js';
 
 const BYTES_PER_MB = 1024 * 1024;

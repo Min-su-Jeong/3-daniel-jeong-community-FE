@@ -25,9 +25,14 @@
 .form-group:nth-child(3) { animation-delay: 0.7s; }
 
 .form-input:read-only {
-    background: rgba(248, 250, 252, 0.8);
+    background: var(--background-primary);
     color: var(--text-secondary);
     cursor: not-allowed;
+}
+
+.dark .form-input:read-only {
+    background: var(--input-bg);
+    opacity: 0.5;
 }
 
 /* 프로필 섹션 */
@@ -60,9 +65,9 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--white);
     backdrop-filter: blur(10px);
-    border: 3px dashed rgba(0, 0, 0, 0.1);
+    border: 3px dashed var(--border-light);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -74,9 +79,19 @@
 
 .profile-image:hover {
     border-color: var(--primary-color);
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--white);
     transform: scale(1.05);
-    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.2);
+    box-shadow: var(--shadow-md);
+}
+
+.dark .profile-image {
+    background: var(--input-bg);
+    border-color: var(--border-light);
+}
+
+.dark .profile-image:hover {
+    background: var(--input-bg-focus);
+    border-color: var(--primary-color);
 }
 
 .plus-icon {

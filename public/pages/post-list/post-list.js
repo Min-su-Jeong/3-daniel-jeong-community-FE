@@ -1,10 +1,13 @@
-import { Button, PageLayout, Toast, Modal } from '../../components/index.js';
+import { Button } from '../../components/button/button.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { Toast } from '../../components/toast/toast.js';
+import { Modal } from '../../components/modal/modal.js';
 import { formatNumber, formatDate } from '../../utils/common/format.js';
 import { initializeElements } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
 import { extractProfileImageKey, renderProfileImage } from '../../utils/common/image.js';
 import { getCurrentUserInfo } from '../../utils/common/user.js';
-import { getPosts } from '../../api/index.js';
+import { getPosts } from '../../api/posts.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { debounce } from '../../utils/common/debounce-helper.js';
@@ -60,7 +63,8 @@ function initTypingAnimation() {
     const fullText = handwritingText.textContent || '여러분의 재밌는 이야기를 들려주세요';
     handwritingText.textContent = '';
     handwritingText.classList.remove('typing-complete');
-
+    handwritingText.style.backgroundClip = 'text';
+    
     let currentIndex = 0;
     const typingSpeed = 100; // 타이핑 속도 (ms)
 

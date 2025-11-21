@@ -2,7 +2,8 @@
  * Form 제출 처리 공통 유틸리티
  */
 
-import { PageLayout, Toast } from '../index.js';
+import { PageLayout } from '../layout/page-layout.js';
+import { Toast } from '../toast/toast.js';
 import { getElementValue } from '../../utils/common/element.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 

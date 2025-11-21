@@ -1,8 +1,11 @@
-import { PageLayout, Button, Toast } from '../../components/index.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { Button } from '../../components/button/button.js';
+import { Toast } from '../../components/toast/toast.js';
 import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
-import { sendPasswordResetCode, verifyPasswordResetCode, resetPasswordById, checkEmail } from '../../api/index.js';
+import { sendPasswordResetCode, verifyPasswordResetCode, resetPasswordById } from '../../api/auth.js';
+import { checkEmail } from '../../api/users.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 

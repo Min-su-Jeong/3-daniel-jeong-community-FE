@@ -6,11 +6,11 @@
 import { 
     validateImageFiles, 
     setupProfileImagePreview, 
-    createProfilePlaceholder 
+    createProfilePlaceholder
 } from './image.js';
-import { IMAGE_CONSTANTS } from '../constants/api.js';
+import { IMAGE_CONSTANTS } from '../constants/image.js';
 import { TOAST_MESSAGE } from '../constants/toast.js';
-import { Toast } from '../../components/index.js';
+import { Toast } from '../../components/toast/toast.js';
 
 // 프로필 이미지 설정 (미리보기, 삭제 버튼 처리)
 export function setupProfileImage({ 

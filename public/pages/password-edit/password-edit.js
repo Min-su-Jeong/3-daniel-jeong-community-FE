@@ -1,10 +1,14 @@
-import { PageLayout, Button, Toast, createFormHandler } from '../../components/index.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
+import { Button } from '../../components/button/button.js';
+import { Toast } from '../../components/toast/toast.js';
+import { createFormHandler } from '../../components/form/form-handler.js';
 import { validatePassword, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, initializeElements } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
 import { debounce } from '../../utils/common/debounce-helper.js';
 import { getUserFromStorage } from '../../utils/common/user.js';
-import { updatePassword, checkCurrentPassword } from '../../api/index.js';
+import { updatePassword } from '../../api/users.js';
+import { checkCurrentPassword } from '../../api/auth.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 
