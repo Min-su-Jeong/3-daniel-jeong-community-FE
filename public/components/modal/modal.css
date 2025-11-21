@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--modal-overlay-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -25,9 +25,9 @@
 }
 
 .modal {
-    background: white;
+    background: var(--modal-bg);
     border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--modal-shadow);
     max-width: 400px;
     width: 90%;
     max-height: 80vh;
@@ -43,28 +43,32 @@
 .modal-header {
     padding: 24px 24px 16px;
     text-align: center;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--modal-header-border);
+    transition: border-color 0.3s ease;
 }
 
 .modal-title {
     font-size: 20px;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--text-dark);
     margin: 0 0 8px 0;
     letter-spacing: -0.3px;
+    transition: color 0.3s ease;
 }
 
 .modal-subtitle {
     font-size: 14px;
-    color: #64748b;
+    color: var(--text-secondary);
     margin: 0;
     line-height: 1.5;
+    transition: color 0.3s ease;
 }
 
 .modal-content {
     padding: 16px 24px;
-    color: #1e293b;
+    color: var(--text-dark);
     line-height: 1.6;
+    transition: color 0.3s ease;
 }
 
 .modal-actions {
@@ -75,9 +79,9 @@
 
 .modal-actions .btn-cancel {
     flex: 1;
-    background: #f8fafc;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
+    background: var(--modal-cancel-bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--modal-cancel-border);
     padding: 12px 24px;
     border-radius: 8px;
     font-size: 15px;
@@ -88,7 +92,7 @@
 }
 
 .modal-actions .btn-cancel:hover {
-    background: #e2e8f0;
+    background: var(--modal-cancel-hover-bg);
     transform: translateY(-1px);
 }
 
