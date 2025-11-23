@@ -4,7 +4,7 @@
  */
 import { API_SERVER_URI } from '../constants/api.js';
 import { IMAGE_CONSTANTS, S3_CONFIG } from '../constants/image.js';
-import { uploadImage } from '../../api/images.js';
+import { uploadImage } from '../api/images.js';
 import { TOAST_MESSAGE } from '../constants/toast.js';
 
 const BYTES_PER_MB = 1024 * 1024;

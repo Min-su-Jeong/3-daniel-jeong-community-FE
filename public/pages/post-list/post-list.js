@@ -7,7 +7,7 @@ import { initializeElements } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
 import { extractProfileImageKey, renderProfileImage } from '../../utils/common/image.js';
 import { getCurrentUserInfo } from '../../utils/common/user.js';
-import { getPosts } from '../../api/posts.js';
+import { getPosts } from '../../utils/api/posts.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { debounce } from '../../utils/common/debounce-helper.js';

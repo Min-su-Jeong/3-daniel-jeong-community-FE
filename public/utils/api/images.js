@@ -1,6 +1,6 @@
-import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants/api.js';
-import { S3_CONFIG } from '../utils/constants/image.js';
+import { request } from '../common/request.js';
+import { METHOD } from '../constants/api.js';
+import { S3_CONFIG } from '../constants/image.js';
 
 
 // Presigned URL 요청

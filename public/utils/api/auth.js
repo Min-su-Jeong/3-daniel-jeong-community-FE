@@ -1,5 +1,5 @@
-import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants/api.js';
+import { request } from '../common/request.js';
+import { METHOD } from '../constants/api.js';
 
 // 로그인 API (JWT 토큰 발급 및 쿠키 설정)
 export async function login(credentials) {

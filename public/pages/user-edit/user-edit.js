@@ -13,9 +13,9 @@ import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
-import { updateUser, deleteUser } from '../../api/users.js';
-import { uploadImage } from '../../api/images.js';
-import { logout } from '../../api/auth.js';
+import { updateUser, deleteUser } from '../../utils/api/users.js';
+import { uploadImage } from '../../utils/api/images.js';
+import { logout } from '../../utils/api/auth.js';
 
 const elements = initializeElements({
     buttonGroup: 'buttonGroup',

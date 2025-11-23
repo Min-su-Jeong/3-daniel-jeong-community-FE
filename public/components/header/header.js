@@ -1,5 +1,5 @@
 import { Modal } from '../modal/modal.js';
-import { logout } from '../../api/auth.js';
+import { logout } from '../../utils/api/auth.js';
 import { Toast } from '../toast/toast.js';
 import { renderProfileImage } from '../../utils/common/image.js';
 import { getUserFromStorage, removeUserFromStorage, dispatchUserUpdatedEvent } from '../../utils/common/user.js';

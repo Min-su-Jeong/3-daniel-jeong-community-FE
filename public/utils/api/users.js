@@ -1,5 +1,5 @@
-import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants/api.js';
+import { request } from '../common/request.js';
+import { METHOD } from '../constants/api.js';
 
 // 회원 단건 조회 API (활성 사용자만 조회, 없으면 404)
 export async function getUserById(id) {

@@ -1,5 +1,5 @@
-import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants/api.js';
+import { request } from '../common/request.js';
+import { METHOD } from '../constants/api.js';
 
 // 댓글 목록 조회 API (페이지네이션)
 export async function getComments(postId, page = 0, size = 10) {

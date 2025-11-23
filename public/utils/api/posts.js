@@ -1,5 +1,5 @@
-import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants/api.js';
+import { request } from '../common/request.js';
+import { METHOD } from '../constants/api.js';
 
 // 게시글 목록 조회 API (커서 기반 페이지네이션)
 export async function getPosts(cursor = null, size = 10) {
