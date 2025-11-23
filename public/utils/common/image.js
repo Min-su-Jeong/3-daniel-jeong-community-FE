@@ -3,7 +3,7 @@
  * 파일 검증, 미리보기 생성, 프로필 이미지 렌더링 등 이미지 관련 로직 통합
  */
 import { API_SERVER_URI } from '../constants/api.js';
-import { IMAGE_CONSTANTS } from '../constants/image.js';
+import { IMAGE_CONSTANTS, S3_CONFIG } from '../constants/image.js';
 import { uploadImage } from '../../api/images.js';
 import { TOAST_MESSAGE } from '../constants/toast.js';
 
@@ -180,8 +180,11 @@ export function extractProfileImageKey(author) {
     return author.image?.objectKey || author.profileImageKey || null;
 }
 
-// 프로필 이미지 서버 URL 생성
-const createProfileImageUrl = (imageKey) => `${API_SERVER_URI}/files/${imageKey}`;
+// 프로필 이미지 S3 Public URL 생성
+const createProfileImageUrl = (imageKey) => {
+    if (!imageKey) return null;
+    return S3_CONFIG.getPublicUrl(imageKey);
+};
 
 // 프로필 이미지 img 요소 생성 (로드 실패 시 fallback 텍스트 표시)
 const createImageElement = (imageKey, altText, fallbackText, container) => {

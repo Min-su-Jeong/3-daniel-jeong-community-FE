@@ -6,6 +6,7 @@ import { formatNumber, formatDate } from '../../utils/common/format.js';
 import { initializeElements, getElementValue, setElementValue } from '../../utils/common/element.js';
 import { navigateTo, getUrlParam } from '../../utils/common/navigation.js';
 import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
+import { S3_CONFIG } from '../../utils/constants/image.js';
 import { getCurrentUserInfo } from '../../utils/common/user.js';
 import { getPostById, deletePost as deletePostApi } from '../../api/posts.js';
 import { addPostLike, removePostLike } from '../../api/post-like.js';
@@ -122,14 +123,14 @@ const renderPostImages = (imageKeys) => {
         const imageItem = isSingleImage ? document.createElement('img') : document.createElement('div');
         
         if (isSingleImage) {
-            imageItem.src = `${API_SERVER_URI}/files/${imageKey}`;
+            imageItem.src = S3_CONFIG.getPublicUrl(imageKey);
             imageItem.className = 'post-image-item';
             imageItem.onerror = () => imageItem.remove();
         } else {
             // 갤러리 형태: 각 이미지를 감싸는 컨테이너 생성
             imageItem.className = 'post-image-item-container';
             const image = document.createElement('img');
-            image.src = `${API_SERVER_URI}/files/${imageKey}`;
+            image.src = S3_CONFIG.getPublicUrl(imageKey);
             image.className = 'post-image-item';
             image.onerror = () => imageItem.remove();
             imageItem.appendChild(image);
