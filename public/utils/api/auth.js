@@ -5,7 +5,7 @@ import { METHOD } from '../utils/constants/api.js';
 export async function login(credentials) {
     return await request({
         method: METHOD.POST,
-        url: '/auth',
+        url: '/api/auth',
         body: {
             email: credentials.email,
             password: credentials.password,
@@ -32,7 +32,7 @@ export async function signup(userData, profileImage = null) {
     
     return await request({
         method: METHOD.POST,
-        url: '/users',
+        url: '/api/users',
         body: formData,
         isFormData: true
     });
@@ -42,7 +42,7 @@ export async function signup(userData, profileImage = null) {
 export async function refresh() {
     return await request({
         method: METHOD.POST,
-        url: '/auth/refresh'
+        url: '/api/auth/refresh'
     });
 }
 
@@ -50,7 +50,7 @@ export async function refresh() {
 export async function logout() {
     return await request({
         method: METHOD.DELETE,
-        url: '/auth'
+        url: '/api/auth'
     });
 }
 
@@ -59,7 +59,7 @@ export async function checkCurrentPassword(email, password) {
     try {
         await request({
             method: METHOD.POST,
-            url: '/auth',
+            url: '/api/auth',
             body: { email, password, rememberMe: false }
         });
         return { match: true };
@@ -72,7 +72,7 @@ export async function checkCurrentPassword(email, password) {
 export async function sendPasswordResetCode(email) {
     return await request({
         method: METHOD.POST,
-        url: '/auth/password-reset',
+        url: '/api/auth/password-reset',
         body: { email }
     });
 }
@@ -81,7 +81,7 @@ export async function sendPasswordResetCode(email) {
 export async function verifyPasswordResetCode(userId, verificationCode) {
     return await request({
         method: METHOD.POST,
-        url: `/auth/password-reset/${userId}/verify`,
+        url: `/api/auth/password-reset/${userId}/verify`,
         body: { verificationCode }
     });
 }
@@ -90,7 +90,7 @@ export async function verifyPasswordResetCode(userId, verificationCode) {
 export async function resetPasswordById(userId, newPassword, confirmPassword) {
     return await request({
         method: METHOD.PATCH,
-        url: `/auth/password-reset/${userId}`,
+        url: `/api/auth/password-reset/${userId}`,
         body: { newPassword, confirmPassword }
     });
 }

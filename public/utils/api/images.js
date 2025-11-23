@@ -10,7 +10,7 @@ export async function uploadImage(imageType, resourceId, file) {
 
     return await request({
         method: METHOD.POST,
-        url: '/images/upload',
+        url: '/api/images/upload',
             body: formData,
         isFormData: true
     });

@@ -6,7 +6,7 @@ export async function getPosts(cursor = null, size = 10) {
     const params = cursor ? `cursor=${cursor}&size=${size}` : `size=${size}`;
     return await request({
         method: METHOD.GET,
-        url: `/posts`,
+        url: `/api/posts`,
         params: params
     });
 }
@@ -15,7 +15,7 @@ export async function getPosts(cursor = null, size = 10) {
 export async function getPostById(postId) {
     return await request({
         method: METHOD.GET,
-        url: `/posts/${postId}`
+        url: `/api/posts/${postId}`
     });
 }
 
@@ -23,7 +23,7 @@ export async function getPostById(postId) {
 export async function createPost(postData) {
     return await request({
         method: METHOD.POST,
-        url: '/posts',
+        url: '/api/posts',
         body: {
             userId: postData.userId,
             title: postData.title,
@@ -37,7 +37,7 @@ export async function createPost(postData) {
 export async function updatePost(postId, postData) {
     return await request({
         method: METHOD.PATCH,
-        url: `/posts/${postId}`,
+        url: `/api/posts/${postId}`,
         body: {
             title: postData.title,
             content: postData.content,
@@ -50,7 +50,7 @@ export async function updatePost(postId, postData) {
 export async function deletePost(postId) {
     return await request({
         method: METHOD.DELETE,
-        url: `/posts/${postId}`
+        url: `/api/posts/${postId}`
     });
 }
 
