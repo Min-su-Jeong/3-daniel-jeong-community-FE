@@ -340,8 +340,8 @@ export async function uploadImages(imageFiles, resourceId, imageType = 'POST') {
         try {
             const response = await uploadImage(imageType, resourceId, imageData.file);
             
-            if (response.success && response.data && response.data.objectKey) {
-                uploadedKeys.push(response.data.objectKey);
+            if (response && response.objectKey) {
+                uploadedKeys.push(response.objectKey);
             } else {
                 throw new Error(TOAST_MESSAGE.IMAGE_UPLOAD_FAILED);
             }

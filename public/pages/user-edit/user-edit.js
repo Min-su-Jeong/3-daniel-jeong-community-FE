@@ -241,10 +241,10 @@ async function loadUserData() {
 
 async function uploadProfileImage(userId, file) {
     const response = await uploadImage('PROFILE', userId, file);
-    if (!response?.data?.objectKey) {
+    if (!response?.objectKey) {
         throw new Error(TOAST_MESSAGE.PROFILE_IMAGE_UPLOAD_FAILED);
     }
-    return response.data.objectKey;
+    return response.objectKey;
 }
 
 function updateProfileImageDisplay(imageKey) {
