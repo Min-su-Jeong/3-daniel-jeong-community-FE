@@ -38,6 +38,6 @@ export async function updateComment(postId, commentId, content) {
 export async function deleteComment(postId, commentId) {
     return await request({
         method: METHOD.DELETE,
-        url: `/posts/${postId}/comments/${commentId}`
+        url: `/api/posts/${postId}/comments/${commentId}`
     });
 }
