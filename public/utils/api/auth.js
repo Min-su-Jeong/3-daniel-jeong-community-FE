@@ -14,38 +14,30 @@ export async function login(credentials) {
     });
 }
 
-// 회원가입 API (Presigned URL 방식: 사용자 생성 → 프로필 이미지 업로드 → 사용자 업데이트)
+// 회원가입 API (백엔드에서 이미지 업로드 처리)
 export async function signup(userData, profileImage = null) {
-    // 1. 사용자 생성 (userId 획득)
-    const createResponse = await request({
-        method: METHOD.POST,
-        url: '/api/users',
-        body: {
-            email: userData.email,
-            password: userData.password,
-            confirmPassword: userData.confirmPassword || userData.password,
-            nickname: userData.nickname
-        }
-    });
+    const formData = new FormData();
     
-    const userId = createResponse.data.id;
+    // 사용자 정보를 JSON Blob으로 추가 (백엔드에서 UserCreateRequestDto로 변환)
+    const userDataJson = {
+        email: userData.email,
+        password: userData.password,
+        confirmPassword: userData.confirmPassword || userData.password,
+        nickname: userData.nickname
+    };
+    formData.append('userData', new Blob([JSON.stringify(userDataJson)], { type: 'application/json' }));
     
-    // 2. 프로필 이미지가 있으면 Presigned URL 방식으로 업로드 후 업데이트
-    if (profileImage && userId) {
-        const { uploadImage } = await import('./images.js');
-        const uploadResponse = await uploadImage('PROFILE', userId, profileImage);
-        
-        // 3. 사용자 정보 업데이트 (profileImageKey 설정)
-        await request({
-            method: METHOD.PATCH,
-            url: `/api/users/${userId}`,
-            body: {
-                profileImageKey: uploadResponse.objectKey
-            }
-        });
+    // 프로필 이미지가 있으면 추가 (백엔드에서 MultipartFile로 받음)
+    if (profileImage) {
+        formData.append('profileImage', profileImage);
     }
     
-    return createResponse;
+    return await request({
+        method: METHOD.POST,
+        url: '/api/users',
+        body: formData,
+        isFormData: true
+    });
 }
 
 // Refresh 토큰으로 Access 토큰 갱신 (쿠키의 refresh token 사용)
