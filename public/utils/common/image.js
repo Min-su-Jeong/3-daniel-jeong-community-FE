@@ -1,6 +1,9 @@
 /**
  * 이미지 처리 공통 유틸리티
- * 파일 검증, 미리보기 생성, 프로필 이미지 렌더링 등 이미지 관련 로직 통합
+ * - 업로드 전 파일 검증 및 미리보기
+ * - 드래그 앤 드롭/파일 입력 이벤트 바인딩
+ * - 프로필 이미지 렌더링 및 S3 public URL 연동
+ * - 다중 이미지 업로드 헬퍼
  */
 import { IMAGE_CONSTANTS, S3_CONFIG } from '../constants/image.js';
 import { uploadImage } from '../api/images.js';
@@ -100,7 +103,7 @@ const fileToDataURL = (file) => {
     });
 };
 
-// 이미지 파일들을 Data URL로 변환하여 미리보기 생성
+// 이미지 미리보기 생성
 export async function createImagePreviews(files) {
     if (!files || files.length === 0) {
         return { previews: [], errors: [] };
@@ -217,52 +220,53 @@ const createProfileImageUrl = async (imageKey) => {
 const createImageElement = async (imageKey, altText, fallbackText, container) => {
     const image = document.createElement('img');
     const url = await createProfileImageUrl(imageKey);
+    
     if (url) {
         image.src = url;
     }
+    
     image.alt = altText;
     image.loading = 'lazy';
     image.onerror = () => {
         container.textContent = fallbackText;
     };
+    
+    // 현재 이미지 키 저장
+    image.dataset.imageKey = imageKey || '';
     return image;
 };
 
-// 프로필 이미지 재렌더링 필요 여부 판단
-const shouldRerenderImage = async (container, imageKey, fallbackText) => {
-    const existingImage = container.querySelector('img');
-    
-    if (!imageKey) {
-        // 이미지가 삭제된 경우 (기존 이미지가 있으면 재렌더링 필요)
-        if (existingImage) return true;
-        // 이미 fallback 텍스트가 표시된 경우 재렌더링 불필요
-        return container.textContent !== fallbackText;
-    }
-
-    // 이미지 키가 있는 경우 URL 비교
-    const expectedImageUrl = await createProfileImageUrl(imageKey);
-    return existingImage?.src !== expectedImageUrl;
-};
-
 // 프로필 이미지 렌더링
-export async function renderProfileImage(container, imageKey, fallbackText = DEFAULT_FALLBACK_TEXT, altText = DEFAULT_ALT_TEXT) {
+export async function renderProfileImage(
+    container,
+    imageKey,
+    fallbackText = DEFAULT_FALLBACK_TEXT,
+    altText = DEFAULT_ALT_TEXT
+) {
     if (!container) {
         return;
     }
 
-    if (await shouldRerenderImage(container, imageKey, fallbackText)) {
-        container.replaceChildren();
+    const normalizedKey = imageKey || '';
+    const existingImage = container.querySelector('img');
+    const currentKey = existingImage?.dataset?.imageKey || '';
 
-        if (imageKey) {
-            const image = await createImageElement(imageKey, altText, fallbackText, container);
-            container.appendChild(image);
-        } else {
-            container.textContent = fallbackText;
-        }
+    // 동일 키면 재렌더링 생략
+    if (existingImage && normalizedKey === currentKey) {
+        return;
+    }
+
+    container.replaceChildren();
+
+    if (imageKey) {
+        const image = await createImageElement(imageKey, altText, fallbackText, container);
+        container.appendChild(image);
+    } else {
+        container.textContent = fallbackText;
     }
 }
 
-// 프로필 이미지 placeholder 생성
+// 프로필 이미지 placeholder
 export function createProfilePlaceholder(container) {
     if (!container) return;
     
@@ -283,7 +287,7 @@ const handleFileSelectionError = (errors, imageInput) => {
     imageInput.value = '';
 };
 
-// 프로필 이미지 미리보기 설정
+// 프로필 이미지 미리보기
 export function setupProfileImagePreview({ imageContainer, imageInput, removeButton, onChange, onRemove }) {
     if (!imageContainer || !imageInput) return;
 
@@ -353,7 +357,7 @@ export function setupProfileImagePreview({ imageContainer, imageInput, removeBut
     });
 }
 
-// 여러 이미지 파일 업로드
+// 다중 이미지 업로드
 export async function uploadImages(imageFiles, resourceId, imageType = 'POST') {
     const uploadedKeys = [];
     
