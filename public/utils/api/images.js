@@ -45,11 +45,9 @@ export async function uploadImage(imageType, resourceId, file) {
         throw new Error(`S3 업로드 실패: ${uploadResponse.status} ${uploadResponse.statusText}`);
     }
     
-    // 3. Public URL 생성하여 반환
-    const publicUrl = S3_CONFIG.getPublicUrl(presignedData.objectKey);
-    
+    // 3. 백엔드 응답의 Public URL 사용
     return {
         objectKey: presignedData.objectKey,
-        url: publicUrl
+        url: presignedData.publicUrl
     };
 }

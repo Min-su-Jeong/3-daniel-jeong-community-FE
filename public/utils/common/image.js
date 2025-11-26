@@ -208,14 +208,18 @@ export function extractProfileImageKey(author) {
 }
 
 // 프로필 이미지 S3 Public URL 생성
-const createProfileImageUrl = (imageKey) => {
-    return imageKey ? S3_CONFIG.getPublicUrl(imageKey) : null;
+const createProfileImageUrl = async (imageKey) => {
+    if (!imageKey) return null;
+    return await S3_CONFIG.getPublicUrl(imageKey);
 };
 
 // 프로필 이미지 img 요소 생성
-const createImageElement = (imageKey, altText, fallbackText, container) => {
+const createImageElement = async (imageKey, altText, fallbackText, container) => {
     const image = document.createElement('img');
-    image.src = createProfileImageUrl(imageKey);
+    const url = await createProfileImageUrl(imageKey);
+    if (url) {
+        image.src = url;
+    }
     image.alt = altText;
     image.loading = 'lazy';
     image.onerror = () => {
@@ -225,7 +229,7 @@ const createImageElement = (imageKey, altText, fallbackText, container) => {
 };
 
 // 프로필 이미지 재렌더링 필요 여부 판단
-const shouldRerenderImage = (container, imageKey, fallbackText) => {
+const shouldRerenderImage = async (container, imageKey, fallbackText) => {
     const existingImage = container.querySelector('img');
     
     if (!imageKey) {
@@ -236,22 +240,25 @@ const shouldRerenderImage = (container, imageKey, fallbackText) => {
     }
 
     // 이미지 키가 있는 경우 URL 비교
-    const expectedImageUrl = createProfileImageUrl(imageKey);
+    const expectedImageUrl = await createProfileImageUrl(imageKey);
     return existingImage?.src !== expectedImageUrl;
 };
 
 // 프로필 이미지 렌더링
-export function renderProfileImage(container, imageKey, fallbackText = DEFAULT_FALLBACK_TEXT, altText = DEFAULT_ALT_TEXT) {
-    if (!container || !shouldRerenderImage(container, imageKey, fallbackText)) {
+export async function renderProfileImage(container, imageKey, fallbackText = DEFAULT_FALLBACK_TEXT, altText = DEFAULT_ALT_TEXT) {
+    if (!container) {
         return;
     }
 
-    container.replaceChildren();
+    if (await shouldRerenderImage(container, imageKey, fallbackText)) {
+        container.replaceChildren();
 
-    if (imageKey) {
-        container.appendChild(createImageElement(imageKey, altText, fallbackText, container));
-    } else {
-        container.textContent = fallbackText;
+        if (imageKey) {
+            const image = await createImageElement(imageKey, altText, fallbackText, container);
+            container.appendChild(image);
+        } else {
+            container.textContent = fallbackText;
+        }
     }
 }
 

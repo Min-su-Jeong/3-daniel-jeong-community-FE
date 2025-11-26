@@ -310,14 +310,15 @@ export class PostEditor {
         }
     }
 
-    // 기존 이미지 로드 (수정 모드에서 서버에 저장된 이미지 표시)
+    // 기존 이미지 로드
     loadExistingImages(imageObjectKeys, apiServerUri) {
         if (!imageObjectKeys || imageObjectKeys.length === 0) return;
 
-        imageObjectKeys.forEach(objectKey => {
+        imageObjectKeys.forEach(async objectKey => {
+            const url = await S3_CONFIG.getPublicUrl(objectKey);
             this.selectedImages.push({
                 file: null,
-                url: S3_CONFIG.getPublicUrl(objectKey),
+                url: url,
                 isExisting: true,
                 objectKey: objectKey
             });

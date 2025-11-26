@@ -5,11 +5,17 @@ export const IMAGE_CONSTANTS = Object.freeze({
     ACCEPT: 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
 });
 
-/* AWS S3 관련 상수 */
+/* AWS S3 관련 상수 - 백엔드 API에서 URL 조회 */
 export const S3_CONFIG = Object.freeze({
-    BUCKET_NAME: 'community-images-857597738766',
-    REGION: 'ap-northeast-2',
-    getPublicUrl: (objectKey) => {
-        return `https://${S3_CONFIG.BUCKET_NAME}.s3.${S3_CONFIG.REGION}.amazonaws.com/${objectKey}`;
+    getPublicUrl: async (objectKey) => {
+        if (!objectKey) return null;
+        try {
+            const response = await fetch(`/api/images/public-url?objectKey=${encodeURIComponent(objectKey)}`);
+            const result = await response.json();
+            return result.data?.url || null;
+        } catch (error) {
+            console.error('이미지 URL 조회 실패:', error);
+            return null;
+        }
     }
 });

@@ -123,7 +123,9 @@ const renderPostImages = (imageKeys) => {
         const imageItem = isSingleImage ? document.createElement('img') : document.createElement('div');
         
         if (isSingleImage) {
-            imageItem.src = S3_CONFIG.getPublicUrl(imageKey);
+            S3_CONFIG.getPublicUrl(imageKey).then(url => {
+                if (url) imageItem.src = url;
+            });
             imageItem.className = 'post-image-item';
             imageItem.onerror = () => imageItem.remove();
         } else {
