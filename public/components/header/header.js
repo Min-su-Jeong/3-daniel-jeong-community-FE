@@ -6,7 +6,7 @@ import { getUserFromStorage, removeUserFromStorage, dispatchUserUpdatedEvent } f
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
-const LOGO_TEXT = '아무 말 대잔치';
+const LOGO_TEXT = 'S.W.M';
 const HOME_PATH = '/post-list';
 
 // 프로필 아이콘 렌더링

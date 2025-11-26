@@ -27,7 +27,7 @@ class AppFooter extends HTMLElement {
 
     // 저작권 텍스트 가져오기
     getCopyrightText() {
-        return this.getAttribute('copyright-text') || '© 2025 아무말대잔치 Community. All rights reserved';
+        return this.getAttribute('copyright-text') || '© 2025 S.W.M Community. All rights reserved';
     }
 
     // 스타일 링크 생성
