@@ -314,17 +314,19 @@ export class PostEditor {
     loadExistingImages(imageObjectKeys, apiServerUri) {
         if (!imageObjectKeys || imageObjectKeys.length === 0) return;
 
-        imageObjectKeys.forEach(async objectKey => {
+        const loadPromises = imageObjectKeys.map(async (objectKey) => {
             const url = await S3_CONFIG.getPublicUrl(objectKey);
             this.selectedImages.push({
                 file: null,
-                url: url,
+                url,
                 isExisting: true,
-                objectKey: objectKey
+                objectKey
             });
         });
 
-        this.updateImageGallery();
+        Promise.all(loadPromises).then(() => {
+            this.updateImageGallery();
+        });
     }
 
     // 폼 데이터 추출 (제목, 내용, 선택된 이미지)

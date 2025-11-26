@@ -120,24 +120,32 @@ const renderPostImages = (imageKeys) => {
     }
     
     imageKeys.forEach(imageKey => {
-        const imageItem = isSingleImage ? document.createElement('img') : document.createElement('div');
-        
         if (isSingleImage) {
+            const imageItem = document.createElement('img');
+            imageItem.className = 'post-image-item';
+            imageItem.onerror = () => imageItem.remove();
+            
             S3_CONFIG.getPublicUrl(imageKey).then(url => {
                 if (url) imageItem.src = url;
             });
-            imageItem.className = 'post-image-item';
-            imageItem.onerror = () => imageItem.remove();
+            
+            container.appendChild(imageItem);
         } else {
             // 갤러리 형태: 각 이미지를 감싸는 컨테이너 생성
+            const imageItem = document.createElement('div');
             imageItem.className = 'post-image-item-container';
+            
             const image = document.createElement('img');
-            image.src = S3_CONFIG.getPublicUrl(imageKey);
             image.className = 'post-image-item';
             image.onerror = () => imageItem.remove();
+            
+            S3_CONFIG.getPublicUrl(imageKey).then(url => {
+                if (url) image.src = url;
+            });
+            
             imageItem.appendChild(image);
+            container.appendChild(imageItem);
         }
-        container.appendChild(imageItem);
     });
     
     if (!isSingleImage) {
