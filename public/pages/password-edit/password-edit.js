@@ -200,7 +200,7 @@ function setupFormSubmission() {
         submitButtonSelector: elements.buttonGroup?.querySelector('.btn-primary'),
         validate: async () => await validateFormData(),
         onSubmit: handlePasswordUpdate,
-        onSuccess: () => navigateTo('/')
+        onSuccess: () => navigateTo('/post-list')
     });
 }
 

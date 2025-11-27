@@ -65,7 +65,7 @@ function handleGuestLogin() {
     removeUserFromStorage();
     dispatchUserUpdatedEvent();
     Toast.success(TOAST_MESSAGE.LOGIN_GUEST);
-    navigateTo('/');
+    navigateTo('/post-list');
 }
 
 // 폼 필드 유효성 검사 설정 (이메일/비밀번호 실시간 검증)
@@ -107,7 +107,7 @@ function redirectAfterLogin() {
         sessionStorage.removeItem('redirectAfterLogin');
         navigateTo(redirectPath);
     } else {
-        navigateTo('/');
+        navigateTo('/post-list');
     }
 }
 

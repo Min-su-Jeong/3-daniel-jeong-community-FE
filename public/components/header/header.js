@@ -18,7 +18,7 @@ function renderProfileIcon(icon, user) {
 // 로그아웃 후 페이지 이동 처리
 function handlePostLogoutNavigation() {
     const currentPath = window.location.pathname;
-    const isPostListPage = currentPath === '/' || currentPath === HOME_PATH;
+    const isPostListPage = currentPath === HOME_PATH;
     
     if (isPostListPage) {
         window.history.replaceState({ loggedOut: true }, '', currentPath);

@@ -155,7 +155,7 @@ async function removeUser(userId) {
         dispatchUserUpdatedEvent();
         
         Toast.success(TOAST_MESSAGE.USER_DELETE_SUCCESS);
-        setTimeout(() => navigateTo('/'), 2000);
+        setTimeout(() => navigateTo('/post-list'), 2000);
     } catch (error) {
         Toast.error(error.message || TOAST_MESSAGE.USER_DELETE_FAILED);
     }
@@ -334,7 +334,7 @@ function setupFormSubmission() {
             return { success: true };
         },
         onSuccess: () => {
-            setTimeout(() => navigateTo('/'), 1200);
+            setTimeout(() => navigateTo('/post-list'), 1200);
         }
     });
 }
@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupWithdrawal();
     setupFormSubmission();
     
-    window.handleBackNavigation = () => navigateTo('/');
+    window.handleBackNavigation = () => navigateTo('/post-list');
     
     await loadUserData();
 });
