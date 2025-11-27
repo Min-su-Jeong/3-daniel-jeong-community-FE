@@ -15,11 +15,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // 루트 경로 - 메인 페이지로 리다이렉트
 app.get('/', (req, res) => {
-  res.redirect('/post-list');
+  res.redirect('/home');
 });
 
 // 동적 라우팅 설정
-const pages = ['signup', 'login', 'post-list', 'post-detail', 'post-write', 'post-edit', 'user-edit', 'password-edit', 'password-reset'];
+const pages = ['home', 'signup', 'login', 'post-list', 'post-detail', 'post-write', 'post-edit', 'user-edit', 'password-edit', 'password-reset'];
 
 // 각 페이지에 대해 정적 파일 서빙과 HTML 라우팅 설정
 pages.forEach(page => {

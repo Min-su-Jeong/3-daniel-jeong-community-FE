@@ -1,11 +1,11 @@
-import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants/api.js';
+import { request } from '../common/request.js';
+import { METHOD } from '../constants/api.js';
 
 // 회원 단건 조회 API (활성 사용자만 조회, 없으면 404)
 export async function getUserById(id) {
     return await request({
         method: METHOD.GET,
-        url: `/users/${id}`
+        url: `/api/users/${id}`
     });
 }
 
@@ -13,7 +13,7 @@ export async function getUserById(id) {
 export async function updateUser(id, userData) {
     return await request({
         method: METHOD.PATCH,
-        url: `/users/${id}`,
+        url: `/api/users/${id}`,
         body: {
             nickname: userData.nickname,
             profileImageKey: userData.profileImageKey
@@ -25,7 +25,7 @@ export async function updateUser(id, userData) {
 export async function checkEmail(email) {
     return await request({
         method: METHOD.POST,
-        url: '/users/check-email',
+        url: '/api/users/check-email',
         body: { email }
     });
 }
@@ -34,7 +34,7 @@ export async function checkEmail(email) {
 export async function checkNickname(nickname) {
     return await request({
         method: METHOD.POST,
-        url: '/users/check-nickname',
+        url: '/api/users/check-nickname',
         body: { nickname }
     });
 }
@@ -43,7 +43,7 @@ export async function checkNickname(nickname) {
 export async function updatePassword(id, newPassword, confirmPassword) {
     return await request({
         method: METHOD.PATCH,
-        url: `/users/${id}/password`,
+        url: `/api/users/${id}/password`,
         body: {
             newPassword,
             confirmPassword
@@ -55,7 +55,7 @@ export async function updatePassword(id, newPassword, confirmPassword) {
 export async function deleteUser(id) {
     return await request({
         method: METHOD.DELETE,
-        url: `/users/${id}`
+        url: `/api/users/${id}`
     });
 }
 
@@ -63,6 +63,6 @@ export async function deleteUser(id) {
 export async function restoreUser(id) {
     return await request({
         method: METHOD.PATCH,
-        url: `/users/${id}/restore`
+        url: `/api/users/${id}/restore`
     });
 }

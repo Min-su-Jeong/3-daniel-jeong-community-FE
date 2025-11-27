@@ -11,7 +11,7 @@ import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
-import { getPostById, updatePost } from '../../api/posts.js';
+import { getPostById, updatePost } from '../../utils/api/posts.js';
 
 const elements = initializeElements({
     postForm: 'postForm',

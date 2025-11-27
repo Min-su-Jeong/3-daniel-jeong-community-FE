@@ -27,7 +27,7 @@ class AppFooter extends HTMLElement {
 
     // 저작권 텍스트 가져오기
     getCopyrightText() {
-        return this.getAttribute('copyright-text') || '© 2025 아무말대잔치 Community. All rights reserved';
+        return this.getAttribute('copyright-text') || '© 2025 S.W.M Community. All rights reserved';
     }
 
     // 스타일 링크 생성
@@ -82,7 +82,7 @@ class AppFooter extends HTMLElement {
     // 이용약관 링크 생성
     createTermsLink() {
         const termsLink = document.createElement('a');
-        termsLink.href = `${API_SERVER_URI}/terms`;
+        termsLink.href = `${API_SERVER_URI}/policy/terms`;
         termsLink.className = 'footer-link';
         termsLink.textContent = '커뮤니티 이용약관';
         return termsLink;
@@ -91,7 +91,7 @@ class AppFooter extends HTMLElement {
     // 개인정보처리방침 링크 생성
     createPrivacyLink() {
         const privacyLink = document.createElement('a');
-        privacyLink.href = `${API_SERVER_URI}/privacy`;
+        privacyLink.href = `${API_SERVER_URI}/policy/privacy`;
         privacyLink.className = 'footer-link';
         privacyLink.textContent = '개인정보처리방침';
         return privacyLink;

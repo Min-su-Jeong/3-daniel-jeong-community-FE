@@ -6,10 +6,11 @@ import { formatNumber, formatDate } from '../../utils/common/format.js';
 import { initializeElements, getElementValue, setElementValue } from '../../utils/common/element.js';
 import { navigateTo, getUrlParam } from '../../utils/common/navigation.js';
 import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
+import { S3_CONFIG } from '../../utils/constants/image.js';
 import { getCurrentUserInfo } from '../../utils/common/user.js';
-import { getPostById, deletePost as deletePostApi } from '../../api/posts.js';
-import { addPostLike, removePostLike } from '../../api/post-like.js';
-import { getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../api/comments.js';
+import { getPostById, deletePost as deletePostApi } from '../../utils/api/posts.js';
+import { addPostLike, removePostLike } from '../../utils/api/post-like.js';
+import { getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../utils/api/comments.js';
 import { API_SERVER_URI } from '../../utils/constants/api.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
@@ -119,22 +120,32 @@ const renderPostImages = (imageKeys) => {
     }
     
     imageKeys.forEach(imageKey => {
-        const imageItem = isSingleImage ? document.createElement('img') : document.createElement('div');
-        
         if (isSingleImage) {
-            imageItem.src = `${API_SERVER_URI}/files/${imageKey}`;
+            const imageItem = document.createElement('img');
             imageItem.className = 'post-image-item';
             imageItem.onerror = () => imageItem.remove();
+            
+            S3_CONFIG.getPublicUrl(imageKey).then(url => {
+                if (url) imageItem.src = url;
+            });
+            
+            container.appendChild(imageItem);
         } else {
             // 갤러리 형태: 각 이미지를 감싸는 컨테이너 생성
+            const imageItem = document.createElement('div');
             imageItem.className = 'post-image-item-container';
+            
             const image = document.createElement('img');
-            image.src = `${API_SERVER_URI}/files/${imageKey}`;
             image.className = 'post-image-item';
             image.onerror = () => imageItem.remove();
+            
+            S3_CONFIG.getPublicUrl(imageKey).then(url => {
+                if (url) image.src = url;
+            });
+            
             imageItem.appendChild(image);
+            container.appendChild(imageItem);
         }
-        container.appendChild(imageItem);
     });
     
     if (!isSingleImage) {

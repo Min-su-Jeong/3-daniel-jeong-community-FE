@@ -5,7 +5,7 @@ import { uploadImages } from '../../utils/common/image.js';
 import { Toast } from '../../components/toast/toast.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { PostEditor } from '../../components/post-editor/post-editor.js';
-import { createPost, updatePost } from '../../api/posts.js';
+import { createPost, updatePost } from '../../utils/api/posts.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';

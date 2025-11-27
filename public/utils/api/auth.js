@@ -1,11 +1,11 @@
-import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants/api.js';
+import { request } from '../common/request.js';
+import { METHOD } from '../constants/api.js';
 
 // 로그인 API (JWT 토큰 발급 및 쿠키 설정)
 export async function login(credentials) {
     return await request({
         method: METHOD.POST,
-        url: '/auth',
+        url: '/api/auth',
         body: {
             email: credentials.email,
             password: credentials.password,
@@ -14,25 +14,27 @@ export async function login(credentials) {
     });
 }
 
-// 회원가입 API (multipart/form-data로 사용자 정보 및 프로필 이미지 전송)
+// 회원가입 API (백엔드에서 이미지 업로드 처리)
 export async function signup(userData, profileImage = null) {
     const formData = new FormData();
     
-    formData.append('userData', new Blob([JSON.stringify({
+    // 사용자 정보를 JSON Blob으로 추가 (백엔드에서 UserCreateRequestDto로 변환)
+    const userDataJson = {
         email: userData.email,
         password: userData.password,
         confirmPassword: userData.confirmPassword || userData.password,
-        nickname: userData.nickname,
-        profileImageKey: null
-    })], { type: 'application/json' }));
+        nickname: userData.nickname
+    };
+    formData.append('userData', new Blob([JSON.stringify(userDataJson)], { type: 'application/json' }));
     
+    // 프로필 이미지가 있으면 추가 (백엔드에서 MultipartFile로 받음)
     if (profileImage) {
         formData.append('profileImage', profileImage);
     }
     
     return await request({
         method: METHOD.POST,
-        url: '/users',
+        url: '/api/users',
         body: formData,
         isFormData: true
     });
@@ -42,7 +44,7 @@ export async function signup(userData, profileImage = null) {
 export async function refresh() {
     return await request({
         method: METHOD.POST,
-        url: '/auth/refresh'
+        url: '/api/auth/refresh'
     });
 }
 
@@ -50,7 +52,7 @@ export async function refresh() {
 export async function logout() {
     return await request({
         method: METHOD.DELETE,
-        url: '/auth'
+        url: '/api/auth'
     });
 }
 
@@ -59,7 +61,7 @@ export async function checkCurrentPassword(email, password) {
     try {
         await request({
             method: METHOD.POST,
-            url: '/auth',
+            url: '/api/auth',
             body: { email, password, rememberMe: false }
         });
         return { match: true };
@@ -72,7 +74,7 @@ export async function checkCurrentPassword(email, password) {
 export async function sendPasswordResetCode(email) {
     return await request({
         method: METHOD.POST,
-        url: '/auth/password-reset',
+        url: '/api/auth/password-reset',
         body: { email }
     });
 }
@@ -81,7 +83,7 @@ export async function sendPasswordResetCode(email) {
 export async function verifyPasswordResetCode(userId, verificationCode) {
     return await request({
         method: METHOD.POST,
-        url: `/auth/password-reset/${userId}/verify`,
+        url: `/api/auth/password-reset/${userId}/verify`,
         body: { verificationCode }
     });
 }
@@ -90,7 +92,7 @@ export async function verifyPasswordResetCode(userId, verificationCode) {
 export async function resetPasswordById(userId, newPassword, confirmPassword) {
     return await request({
         method: METHOD.PATCH,
-        url: `/auth/password-reset/${userId}`,
+        url: `/api/auth/password-reset/${userId}`,
         body: { newPassword, confirmPassword }
     });
 }

@@ -1,11 +1,11 @@
-import { request } from '../utils/common/request.js';
-import { METHOD } from '../utils/constants/api.js';
+import { request } from '../common/request.js';
+import { METHOD } from '../constants/api.js';
 
 // 게시글 좋아요 추가 API
 export async function addPostLike(postId, userId) {
     return await request({
         method: METHOD.POST,
-        url: `/posts/${postId}/likes`,
+        url: `/api/posts/${postId}/likes`,
         body: { userId }
     });
 }
@@ -14,7 +14,7 @@ export async function addPostLike(postId, userId) {
 export async function removePostLike(postId, userId) {
     return await request({
         method: METHOD.DELETE,
-        url: `/posts/${postId}/likes`,
+        url: `/api/posts/${postId}/likes`,
         body: { userId }
     });
 }

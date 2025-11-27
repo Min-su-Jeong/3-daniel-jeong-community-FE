@@ -4,7 +4,7 @@
  */
 
 import { validateImageFiles, createImagePreviews, updateImageGalleryCount, setupImageUploadEvents } from '../../utils/common/image.js';
-import { IMAGE_CONSTANTS } from '../../utils/constants/image.js';
+import { IMAGE_CONSTANTS, S3_CONFIG } from '../../utils/constants/image.js';
 import { Toast } from '../toast/toast.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 
@@ -310,20 +310,23 @@ export class PostEditor {
         }
     }
 
-    // 기존 이미지 로드 (수정 모드에서 서버에 저장된 이미지 표시)
+    // 기존 이미지 로드
     loadExistingImages(imageObjectKeys, apiServerUri) {
         if (!imageObjectKeys || imageObjectKeys.length === 0) return;
 
-        imageObjectKeys.forEach(objectKey => {
+        const loadPromises = imageObjectKeys.map(async (objectKey) => {
+            const url = await S3_CONFIG.getPublicUrl(objectKey);
             this.selectedImages.push({
                 file: null,
-                url: `${apiServerUri}/files/${objectKey}`,
+                url,
                 isExisting: true,
-                objectKey: objectKey
+                objectKey
             });
         });
 
-        this.updateImageGallery();
+        Promise.all(loadPromises).then(() => {
+            this.updateImageGallery();
+        });
     }
 
     // 폼 데이터 추출 (제목, 내용, 선택된 이미지)
