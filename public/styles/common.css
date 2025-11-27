@@ -103,6 +103,7 @@
     --spacing-3xl: 32px;
     --spacing-4xl: 40px;
     --spacing-5xl: 48px;
+    --spacing-6xl: 64px;
     
     /* 폰트 크기 */
     --font-size-xs: 12px;
@@ -115,6 +116,25 @@
     --font-size-3xl: 20px;
     --font-size-4xl: 22px;
     --font-size-5xl: 24px;
+    
+    /* 폰트 굵기 */
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+    
+    /* 줄 간격 */
+    --line-height-tight: 1.1;
+    --line-height-relaxed: 1.7;
+    --line-height-extra-relaxed: 1.9;
+    
+    /* 글자 간격 */
+    --letter-spacing-tight: -0.03em;
+    --letter-spacing-normal: 0.03em;
+    --letter-spacing-wide: 0.1em;
+    --letter-spacing-extra-tight: 0.01em;
     
     /* 아이콘 크기 */
     --icon-size-sm: 14px;
@@ -145,6 +165,7 @@
     --shadow-lg: 0 8px 30px rgba(59, 130, 246, 0.4);
     --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-bubble: 0 6px 20px rgba(0, 0, 0, 0.15);
+    --shadow-glow-lg: 40px;
     
     /* 애니메이션 */
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
