@@ -307,4 +307,7 @@ dist
 .history
 .ionide
 
+# Assets - Videos
+public/assets/videos/
+
 # End of https://www.toptal.com/developers/gitignore/api/macos,node,visualstudiocode,intellij
