@@ -9,7 +9,24 @@ on:
       - develop
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [19.x, 20.x, 21.x, 22.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
+
   build-and-push-image:
+    needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop'
 
@@ -35,24 +52,28 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts || true
+          ssh-keyscan -T 10 -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>&1 || echo "Warning: ssh-keyscan failed, but continuing..."
+
+      - name: Test SSH Connection
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'echo "SSH connection successful"' || (echo "SSH connection failed" && exit 1)
 
       - name: Check if Docker is installed
         id: check-docker
         run: |
-          DOCKER_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v docker >/dev/null && echo "true" || echo "false"')
+          DOCKER_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v docker >/dev/null && echo "true" || echo "false"')
           echo "docker_exists=$DOCKER_EXISTS" >> $GITHUB_OUTPUT
 
       - name: Check if Node.js is installed
         id: check-nodejs
         run: |
-          NODE_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v node >/dev/null && echo "true" || echo "false"')
+          NODE_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v node >/dev/null && echo "true" || echo "false"')
           echo "node_exists=$NODE_EXISTS" >> $GITHUB_OUTPUT
 
       - name: Install Docker on EC2
         if: steps.check-docker.outputs.docker_exists == 'false'
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
             sudo apt-get update
             sudo apt-get install -y \
               ca-certificates \
@@ -75,14 +96,14 @@ jobs:
       - name: Install Node.js on EC2
         if: steps.check-nodejs.outputs.node_exists == 'false'
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
             sudo apt-get install -y nodejs
           REMOTE_EOF
 
       - name: Deploy to EC2 via Docker Compose
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
             cd /home/ubuntu
             docker pull minsujeong/community-frontend:latest
             docker compose up -d frontend

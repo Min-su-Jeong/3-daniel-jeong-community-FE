@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [
     "community",
