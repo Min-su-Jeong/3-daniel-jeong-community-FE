@@ -35,7 +35,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts || true
 
       - name: Check if Docker is installed
         id: check-docker
@@ -84,17 +84,6 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
             cd /home/ubuntu
-            if [ -d "community-operation" ]; then
-              cd community-operation
-            elif [ -f "docker-compose.yml" ]; then
-              # docker-compose.yml이 있는 디렉토리에서 실행
-              :
-            else
-              echo "Error: docker-compose.yml not found"
-              exit 1
-            fi
-            export DOCKER_USERNAME=minsujeong
-            # Frontend 이미지 pull
             docker pull minsujeong/community-frontend:latest
             docker compose up -d frontend
           REMOTE_EOF
