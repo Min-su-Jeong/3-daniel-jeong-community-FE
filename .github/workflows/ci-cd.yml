@@ -16,8 +16,8 @@ jobs:
         node-version: [19.x, 20.x, 21.x, 22.x]
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
@@ -31,7 +31,7 @@ jobs:
     if: github.ref == 'refs/heads/develop'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Docker Hub Login
         uses: docker/login-action@v3
         with:
@@ -104,7 +104,7 @@ jobs:
       - name: Deploy to EC2 via Docker Compose
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
-            cd /home/ubuntu/frontend
-            docker compose pull
-            docker compose up -d
+            cd /home/ubuntu/prod
+            docker compose pull frontend
+            docker compose up -d --no-deps --force-recreate frontend
           REMOTE_EOF
