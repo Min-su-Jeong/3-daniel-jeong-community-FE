@@ -83,11 +83,11 @@ function updateSubmitButtonState() {
 }
 
 // 원본 프로필 이미지 복원 (변경 취소 시)
-function restoreOriginalImage() {
+async function restoreOriginalImage() {
     clearImageContainer();
     
     if (originalProfileImageKey) {
-        renderProfileImage(elements.profileImage, originalProfileImageKey);
+        await renderProfileImage(elements.profileImage, originalProfileImageKey);
         updateRemoveButtonVisibility(true);
     } else {
         createProfilePlaceholder(elements.profileImage);
@@ -222,7 +222,7 @@ async function loadUserData() {
     clearImageContainer();
     
     if (originalProfileImageKey) {
-        renderProfileImage(elements.profileImage, originalProfileImageKey);
+        await renderProfileImage(elements.profileImage, originalProfileImageKey);
         updateRemoveButtonVisibility(true);
     } else {
         createProfilePlaceholder(elements.profileImage);
@@ -247,11 +247,11 @@ async function uploadProfileImage(userId, file) {
     return response.objectKey;
 }
 
-function updateProfileImageDisplay(imageKey) {
+async function updateProfileImageDisplay(imageKey) {
     clearImageContainer();
     
     if (imageKey) {
-        renderProfileImage(elements.profileImage, imageKey);
+        await renderProfileImage(elements.profileImage, imageKey);
         updateRemoveButtonVisibility(true);
     } else {
         createProfilePlaceholder(elements.profileImage);
@@ -281,7 +281,7 @@ async function determineProfileImageKey(profileImageFile) {
 
 // 사용자 정보 업데이트 후 상태 동기화
 // 서버에서 받은 업데이트된 사용자 정보로 로컬 상태와 UI를 동기화
-function syncUserState(updatedUser, nickname) {
+async function syncUserState(updatedUser, nickname) {
     user = updatedUser;
     // rememberMe 상태 확인 (localStorage에 있으면 true)
     const isRemembered = localStorage.getItem('user') !== null;
@@ -291,7 +291,7 @@ function syncUserState(updatedUser, nickname) {
     originalNickname = nickname;
     originalProfileImageKey = user.profileImageKey || null;
     
-    updateProfileImageDisplay(user.profileImageKey || null);
+    await updateProfileImageDisplay(user.profileImageKey || null);
     elements.profileImageInput.value = '';
     updateSubmitButtonState();
     dispatchUserUpdatedEvent();
@@ -330,7 +330,7 @@ function setupFormSubmission() {
                 throw new Error(TOAST_MESSAGE.USER_UPDATE_FAILED);
             }
             
-            syncUserState(response.data, nickname);
+            await syncUserState(response.data, nickname);
             return { success: true };
         },
         onSuccess: () => {

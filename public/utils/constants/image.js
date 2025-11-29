@@ -9,6 +9,14 @@ export const IMAGE_CONSTANTS = Object.freeze({
 const publicUrlCache = new Map();
 
 export const S3_CONFIG = Object.freeze({
+    // 배경 비디오 objectKey
+    BACKGROUND_VIDEO_KEY: 'assets/videos/background.mp4',
+    
+    // 배경 비디오 URL 가져오기
+    getBackgroundVideoUrl: async () => {
+        return await S3_CONFIG.getPublicUrl(S3_CONFIG.BACKGROUND_VIDEO_KEY);
+    },
+    
     getPublicUrl: async (objectKey) => {
         if (!objectKey) return null;
         
