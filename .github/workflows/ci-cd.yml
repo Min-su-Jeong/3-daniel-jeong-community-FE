@@ -104,7 +104,7 @@ jobs:
       - name: Deploy to EC2 via Docker Compose
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
-            cd /home/ubuntu
-            docker pull minsujeong/community-frontend:latest
-            docker compose up -d frontend
+            cd /home/ubuntu/frontend
+            docker compose pull
+            docker compose up -d
           REMOTE_EOF
