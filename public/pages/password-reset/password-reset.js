@@ -1,8 +1,8 @@
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { Toast } from '../../components/toast/toast.js';
-import { validateEmail, validatePassword, setupFormValidation } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements } from '../../utils/common/element.js';
+import { validateEmail, validatePassword, setupFormValidation, setupPasswordConfirmationUI } from '../../utils/common/validation.js';
+import { getElementValue, initializeElements, disableControls } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
 import { sendPasswordResetCode, verifyPasswordResetCode, resetPasswordById } from '../../utils/api/auth.js';
 import { checkEmail } from '../../utils/api/users.js';
@@ -32,12 +32,6 @@ let isSendingCode = false;
 let isVerifyingCode = false;
 let isResettingPassword = false;
 
-function disableControls(controls = []) {
-    const prev = controls.map((el) => el?.disabled);
-    controls.forEach((el) => el && (el.disabled = true));
-    return () => controls.forEach((el, i) => el && (el.disabled = !!prev[i]));
-}
-
 function createButton(containerId, text, buttonType = 'submit') {
     const container = elements[containerId];
     if (!container) return;
@@ -53,11 +47,9 @@ function createButton(containerId, text, buttonType = 'submit') {
 
 // 비밀번호 재설정 단계 표시 (3단계: 이메일 입력 -> 인증번호 확인 -> 비밀번호 재설정)
 function showStep(step) {
-    // 모든 폼 숨기기
     [elements.emailForm, elements.verificationForm, elements.passwordForm].forEach(form => form.style.display = 'none');
     elements.passwordSubtitle.style.display = 'none';
     
-    // 단계별 설정
     const config = {
         1: { form: elements.emailForm, title: '비밀번호 찾기' },
         2: { form: elements.verificationForm, title: '인증번호 확인' },
@@ -93,26 +85,16 @@ function setupPasswordValidation() {
         }
     ]);
     
-    // 비밀번호 확인 실시간 검증
-    if (!elements.newPassword || !elements.confirmPassword) return;
-    
-    const updateConfirmHelper = () => {
-        const helperText = elements.confirmPassword.nextElementSibling;
-        if (!helperText) return;
-        
-        if (!elements.confirmPassword.value) {
-            helperText.textContent = '비밀번호를 다시 한번 입력해주세요';
-            helperText.className = 'helper-text';
-            return;
-        }
-        
-        const isMatch = elements.newPassword.value === elements.confirmPassword.value;
-        helperText.textContent = isMatch ? '비밀번호가 일치합니다' : '비밀번호가 일치하지 않습니다';
-        helperText.className = `helper-text ${isMatch ? 'success' : 'error'}`;
-    };
-    
-    elements.newPassword.addEventListener('input', updateConfirmHelper);
-    elements.confirmPassword.addEventListener('input', updateConfirmHelper);
+    const helperText = elements.confirmPassword?.nextElementSibling;
+    if (helperText && helperText.classList.contains('helper-text')) {
+        setupPasswordConfirmationUI(
+            elements.newPassword,
+            elements.confirmPassword,
+            helperText,
+            '비밀번호가 일치합니다',
+            '비밀번호가 일치하지 않습니다'
+        );
+    }
 }
 
 function updateVerificationStatus(verified) {
@@ -127,7 +109,7 @@ function updateVerificationStatus(verified) {
 }
 
 // 이메일 존재 여부 확인
-async function checkEmailAvailability(email) {
+async function checkEmailExists(email) {
     const emailCheckResponse = await checkEmail(email);
     if (emailCheckResponse?.data?.available) {
         Toast.error(TOAST_MESSAGE.EMAIL_NOT_FOUND);
@@ -149,7 +131,7 @@ function initializeVerificationStep() {
 
 // 인증번호 발송 처리
 async function sendVerificationCode(email) {
-    if (!await checkEmailAvailability(email)) {
+    if (!await checkEmailExists(email)) {
         return false;
     }
     
@@ -298,7 +280,7 @@ elements.passwordForm.onsubmit = async (e) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    PageLayout.initializePage();
+    PageLayout.init();
     createButton('emailButtonGroup', '비밀번호 찾기');
     showStep(1);
 });

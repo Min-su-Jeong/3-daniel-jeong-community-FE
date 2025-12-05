@@ -1,36 +1,81 @@
-/* 공통 스타일 import */
-@import url('../../styles/common.css');
-@import url('../../components/form/form.css');
 
-/* 회원가입 페이지 전용 스타일 */
+/* 메인 컨텐츠 */
 .main {
+    position: relative;
+    min-height: 100vh;
+    z-index: var(--z-content);
+    padding-top: 72px;
     display: flex;
+    align-items: center;
     justify-content: center;
-    align-items: flex-start;
 }
 
-/* 프로필 섹션 */
+.signup-container {
+    width: 100%;
+    max-width: 480px;
+    padding: 40px 24px;
+}
+
+.signup-card {
+    padding: 48px 40px;
+}
+
+.signup-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.signup-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.signup-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 프로필 이미지 */
 .profile-section {
-    margin-bottom: var(--spacing-2xl);
-    padding-bottom: var(--spacing-xl);
-    border-bottom: 1px solid var(--border-light);
-    animation: fadeIn 0.8s ease-out 0.3s both;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
 }
 
-.profile-label {
-    display: block;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-sm);
-    letter-spacing: -0.3px;
+.profile-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--theme-input-bg);
+    border: 3px dashed var(--theme-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--lg-transition-normal);
 }
 
-.profile-section .helper-text {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-lg);
-    font-weight: 500;
+.profile-image:hover {
+    border-color: var(--theme-accent);
+    background: var(--theme-card-hover-bg);
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.profile-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-placeholder {
+    width: 50px;
+    height: 50px;
+    stroke: rgba(255, 255, 255, 0.7); /* 사람 아이콘이 더 또렷하게 보이도록 농도 강화 */
 }
 
 .profile-upload {
@@ -42,83 +87,218 @@
     gap: var(--spacing-sm);
 }
 
-.profile-img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: var(--white);
-    backdrop-filter: blur(10px);
-    border: 3px dashed var(--border-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.profile-hint {
+    margin-top: 12px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-remove-image {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--red);
+    border: 1px solid var(--red);
+    border-radius: var(--border-radius-md);
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    position: relative;
     transition: var(--transition-normal);
-    overflow: hidden;
+    font-family: inherit;
 }
 
-.profile-img:hover {
-    border-color: var(--primary-color);
-    background: var(--white);
-    transform: scale(1.05);
-    box-shadow: var(--shadow-md);
+.btn-remove-image:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
 }
 
-.dark .profile-img {
-    background: var(--input-bg);
-    border-color: var(--border-light);
-}
-
-.dark .profile-img:hover {
-    background: var(--input-bg-focus);
-    border-color: var(--primary-color);
-}
-
-.plus-icon {
-    font-size: 32px;
-    color: var(--text-secondary);
-    font-weight: 300;
-    transition: var(--transition-normal);
-}
-
-.profile-img:hover .plus-icon {
-    color: var(--primary-color);
-    transform: scale(1.1);
-}
-
-.profile-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    transition: var(--transition-normal);
+.btn-remove-image:active {
+    transform: translateY(0);
 }
 
 /* 폼 스타일 */
 .signup-form {
-    margin-top: var(--spacing-sm);
-    animation: fadeIn 0.8s ease-out 0.4s both;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .form-group {
-    margin-bottom: var(--spacing-xl);
-    animation: slideInLeft 0.6s ease-out both;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.form-group:nth-child(1) { animation-delay: 0.5s; }
-.form-group:nth-child(2) { animation-delay: 0.6s; }
-.form-group:nth-child(3) { animation-delay: 0.7s; }
-.form-group:nth-child(4) { animation-delay: 0.8s; }
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.3px;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    stroke: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    transition: stroke var(--lg-transition-fast);
+}
+
+.form-input {
+    width: 100%;
+    padding: 14px 16px 14px 48px;
+    background: var(--lg-glass-bg);
+    border: 1px solid var(--lg-glass-border);
+    border-radius: var(--lg-radius-md);
+    color: white;
+    font-size: 15px;
+    transition: all var(--lg-transition-normal);
+}
+
+.form-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.form-input:focus {
+    outline: none;
+    background: var(--lg-glass-bg-hover);
+    border-color: var(--lg-primary);
+    box-shadow: var(--lg-focus-shadow);
+}
+
+.form-input:focus + .input-icon,
+.input-wrapper:focus-within .input-icon {
+    stroke: var(--lg-icon-color);
+}
+
+
+/* 버튼 */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.button-group .btn {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: var(--lg-radius-md);
+    cursor: pointer;
+    transition: all var(--lg-transition-normal);
+    border: none;
+}
+
+.button-group .btn-primary {
+    background: linear-gradient(135deg, var(--lg-primary) 0%, var(--lg-secondary) 100%);
+    color: white;
+    box-shadow: var(--lg-button-shadow);
+}
+
+.button-group .btn-primary:hover {
+    box-shadow: var(--lg-button-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.button-group .btn-secondary {
+    background: var(--lg-glass-bg);
+    color: white;
+    border: 1px solid var(--lg-glass-border);
+}
+
+.button-group .btn-secondary:hover {
+    background: var(--lg-glass-bg-hover);
+    border-color: var(--lg-glass-border-light);
+}
+
+/* 회원가입 푸터 */
+.signup-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--lg-glass-border);
+}
+
+.signup-footer-text {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.login-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--lg-text-accent);
+    text-decoration: none;
+    transition: color var(--lg-transition-fast);
+}
+
+.login-link:hover {
+    color: var(--lg-text-accent);
+}
 
 /* 반응형 */
-@media (max-width: 480px) {
-    .profile-img {
-        width: 100px;
-        height: 100px;
+@media (max-width: 1024px) {
+    .nav-menu {
+        display: none;
     }
     
-    .plus-icon {
-        font-size: 28px;
+    .nav-actions {
+        display: none;
+    }
+    
+    .nav-mobile-toggle {
+        display: flex;
+    }
+    
+    .mobile-menu {
+        display: block;
+    }
+}
+
+@media (max-width: 480px) {
+    .signup-container {
+        padding: 24px 16px;
+    }
+    
+    .signup-card {
+        padding: 32px 24px;
+    }
+    
+    .signup-title {
+        font-size: 24px;
+    }
+    
+    .profile-placeholder {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* 애니메이션 */
+.signup-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

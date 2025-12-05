@@ -3,83 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회원가입</title>
+    <title>회원가입 - Swim Way Makers</title>
     <link rel="stylesheet" href="../../styles/common.css">
     <link rel="stylesheet" href="../../components/button/button.css">
-    <link rel="stylesheet" href="../../components/modal/modal.css">
+    <link rel="stylesheet" href="../../components/form/form.css">
     <link rel="stylesheet" href="../../components/toast/toast.css">
-    <link rel="stylesheet" href="../../assets/animations/bubble-animation.css">
     <link rel="stylesheet" href="signup.css">
 </head>
-<body>
-    <!-- 헤더 -->
-    <app-header show-back></app-header>
+<body class="theme">
+    <!-- Navigation -->
+    <app-header show-menu="false" show-actions="true" active-path="/signup"></app-header>
 
-    <!-- 메인 컨텐츠 -->
+    <!-- Main Content -->
     <main class="main">
-        <div class="container">
-            <h2 class="page-title">회원가입</h2>
-            
-            <!-- 프로필 사진 -->
-            <div class="profile-section">
-                <label class="profile-label">프로필 사진</label>
-                <p class="helper-text">프로필 사진을 등록해주세요 (선택)</p>
-                <div class="profile-upload">
-                    <div class="profile-img" id="profileImage">
-                        <span class="plus-icon">+</span>
+        <div class="signup-container">
+            <div class="signup-card lg-glass">
+                <div class="signup-header">
+                    <h1 class="signup-title">회원가입</h1>
+                    <p class="signup-subtitle">Swim Way Makers의 멤버가 되어주세요</p>
+                </div>
+                
+                <form class="signup-form" id="signupForm">
+                    <!-- Profile Image -->
+                    <div class="profile-section">
+                        <div class="profile-upload">
+                            <div class="profile-image" id="profileImage">
+                                <img id="profilePlaceholderIcon" data-path="auth/user.svg" alt="프로필" style="width: 48px; height: 48px;">
+                            </div>
+                            <input type="file" id="profileInput" accept="image/*" hidden>
+                            <button type="button" class="btn-remove-image" id="removeImageBtn">삭제</button>
+                        </div>
+                        <p class="profile-hint">프로필 이미지 (선택)</p>
                     </div>
-                    <input type="file" id="profileInput" style="display: none;">
-                    <button type="button" class="btn-remove-image" id="removeImageBtn">삭제</button>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label" for="email">이메일</label>
+                        <div class="input-wrapper">
+                            <img class="input-icon" id="emailIcon" data-path="auth/mail.svg" alt="이메일" style="width: 20px; height: 20px;">
+                            <input type="email" class="form-input" id="email" placeholder="이메일을 입력하세요" required>
+                        </div>
+                        <span class="helper-text" id="emailHelper"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label class="form-label" for="password">비밀번호</label>
+                        <div class="input-wrapper">
+                            <img class="input-icon" id="passwordIcon" data-path="auth/lock.svg" alt="비밀번호" style="width: 20px; height: 20px;">
+                            <input type="password" class="form-input" id="password" placeholder="비밀번호를 입력하세요" required>
+                        </div>
+                        <span class="helper-text" id="passwordHelper"></span>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">비밀번호 확인</label>
+                        <div class="input-wrapper">
+                            <img class="input-icon" id="confirmPasswordIcon" data-path="auth/lock.svg" alt="비밀번호 확인" style="width: 20px; height: 20px;">
+                            <input type="password" class="form-input" id="confirmPassword" placeholder="비밀번호를 다시 입력하세요" required>
+                        </div>
+                        <span class="helper-text" id="confirmPasswordHelper"></span>
+                    </div>
+
+                    <!-- Nickname -->
+                    <div class="form-group">
+                        <label class="form-label" for="nickname">닉네임</label>
+                        <div class="input-wrapper">
+                            <img class="input-icon" id="nicknameIcon" data-path="auth/user-simple.svg" alt="닉네임" style="width: 20px; height: 20px;">
+                            <input type="text" class="form-input" id="nickname" placeholder="닉네임을 입력하세요" required>
+                        </div>
+                        <span class="helper-text" id="nicknameHelper"></span>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="button-group" id="buttonGroup"></div>
+                </form>
+
+                <div class="signup-footer">
+                    <p class="signup-footer-text">이미 회원이신가요?</p>
+                    <a href="/login" class="login-link">로그인</a>
                 </div>
             </div>
-
-            <!-- 회원가입 폼 -->
-            <form class="signup-form" id="signupForm">
-                <!-- 이메일 -->
-                <div class="form-group">
-                    <label class="form-label">이메일 *</label>
-                    <input type="email" class="form-input" id="email" placeholder="이메일을 입력하세요" required>
-                    <p class="helper-text">이메일 주소를 정확히 입력해주세요</p>
-                </div>
-
-                <!-- 비밀번호 -->
-                <div class="form-group">
-                    <label class="form-label">비밀번호 *</label>
-                    <input type="password" class="form-input" id="password" placeholder="비밀번호를 입력하세요" required>
-                    <p class="helper-text">영문, 숫자, 특수문자를 포함하여 8자 이상 입력해주세요</p>
-                </div>
-
-                <!-- 비밀번호 확인 -->
-                <div class="form-group">
-                    <label class="form-label">비밀번호 확인 *</label>
-                    <input type="password" class="form-input" id="confirmPassword" placeholder="비밀번호를 한번 더 입력하세요" required>
-                    <p class="helper-text">비밀번호를 다시 한번 입력해주세요</p>
-                </div>
-
-                <!-- 닉네임 -->
-                <div class="form-group">
-                    <label class="form-label">닉네임 *</label>
-                    <input type="text" class="form-input" id="nickname" placeholder="닉네임을 입력하세요" maxlength="10" required>
-                    <p class="helper-text">2-10자 사이로 입력해주세요</p>
-                </div>
-
-                <!-- 버튼 그룹 -->
-                <div class="button-group" id="buttonGroup"></div>
-            </form>
         </div>
     </main>
 
-    <!-- Footer -->
-    <app-footer></app-footer>
-
-    <!-- 다크모드 토글 -->
-    <app-darkmode></app-darkmode>
-
-    <script src="../../assets/animations/bubble-animation.js"></script>
+    <script type="module" src="../../components/layout/page-layout.js"></script>
     <script type="module" src="../../components/header/header.js"></script>
     <script type="module" src="../../components/footer/footer.js"></script>
-    <script type="module" src="../../components/toast/toast.js"></script>
-    <script type="module" src="../../components/dark-mode/dark-mode.js"></script>
     <script type="module" src="signup.js"></script>
 </body>
 </html>
