@@ -23,7 +23,7 @@ export async function getPostById(postId) {
 export async function createPost(postData) {
     return await request({
         method: METHOD.POST,
-        url: '/api/posts',
+        url: `/api/posts`,
         body: {
             userId: postData.userId,
             title: postData.title,

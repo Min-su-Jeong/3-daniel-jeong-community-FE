@@ -25,7 +25,7 @@ export async function updateUser(id, userData) {
 export async function checkEmail(email) {
     return await request({
         method: METHOD.POST,
-        url: '/api/users/check-email',
+        url: `/api/users/check-email`,
         body: { email }
     });
 }
@@ -34,7 +34,7 @@ export async function checkEmail(email) {
 export async function checkNickname(nickname) {
     return await request({
         method: METHOD.POST,
-        url: '/api/users/check-nickname',
+        url: `/api/users/check-nickname`,
         body: { nickname }
     });
 }
