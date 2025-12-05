@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중고거래 상세조회</title>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="marketplace-detail.css">
+</head>
+<body class="theme">
+    <!-- Navigation -->
+    <app-header show-menu="true" show-actions="true" show-profile="true" active-path="/marketplace"></app-header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <div class="container">
+            <!-- 상품 상세 정보 -->
+            <article class="product-detail card-section">
+                <!-- 상품 헤더 (제목 + 버튼) -->
+                <div class="product-header">
+                    <h2 class="product-title" id="productTitle">제목</h2>
+                    <div class="product-actions" id="productActions"></div>
+                </div>
+
+                <!-- 상태 배지 -->
+                <div class="product-status-badge" id="productStatusBadge">판매중</div>
+
+                <!-- 가격 -->
+                <div class="product-price" id="productPrice">0원</div>
+
+                <!-- 카테고리 -->
+                <div class="product-category" id="productCategory">카테고리</div>
+
+                <!-- 상품 이미지 -->
+                <div class="product-images" id="productImages">
+                    <div class="image-placeholder">이미지</div>
+                </div>
+
+                <!-- 상품 내용 -->
+                <div class="product-content" id="productContent">
+                    상품 내용이 여기에 표시됩니다.
+                </div>
+
+                <!-- 상품 메타 정보 -->
+                <div class="product-meta">
+                    <div class="seller-info">
+                        <div class="seller-avatar" id="sellerAvatar">👤</div>
+                        <span class="seller-name" id="sellerName">판매자</span>
+                    </div>
+                    <div class="product-info-right">
+                        <span class="product-location" id="productLocation">위치</span>
+                        <span class="product-date" id="productDate">2021-01-01 00:00:00</span>
+                    </div>
+                </div>
+
+                <!-- 상품 통계 -->
+                <div class="product-stats">
+                    <div class="stat-item">
+                        <img class="stat-icon" id="viewIcon" data-path="post/view.svg" alt="조회수">
+                        <span class="view-count" id="viewCount">0</span>
+                        <span class="stat-label">조회수</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 댓글 섹션 -->
+            <section class="comments-section card-section">
+                <h3 class="comments-title">댓글</h3>
+                
+                <!-- 댓글 입력 -->
+                <div class="comment-input-section">
+                    <textarea 
+                        class="comment-input text-input" 
+                        id="commentInput" 
+                        placeholder="댓글을 남겨주세요."
+                        rows="3"
+                    ></textarea>
+                    <div id="commentSubmitBtn"></div>
+                </div>
+
+                <!-- 댓글 목록 -->
+                <div class="comments-list" id="commentsList"></div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module" src="../../components/layout/page-layout.js"></script>
+    <script type="module" src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/footer/footer.js"></script>
+    <script type="module" src="marketplace-detail.js"></script>
+</body>
+</html>
+

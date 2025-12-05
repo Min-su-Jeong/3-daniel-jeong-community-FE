@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중고거래 등록 - Swim Way Makers</title>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="marketplace-write.css">
+</head>
+<body class="theme">
+    <!-- Navigation -->
+    <app-header show-menu="true" show-actions="true" show-profile="true" active-path="/marketplace"></app-header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <div class="post-editor-container">
+            <!-- 페이지 제목 -->
+            <div class="page-header">
+                <h1 class="page-title">중고거래 등록</h1>
+                <p class="page-subtitle">수영 용품을 사고팔며 합리적인 가격으로 장비를 구매하세요</p>
+            </div>
+
+            <!-- 중고거래 작성 폼 -->
+            <form class="post-form" id="productForm">
+                <!-- 이미지 업로드 -->
+                <div class="form-group">
+                    <label for="productImages" class="form-label">
+                        상품 이미지 <span class="required">*</span> <span class="image-count">(최대 5개)</span>
+                    </label>
+                    <div class="image-upload-container">
+                        <input 
+                            type="file" 
+                            id="productImages" 
+                            name="images" 
+                            class="image-input" 
+                            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                            multiple
+                        >
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <div class="upload-icon">🖼️</div>
+                            <div class="upload-text">
+                                <span class="upload-title">이미지 선택</span>
+                                <span class="upload-subtitle">클릭하거나 드래그하여 파일을 선택하세요 (최대 5개)</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 이미지 갤러리 -->
+                        <div class="image-gallery" id="imageGallery" style="display: none;">
+                            <div class="gallery-header">
+                                <span class="gallery-title">선택된 이미지</span>
+                                <span class="gallery-count" id="galleryCount">0/5</span>
+                            </div>
+                            <div class="gallery-grid" id="galleryGrid">
+                                <!-- 동적으로 이미지 미리보기들이 추가됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 제목 입력 -->
+                <div class="form-group">
+                    <label for="productTitle" class="form-label">
+                        제목 <span class="required">*</span>
+                    </label>
+                    <div class="input-container">
+                        <input 
+                            type="text" 
+                            id="productTitle" 
+                            name="title" 
+                            class="form-input" 
+                            placeholder="예) 스피도 수영고글 경기용 (거의 새것)"
+                            maxlength="26"
+                            required
+                        >
+                        <div class="char-counter">
+                            <span id="titleCharCount">0</span>/26
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 카테고리 -->
+                <div class="form-group">
+                    <label class="form-label">
+                        카테고리 <span class="required">*</span>
+                    </label>
+                    <div class="category-grid">
+                        <label class="category-item">
+                            <input type="radio" name="category" value="swimsuit" required>
+                            <div class="category-content">
+                                <img class="category-icon" data-path="category/swimsuit.svg" alt="수영복" style="width: 32px; height: 32px;">
+                                <span>수영복</span>
+                            </div>
+                        </label>
+                        <label class="category-item">
+                            <input type="radio" name="category" value="goggles" required>
+                            <div class="category-content">
+                                <img class="category-icon" data-path="category/goggles.svg" alt="수영고글" style="width: 32px; height: 32px;">
+                                <span>수영고글</span>
+                            </div>
+                        </label>
+                        <label class="category-item">
+                            <input type="radio" name="category" value="cap" required>
+                            <div class="category-content">
+                                <img class="category-icon" data-path="category/swim-cap.svg" alt="수영모" style="width: 32px; height: 32px;">
+                                <span>수영모</span>
+                            </div>
+                        </label>
+                        <label class="category-item">
+                            <input type="radio" name="category" value="training" required>
+                            <div class="category-content">
+                                <img class="category-icon" data-path="category/training-equipment.svg" alt="훈련용품" style="width: 32px; height: 32px;">
+                                <span>훈련용품</span>
+                            </div>
+                        </label>
+                        <label class="category-item">
+                            <input type="radio" name="category" value="fins" required>
+                            <div class="category-content">
+                                <img class="category-icon" data-path="category/fins.svg" alt="오리발" style="width: 32px; height: 32px;">
+                                <span>오리발</span>
+                            </div>
+                        </label>
+                        <label class="category-item">
+                            <input type="radio" name="category" value="bag" required>
+                            <div class="category-content">
+                                <img class="category-icon" data-path="category/bag-accessories.svg" alt="가방/액세서리" style="width: 32px; height: 32px;">
+                                <span>가방/액세서리</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 가격 -->
+                <div class="form-group">
+                    <label for="productPrice" class="form-label">
+                        가격 <span class="required">*</span>
+                    </label>
+                    <div class="price-wrapper">
+                        <input 
+                            type="text" 
+                            id="productPrice" 
+                            name="price" 
+                            class="form-input" 
+                            placeholder="가격을 입력하세요" 
+                            required
+                        >
+                        <span class="price-unit">원</span>
+                    </div>
+                    <div class="helper-text">거래 희망 가격을 입력해주세요 (가격 제안 받기 가능)</div>
+                </div>
+
+                <!-- 거래 위치 -->
+                <div class="form-group">
+                    <label for="productLocation" class="form-label">
+                        거래 위치 <span class="required">*</span>
+                    </label>
+                    <div class="input-container">
+                        <input 
+                            type="text" 
+                            id="productLocation" 
+                            name="location" 
+                            class="form-input" 
+                            placeholder="예) 서울 강남구, 부산 해운대구" 
+                            maxlength="26" 
+                            required
+                        >
+                        <div class="char-counter">
+                            <span id="locationCharCount">0</span>/26
+                        </div>
+                    </div>
+                    <div class="helper-text">직거래를 원하시는 지역을 입력해주세요</div>
+                </div>
+
+                <!-- 상세 설명 -->
+                <div class="form-group">
+                    <label for="productContent" class="form-label">
+                        상세 설명 <span class="required">*</span>
+                    </label>
+                    <div class="textarea-container">
+                        <textarea 
+                            id="productContent" 
+                            name="content" 
+                            class="form-textarea" 
+                            placeholder="상품명, 구매 시기, 상태, 하자 유무 등을 자세히 작성해주세요."
+                            rows="8"
+                            required
+                        ></textarea>
+                    </div>
+                    <div class="helper-text">상품의 상태, 구매 시기, 사용 기간 등을 자세히 작성해주세요. 안전한 거래를 위해 개인정보는 작성하지 마세요</div>
+                </div>
+
+                <!-- 거래 안내 -->
+                <div class="form-group info-section">
+                    <div class="info-box">
+                        <img id="infoIcon" data-path="common/info.svg" alt="정보" style="width: 20px; height: 20px;">
+                        <div>
+                            <strong>안전한 거래를 위한 안내</strong>
+                            <ul>
+                                <li>직거래 시 공공장소에서 만나세요</li>
+                                <li>계좌이체보다는 직거래를 권장합니다</li>
+                                <li>상품 상태를 꼼꼼히 확인하세요</li>
+                                <li>의심스러운 거래는 신고해주세요</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 등록 버튼 -->
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                        <span class="btn-text">등록하기</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <app-footer></app-footer>
+
+    <script type="module" src="../../components/layout/page-layout.js"></script>
+    <script type="module" src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/footer/footer.js"></script>
+    <script type="module" src="../../components/modal/modal.js"></script>
+    <script type="module" src="marketplace-write.js"></script>
+</body>
+</html>
+
+

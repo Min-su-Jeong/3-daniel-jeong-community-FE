@@ -1,0 +1,279 @@
+/* 공통 스타일 import */
+@import url('../../styles/common.css');
+@import url('../../components/form/form.css');
+@import url('../../styles/post-editor.css');
+
+/* CATEGORY GRID - 카테고리 선택 */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+}
+
+.category-item {
+    position: relative;
+    cursor: pointer;
+}
+
+.category-item input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.category-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xl) var(--spacing-md);
+    background: var(--theme-input-bg);
+    border: 2px solid var(--theme-border);
+    border-radius: var(--border-radius-lg);
+    transition: var(--transition-normal);
+}
+
+.category-content svg {
+    width: 32px;
+    height: 32px;
+    stroke: var(--theme-text-light);
+    transition: var(--transition-normal);
+}
+
+.category-content span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--theme-text-dark);
+    transition: var(--transition-normal);
+}
+
+.category-item:hover .category-content {
+    background: var(--theme-card-hover-bg);
+    border-color: var(--theme-accent);
+    transform: translateY(-2px);
+}
+
+.category-item input[type="radio"]:checked + .category-content {
+    background: var(--theme-button-primary-bg);
+    border-color: var(--theme-accent);
+    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+}
+
+.category-item input[type="radio"]:checked + .category-content svg {
+    stroke: var(--white);
+}
+
+.category-item input[type="radio"]:checked + .category-content span {
+    color: var(--white);
+    font-weight: 600;
+}
+
+/* PRICE INPUT - 가격 입력 */
+.price-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.price-wrapper .form-input {
+    flex: 1;
+    padding-right: 50px;
+}
+
+.price-unit {
+    position: absolute;
+    right: var(--spacing-lg);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--theme-text-light);
+    pointer-events: none;
+}
+
+/* 숫자 입력 필드 스피너 제거 */
+.price-wrapper input[type="number"]::-webkit-outer-spin-button,
+.price-wrapper input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* 숫자 입력 필드 스피너 제거 */
+.price-wrapper input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* INFO SECTION */
+.info-section {
+    margin-top: var(--spacing-2xl);
+}
+
+.info-box {
+    display: flex;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: var(--border-radius-lg);
+    backdrop-filter: blur(var(--lg-blur-md));
+    -webkit-backdrop-filter: blur(var(--lg-blur-md));
+}
+
+.info-box svg {
+    width: 24px;
+    height: 24px;
+    stroke: #ffc107;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.info-box strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--theme-text-dark);
+    margin-bottom: var(--spacing-md);
+}
+
+.info-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-box li {
+    font-size: 13px;
+    color: var(--theme-text-dark);
+    line-height: 1.6;
+    padding-left: var(--spacing-lg);
+    position: relative;
+    margin-bottom: var(--spacing-xs);
+}
+
+.info-box li:before {
+    content: '•';
+    position: absolute;
+    left: 4px;
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.info-box li:last-child {
+    margin-bottom: 0;
+}
+
+/* STATUS GRID */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.status-item {
+    position: relative;
+    cursor: pointer;
+}
+
+.status-item input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.status-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: var(--theme-input-bg);
+    border: 2px solid var(--theme-border);
+    border-radius: var(--border-radius-lg);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--theme-text-dark);
+    transition: var(--transition-normal);
+}
+
+.status-item:hover .status-content {
+    background: var(--theme-card-hover-bg);
+    border-color: var(--theme-accent);
+    transform: translateY(-2px);
+}
+
+.status-item input[type="radio"]:checked + .status-content {
+    border-width: 2px;
+    transform: scale(1.02);
+}
+
+/* 판매중 */
+.status-selling {
+    color: var(--warning);
+    border-color: var(--warning);
+}
+
+.status-item input[type="radio"]:checked + .status-content.status-selling {
+    background: var(--warning-bg-light);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+/* 예약중 */
+.status-reserved {
+    color: var(--green);
+    border-color: var(--green);
+}
+
+.status-item input[type="radio"]:checked + .status-content.status-reserved {
+    background: var(--success-bg-light);
+    border-color: var(--green);
+    color: var(--green);
+}
+
+/* 거래완료 */
+.status-sold {
+    color: var(--white);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.status-item input[type="radio"]:checked + .status-content.status-sold {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: var(--white);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .category-content {
+        padding: 16px 8px;
+    }
+    
+    .category-content svg {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .category-content span {
+        font-size: 13px;
+    }
+    
+    .info-box {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .status-content {
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+}
+
