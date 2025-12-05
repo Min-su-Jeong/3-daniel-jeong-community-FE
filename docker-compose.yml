@@ -1,0 +1,17 @@
+services:
+  frontend:
+    image: ${DOCKER_USERNAME}/community-frontend:latest
+    container_name: community-frontend
+    restart: unless-stopped
+    environment:
+      PORT: ${FRONTEND_PORT}
+      KAKAO_MAP_JAVASCRIPT_KEY: ${KAKAO_MAP_JAVASCRIPT_KEY}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - community-network
+
+networks:
+  community-network:
+    name: community-network
+    external: true
