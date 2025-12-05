@@ -4,6 +4,7 @@
  * - 드래그 앤 드롭/파일 입력 이벤트 바인딩
  * - 프로필 이미지 렌더링 및 S3 public URL 연동
  * - 다중 이미지 업로드 헬퍼
+ * - 프로필 이미지 설정 및 검증
  */
 import { IMAGE_CONSTANTS, S3_CONFIG } from '../constants/image.js';
 import { uploadImage } from '../api/images.js';
@@ -14,42 +15,40 @@ const BYTES_PER_MB = 1024 * 1024;
 const DEFAULT_FALLBACK_TEXT = '👤';
 const DEFAULT_ALT_TEXT = '프로필 이미지';
 
-// 바이트를 MB 단위로 변환 (반올림)
+// 바이트를 MB 단위로 변환
 const bytesToMB = (bytes) => Math.round(bytes / BYTES_PER_MB);
 
 // 허용된 이미지 타입 목록 추출
 const getAllowedTypes = () => IMAGE_CONSTANTS.ACCEPT.split(',').map(type => type.trim());
 
-// 허용된 확장자 목록 추출 (에러 메시지용)
+// 허용된 확장자 목록 추출
 const getAllowedExtensions = () => {
-    const types = getAllowedTypes();
-    const extensions = [];
-    for (let i = 0; i < types.length; i++) {
-        const ext = types[i].replace('image/', '');
-        if (ext) extensions.push(ext);
-    }
-    return extensions;
+    return getAllowedTypes()
+        .map(type => type.replace('image/', ''))
+        .filter(ext => ext);
 };
 
-// 파일 확장자 추출
+// 파일 확장자 추출 (마지막 점 이후 문자열)
 const getFileExtension = (fileName) => {
     if (!fileName) return '';
     const lastDot = fileName.toLowerCase().lastIndexOf('.');
     return lastDot > 0 ? fileName.slice(lastDot + 1) : '';
 };
 
-// 파일 타입 검증
+// 파일 타입 검증 (MIME 타입 또는 확장자로 확인)
 const isValidImageType = (file, allowedTypes, allowedExtensionsSet) => {
     const fileType = file.type?.toLowerCase();
+    // MIME 타입으로 확인
     if (fileType && allowedTypes.includes(fileType)) {
         return true;
     }
     
+    // 확장자로 확인 (MIME 타입이 없는 경우 대비)
     const fileExtension = getFileExtension(file.name);
     return fileExtension && allowedExtensionsSet.has(fileExtension);
 };
 
-// 이미지 파일 유효성 검사 (타입/크기/개수 제한)
+// 이미지 파일 유효성 검사
 export function validateImageFiles(files, maxSize = IMAGE_CONSTANTS.MAX_IMAGE_SIZE, maxFiles = IMAGE_CONSTANTS.MAX_IMAGES) {
     const fileArray = Array.from(files);
     if (fileArray.length === 0) {
@@ -70,9 +69,8 @@ export function validateImageFiles(files, maxSize = IMAGE_CONSTANTS.MAX_IMAGE_SI
     const allowedExtensionsStr = allowedExtensions.join(', ');
     const validFiles = [];
 
-    for (let i = 0; i < fileArray.length; i++) {
-        const file = fileArray[i];
-        
+    for (const file of fileArray) {
+        // 파일 타입 검증 (하나라도 실패하면 전체 실패)
         if (!isValidImageType(file, allowedTypes, allowedExtensionsSet)) {
             return {
                 validFiles: [],
@@ -80,6 +78,7 @@ export function validateImageFiles(files, maxSize = IMAGE_CONSTANTS.MAX_IMAGE_SI
             };
         }
         
+        // 파일 크기 검증 (하나라도 초과하면 전체 실패)
         if (file.size > maxSize) {
             return {
                 validFiles: [],
@@ -103,28 +102,27 @@ const fileToDataURL = (file) => {
     });
 };
 
-// 이미지 미리보기 생성
+// 이미지 미리보기 생성 (Data URL로 변환)
 export async function createImagePreviews(files) {
     if (!files || files.length === 0) {
         return { previews: [], errors: [] };
     }
 
+    // 모든 파일을 병렬로 처리 (일부 실패해도 계속 진행)
     const results = await Promise.allSettled(
         files.map(file => fileToDataURL(file))
     );
 
     const previews = [];
     const errors = [];
-    const filesLength = files.length;
 
-    for (let i = 0; i < filesLength; i++) {
-        const result = results[i];
+    results.forEach((result, index) => {
         if (result.status === 'fulfilled') {
-            previews.push({ file: files[i], url: result.value });
+            previews.push({ file: files[index], url: result.value });
         } else {
             errors.push(result.reason?.message || '이미지 읽기 실패');
         }
-    }
+    });
 
     return { previews, errors };
 }
@@ -204,7 +202,7 @@ export function setupImageUploadEvents(container, input, onFileSelect) {
     manageImageUploadHandlers(container, input, handlers, false);
 }
 
-// 작성자 객체에서 프로필 이미지 키 추출
+// 프로필 이미지 키 추출
 export function extractProfileImageKey(author) {
     if (!author) return null;
     return author.image?.objectKey || author.profileImageKey || null;
@@ -251,7 +249,6 @@ export async function renderProfileImage(
     const existingImage = container.querySelector('img');
     const currentKey = existingImage?.dataset?.imageKey || '';
 
-    // 동일 키면 재렌더링 생략
     if (existingImage && normalizedKey === currentKey) {
         return;
     }
@@ -266,16 +263,10 @@ export async function renderProfileImage(
     }
 }
 
-// 프로필 이미지 placeholder
+// 프로필 이미지 placeholder 생성
 export function createProfilePlaceholder(container) {
     if (!container) return;
-    
     container.replaceChildren();
-    
-    const plusIcon = document.createElement('span');
-    plusIcon.className = 'plus-icon';
-    plusIcon.textContent = '+';
-    container.appendChild(plusIcon);
 }
 
 // 파일 선택 에러 처리
@@ -357,7 +348,67 @@ export function setupProfileImagePreview({ imageContainer, imageInput, removeBut
     });
 }
 
-// 다중 이미지 업로드
+// 프로필 이미지 설정
+export function setupProfileImage({ 
+    imageContainer, 
+    imageInput, 
+    removeButton, 
+    onRemove, 
+    onChange,
+    onImageChange 
+}) {
+    if (!imageContainer || !imageInput) return;
+
+    const handleRemove = () => {
+        createProfilePlaceholder(imageContainer);
+        if (removeButton) {
+            removeButton.classList.remove('visible');
+        }
+        imageInput.value = '';
+        if (onRemove) {
+            onRemove();
+        }
+    };
+
+    setupProfileImagePreview({
+        imageContainer,
+        imageInput,
+        removeButton,
+        onRemove: handleRemove,
+        onChange: (previewUrl) => {
+            if (onChange) {
+                onChange(previewUrl);
+            }
+            if (onImageChange) {
+                onImageChange();
+            }
+        }
+    });
+}
+
+// 프로필 이미지 유효성 검사 (크기/형식 검증)
+export function validateProfileImage(profileImage) {
+    if (!profileImage) return true;
+    
+    const { validFiles, errors } = validateImageFiles(
+        [profileImage], 
+        IMAGE_CONSTANTS.MAX_IMAGE_SIZE, 
+        1
+    );
+    
+    if (errors.length > 0) {
+        errors.forEach(error => Toast.error(error));
+        return false;
+    }
+    
+    if (validFiles.length === 0) {
+        Toast.error(TOAST_MESSAGE.IMAGE_INVALID);
+        return false;
+    }
+    
+    return true;
+}
+
 export async function uploadImages(imageFiles, resourceId, imageType = 'POST') {
     const uploadedKeys = [];
     
@@ -386,4 +437,15 @@ export async function uploadImages(imageFiles, resourceId, imageType = 'POST') {
     }
     
     return uploadedKeys;
+}
+
+// 페이지의 모든 이미지 경로를 S3 URL로 변환
+export function convertPageImagesToS3() {
+    const dataPathImages = document.querySelectorAll('img[data-path]');
+    dataPathImages.forEach(img => {
+        const path = img.getAttribute('data-path');
+        if (path) {
+            img.src = S3_CONFIG.getImageUrl(path);
+        }
+    });
 }

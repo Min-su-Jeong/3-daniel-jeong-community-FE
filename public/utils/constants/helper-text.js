@@ -1,4 +1,4 @@
-/* Helper Text 상수 */
+// Helper Text 상수
 export const HELPER_TEXT = Object.freeze({
     PROFILE_IMAGE: '프로필 사진을 등록해주세요 (선택)',
     EMAIL: '이메일 주소를 정확히 입력해주세요',

@@ -1,20 +1,35 @@
-/* 이미지 관련 상수 */
+// 이미지 관련 상수
 export const IMAGE_CONSTANTS = Object.freeze({
     MAX_IMAGES: 10,
     MAX_IMAGE_SIZE: 5 * 1024 * 1024, // 5MB
     ACCEPT: 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
 });
 
-/* AWS S3 관련 상수 - public-url 캐시 */
+// AWS S3 관련 상수
 const publicUrlCache = new Map();
 
 export const S3_CONFIG = Object.freeze({
-    // 배경 비디오 objectKey
-    BACKGROUND_VIDEO_KEY: 'assets/videos/background.mp4',
+    // S3 베이스 URL
+    BASE_URL: 'https://community-images-swimwaymakers.s3.ap-northeast-2.amazonaws.com',
     
     // 배경 비디오 URL 가져오기
     getBackgroundVideoUrl: async () => {
         return await S3_CONFIG.getPublicUrl(S3_CONFIG.BACKGROUND_VIDEO_KEY);
+    },
+    
+    // 배경 비디오 URL
+    get BACKGROUND_VIDEO_URL() {
+        return `${S3_CONFIG.BASE_URL}/assets/videos/background.mp4`;
+    },
+    
+    // 폰트 URL 생성
+    getFontUrl: (fontPath) => {
+        return `${S3_CONFIG.BASE_URL}/assets/fonts/${fontPath}`;
+    },
+    
+    // 이미지 URL 생성
+    getImageUrl: (imagePath) => {
+        return `${S3_CONFIG.BASE_URL}/assets/images/${imagePath}`;
     },
     
     getPublicUrl: async (objectKey) => {
