@@ -1,9 +1,7 @@
+/* 모달 오버레이 */
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: var(--modal-overlay-bg);
     display: flex;
     align-items: center;
@@ -14,23 +12,23 @@
     transition: all 0.3s ease;
 }
 
-.modal-overlay.show {
-    opacity: 1;
-    visibility: visible;
-}
-
+.modal-overlay.show,
 .modal-overlay.visible {
     opacity: 1;
     visibility: visible;
 }
 
+/* 모달 컨테이너 */
 .modal {
-    background: var(--modal-bg);
-    border-radius: 12px;
-    box-shadow: var(--modal-shadow);
     max-width: 400px;
     width: 90%;
     max-height: 80vh;
+    background: var(--theme-card-bg-light);
+    backdrop-filter: blur(var(--lg-blur-lg));
+    -webkit-backdrop-filter: blur(var(--lg-blur-lg));
+    border: 1px solid var(--theme-border-light);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--modal-shadow);
     overflow: hidden;
     transform: scale(0.9) translateY(20px);
     transition: all 0.3s ease;
@@ -40,75 +38,80 @@
     transform: scale(1) translateY(0);
 }
 
+/* 모달 헤더 */
 .modal-header {
-    padding: 24px 24px 16px;
+    padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-lg);
     text-align: center;
-    border-bottom: 1px solid var(--modal-header-border);
+    border-bottom: 1px solid var(--theme-border-light);
     transition: border-color 0.3s ease;
 }
 
 .modal-title {
-    font-size: 20px;
+    font-size: var(--font-size-3xl);
     font-weight: 700;
-    color: var(--text-dark);
-    margin: 0 0 8px 0;
+    color: var(--theme-text-dark);
     letter-spacing: -0.3px;
+    margin: 0 0 var(--spacing-sm) 0;
     transition: color 0.3s ease;
 }
 
 .modal-subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin: 0;
+    font-size: var(--font-size-md);
+    color: var(--theme-text-muted);
     line-height: 1.5;
+    margin: 0;
     transition: color 0.3s ease;
 }
 
+/* 모달 내용 */
 .modal-content {
-    padding: 16px 24px;
-    color: var(--text-dark);
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    color: var(--theme-text-dark);
     line-height: 1.6;
     transition: color 0.3s ease;
 }
 
+/* 모달 액션 */
 .modal-actions {
     display: flex;
-    gap: 12px;
-    padding: 16px 24px 24px;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-2xl) var(--spacing-2xl);
 }
 
 .modal-actions .btn-cancel {
     flex: 1;
-    background: var(--modal-cancel-bg);
-    color: var(--text-secondary);
-    border: 1px solid var(--modal-cancel-border);
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 15px;
+    padding: var(--spacing-md) var(--spacing-2xl);
+    background: var(--theme-input-bg);
+    backdrop-filter: blur(var(--lg-blur-md));
+    -webkit-backdrop-filter: blur(var(--lg-blur-md));
+    color: var(--lg-text-on-glass);
+    border: 1px solid var(--theme-border-light);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
     font-weight: 600;
+    letter-spacing: -0.3px;
     cursor: pointer;
     transition: all 0.2s ease;
-    letter-spacing: -0.3px;
 }
 
 .modal-actions .btn-cancel:hover {
-    background: var(--modal-cancel-hover-bg);
+    background: var(--theme-card-hover-bg-light);
     transform: translateY(-1px);
 }
 
 .modal-actions .btn-confirm {
     flex: 1;
+    padding: var(--spacing-md) var(--spacing-2xl);
     background: #0064ff;
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 15px;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 100, 255, 0.3);
     letter-spacing: -0.3px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 100, 255, 0.3);
+    transition: all 0.2s ease;
 }
 
 .modal-actions .btn-confirm:hover {
@@ -141,21 +144,21 @@
 @media (max-width: 768px) {
     .modal {
         width: 95%;
-        margin: 20px;
+        margin: var(--spacing-2xl);
     }
     
     .modal-header {
-        padding: 20px 20px 12px;
+        padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-md);
     }
     
     .modal-title {
-        font-size: 18px;
+        font-size: var(--font-size-2xl);
     }
     
     .modal-actions {
         flex-direction: column;
-        gap: 8px;
-        padding: 12px 20px 20px;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-2xl) var(--spacing-2xl);
     }
     
     .modal-actions .btn-cancel,

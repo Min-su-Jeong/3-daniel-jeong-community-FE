@@ -2,11 +2,9 @@ import { initializeElements, setupPlaceholders, setupStandaloneHelperText } from
 import { navigateTo, getUrlParam, handlePostEditorBackNavigation } from '../../utils/common/navigation.js';
 import { getCurrentUserInfo } from '../../utils/common/user.js';
 import { uploadImages } from '../../utils/common/image.js';
-import { IMAGE_CONSTANTS } from '../../utils/constants/image.js';
 import { Toast } from '../../components/toast/toast.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { PostEditor } from '../../components/post-editor/post-editor.js';
-import { API_SERVER_URI } from '../../utils/constants/api.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
@@ -33,6 +31,8 @@ let postId = null;
 
 // 페이지 초기화
 async function init() {
+    PageLayout.init();
+    
     setupPlaceholders([
         { element: elements.postTitle, placeholder: PLACEHOLDER.POST_TITLE },
         { element: elements.postContent, placeholder: PLACEHOLDER.POST_CONTENT }
@@ -41,7 +41,6 @@ async function init() {
     if (elements.helperText) {
         setupStandaloneHelperText(elements.helperText, HELPER_TEXT.POST_FORM);
     }
-    PageLayout.initializePage();
 
     postEditor = new PostEditor({
         ...elements,
@@ -51,19 +50,16 @@ async function init() {
     await loadPostData();
 }
 
-// 세션 스토리지에서 게시글 데이터 파싱
+// 세션 스토리지 데이터 파싱 (뒤로가기 후 재진입 시 사용)
 function parseSessionData(sessionData) {
     try {
         return JSON.parse(sessionData);
-    } catch (error) {
-        // 파싱 실패 시 null 반환
+    } catch {
         return null;
     }
 }
 
 // 게시글 데이터 로드
-// 세션 스토리지에 저장된 데이터가 있으면 사용 (뒤로가기 후 재진입 시 API 호출 방지)
-// 없으면 API로 게시글 데이터 조회
 async function loadPostData() {
     try {
         postId = getUrlParam('id');
@@ -78,11 +74,12 @@ async function loadPostData() {
         const sessionData = sessionStorage.getItem('editPostData');
         let postData = sessionData ? parseSessionData(sessionData) : null;
         
+        // 사용 후 세션 스토리지에서 제거
         if (sessionData) {
                 sessionStorage.removeItem('editPostData');
         }
         
-        // 세션 스토리지에 데이터가 없으면 API 호출
+        // 세션 데이터가 없으면 API로 조회
         if (!postData) {
             postData = await fetchPostData(postId);
             
@@ -93,22 +90,22 @@ async function loadPostData() {
                 }
         }
         
-        // 폼에 데이터 채우기
+        // PostEditor에 제목과 내용 설정
         postEditor.setFormData({
             title: postData.title || '',
             content: postData.content || ''
         });
         
         // 기존 이미지 로드
-        if (postData.imageObjectKeys && postData.imageObjectKeys.length > 0) {
-            postEditor.loadExistingImages(postData.imageObjectKeys, API_SERVER_URI);
+        if (postData.imageObjectKeys?.length) {
+            postEditor.loadExistingImages(postData.imageObjectKeys);
         }
     } catch (error) {
         Toast.error(TOAST_MESSAGE.POST_LOAD_FAILED);
     }
 }
 
-// 게시글 데이터 가져오기
+// 게시글 데이터 조회
 async function fetchPostData(postId) {
     try {
         const response = await getPostById(postId);
@@ -123,19 +120,18 @@ async function fetchPostData(postId) {
     }
 }
 
-// 이미지 objectKey 배열 준비 (기존 이미지 + 새로 업로드한 이미지)
-// 수정 모드에서 기존 이미지는 objectKey만 사용하고, 새로 추가한 이미지만 업로드
+// 이미지 objectKey 배열 준비 (기존 이미지 유지 + 새 이미지 업로드)
 async function getImageObjectKeys(selectedImages) {
     const imageObjectKeys = [];
     
-    // 기존 이미지의 objectKey 추가 (서버에 이미 존재하는 이미지)
+    // 기존 이미지의 objectKey 추가
     selectedImages.forEach((imageData) => {
         if (imageData.isExisting && imageData.objectKey) {
             imageObjectKeys.push(imageData.objectKey);
         }
     });
     
-    // 새로 추가한 이미지만 업로드
+    // 새로 추가된 이미지 파일 업로드
     const newImageFiles = selectedImages.filter(img => img.file && !img.isExisting);
     if (newImageFiles.length > 0) {
         const uploadedKeys = await uploadImages(newImageFiles, postId, 'PATCH');
@@ -145,7 +141,7 @@ async function getImageObjectKeys(selectedImages) {
     return imageObjectKeys;
 }
 
-// 폼 제출 상태 설정
+// 제출 상태 설정 (중복 제출 방지)
 function setFormSubmitting(submitting) {
     isPostSubmitted = submitting;
     postEditor.setSubmitting(submitting);
@@ -154,15 +150,18 @@ function setFormSubmitting(submitting) {
     }
 }
 
-// 폼 제출 처리
+// 게시글 수정 처리
 async function handlePostUpdate() {
+    // 중복 제출 방지
     if (isPostSubmitted) return;
     
+    // 폼 유효성 검사
     if (!postEditor.validateForm()) {
         Toast.error(VALIDATION_MESSAGE.ALL_FIELDS_REQUIRED);
         return;
     }
     
+    // 로그인 상태 확인
     const { userId } = getCurrentUserInfo();
     if (!userId) {
         Toast.error(TOAST_MESSAGE.LOGIN_REQUIRED);
@@ -174,6 +173,7 @@ async function handlePostUpdate() {
     try {
         const formData = postEditor.getFormData();
         const selectedImages = postEditor.getSelectedImages();
+        // 기존 이미지 유지 + 새 이미지 업로드하여 objectKey 배열 생성
         const imageObjectKeys = await getImageObjectKeys(selectedImages);
         
         const result = await updatePost(postId, {
@@ -187,10 +187,9 @@ async function handlePostUpdate() {
         }
         
         Toast.success(TOAST_MESSAGE.POST_UPDATE_SUCCESS);
+        // 성공 후 상세 페이지로 이동 (히스토리 교체하여 뒤로가기 방지)
         setTimeout(() => {
-            // 수정 후 상세 페이지 진입 시 뒤로가기가 메인 페이지로 가도록 히스토리 수정
             window.history.replaceState(null, '', '/post-list');
-            // 상세 페이지로 이동
             navigateTo(`/post-detail?id=${postId}`);
         }, 1200);
     } catch (error) {
@@ -201,4 +200,5 @@ async function handlePostUpdate() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+// 뒤로가기 시 미저장 변경사항 확인
 window.handleBackNavigation = () => handlePostEditorBackNavigation(postEditor);

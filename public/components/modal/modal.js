@@ -1,30 +1,10 @@
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 
-/**
- * 모달 컴포넌트
- * 확인/취소 다이얼로그, 배경 스크롤 방지, 애니메이션 지원
- */
+// 모달 컴포넌트 (확인/취소 다이얼로그, 배경 스크롤 방지, 애니메이션 지원)
 
 const ANIMATION_DELAY = 10;
 const ANIMATION_DURATION = 300;
 const ESCAPE_KEY = 'Escape';
-
-// HTML 문자열을 DocumentFragment로 변환하여 삽입
-function parseHTML(htmlString) {
-    if (!htmlString) {
-        return document.createDocumentFragment();
-    }
-    
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlString, 'text/html');
-    const fragment = document.createDocumentFragment();
-    
-    Array.from(doc.body.childNodes).forEach(node => {
-        fragment.appendChild(node.cloneNode(true));
-    });
-    
-    return fragment;
-}
 
 export class Modal {
     constructor(options = {}) {
@@ -47,7 +27,6 @@ export class Modal {
     }
 
     // 모달 표시 (DOM 생성, 이벤트 리스너 등록, 배경 스크롤 방지)
-    // 이미 표시 중이면 무시, 기존 모달이 있으면 먼저 제거 후 새로 생성
     show() {
         if (this.isVisible) return;
         
@@ -86,13 +65,13 @@ export class Modal {
         
         const title = document.createElement('h3');
         title.className = 'modal-title';
-        title.appendChild(parseHTML(this.options.title));
+        title.textContent = this.options.title;
         header.appendChild(title);
         
         if (this.options.subtitle) {
             const subtitle = document.createElement('p');
             subtitle.className = 'modal-subtitle';
-            subtitle.appendChild(parseHTML(this.options.subtitle));
+            subtitle.innerHTML = this.options.subtitle;
             header.appendChild(subtitle);
         }
         
@@ -103,7 +82,8 @@ export class Modal {
     createContent() {
         const content = document.createElement('div');
         content.className = 'modal-content';
-        content.appendChild(parseHTML(this.options.content));
+        // HTML 태그 지원 (innerHTML 사용)
+        content.innerHTML = this.options.content;
         return content;
     }
 
@@ -171,9 +151,7 @@ export class Modal {
 
     // 모달 DOM 제거
     removeModalFromDOM() {
-        if (this.modalElement?.parentNode) {
-            this.modalElement.parentNode.removeChild(this.modalElement);
-        }
+        this.modalElement?.remove();
     }
 
     // 모달 상태 초기화
@@ -278,20 +256,6 @@ export class Modal {
         });
         
         return Modal.createPromiseModal(modal, true);
-    }
-
-    // 성공 모달
-    static success(options = {}) {
-        const modal = new Modal({
-            title: '성공',
-            subtitle: MODAL_MESSAGE.SUBTITLE_SUCCESS,
-            confirmText: '확인',
-            confirmType: 'success',
-            showCancel: false,
-            ...options
-        });
-        
-        return Modal.createPromiseModal(modal, false);
     }
 
     // 알림 모달

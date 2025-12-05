@@ -11,6 +11,7 @@ export const MODAL_MESSAGE = Object.freeze({
     
     /* 부제목/내용 */
     SUBTITLE_POST_DELETE: '게시글을 삭제하시겠습니까?<br>삭제한 내용은 복구할 수 없습니다.',
+    SUBTITLE_PRODUCT_DELETE: '상품을 삭제하시겠습니까?<br>삭제한 내용은 복구할 수 없습니다.',
     SUBTITLE_COMMENT_DELETE: '댓글을 삭제하시겠습니까?',
     SUBTITLE_USER_DELETE: '정말로 회원 탈퇴를 하시겠습니까?<br>탈퇴한 계정은 30일 이내 재로그인하시면 복구할 수 있습니다.',
     SUBTITLE_LOGOUT: '로그아웃 하시겠습니까?',

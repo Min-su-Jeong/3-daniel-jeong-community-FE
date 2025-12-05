@@ -1,13 +1,11 @@
 import { request } from '../common/request.js';
 import { METHOD } from '../constants/api.js';
-import { S3_CONFIG } from '../constants/image.js';
-
 
 // Presigned URL 요청
 export async function getPresignedUrl(imageType, resourceId, filename, contentType) {
     return await request({
         method: METHOD.POST,
-        url: '/api/images/presigned-url',
+        url: `/api/images/presigned-url`,
         body: {
             imageType,
             resourceId,

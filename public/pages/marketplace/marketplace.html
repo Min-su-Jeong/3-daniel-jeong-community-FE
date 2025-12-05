@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중고거래 - Swim Way Makers</title>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="marketplace.css">
+</head>
+<body class="theme">
+    <!-- Navigation -->
+    <app-header show-menu="true" show-actions="true" show-profile="true" active-path="/marketplace"></app-header>
+
+    <main class="marketplace-main">
+        <!-- Hero Section -->
+        <section class="page-hero">
+            <div class="page-hero-content">
+                <span class="page-tag">MARKETPLACE</span>
+                <h1 class="page-title">중고거래</h1>
+                <p class="page-subtitle">수영 용품을 사고팔며 합리적인 가격으로 장비를 구매하세요</p>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-section">
+            <div class="filter-container lg-glass">
+                <div class="search-box">
+                    <img id="searchIcon" data-path="common/search.svg" alt="검색" style="width: 20px; height: 20px;">
+                    <input type="text" id="searchInput" placeholder="상품명, 브랜드, 키워드 검색..." class="search-input">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">카테고리</label>
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="all">전체</option>
+                        <option value="swimsuit">수영복</option>
+                        <option value="goggles">수영고글</option>
+                        <option value="cap">수영모</option>
+                        <option value="training">훈련용품</option>
+                        <option value="fins">오리발</option>
+                        <option value="bag">가방/액세서리</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">상태</label>
+                    <select class="filter-select" id="statusFilter">
+                        <option value="all">전체</option>
+                        <option value="SELLING">판매중</option>
+                        <option value="RESERVED">예약중</option>
+                        <option value="SOLD">거래완료</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">가격대</label>
+                    <select class="filter-select" id="priceFilter">
+                        <option value="all">전체</option>
+                        <option value="0-30000">3만원 이하</option>
+                        <option value="30000-50000">3만원 ~ 5만원</option>
+                        <option value="50000-100000">5만원 ~ 10만원</option>
+                        <option value="100000-">10만원 이상</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">정렬</label>
+                    <select class="filter-select" id="sortFilter">
+                        <option value="latest">최신순</option>
+                        <option value="price-low">가격 낮은순</option>
+                        <option value="price-high">가격 높은순</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Action Button -->
+        <section class="action-section">
+            <button class="write-btn lg-glass lg-card-hover" id="writeProductBtn">
+                <img id="writeBtnIcon" data-path="common/plus.svg" alt="상품 등록" style="width: 20px; height: 20px;">
+                <span>상품 등록</span>
+            </button>
+        </section>
+
+        <!-- Products Section -->
+        <section class="products-section">
+            <div class="products-container">
+                <div class="products-grid" id="productsGrid"></div>
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <img id="emptyIcon" data-path="misc/shopping-cart.svg" alt="빈 상태" style="width: 48px; height: 48px;">
+                    <p>검색 결과가 없습니다</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="../../components/layout/page-layout.js"></script>
+    <script type="module" src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/footer/footer.js"></script>
+    <script type="module" src="marketplace.js"></script>
+</body>
+</html>

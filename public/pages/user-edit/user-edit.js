@@ -6,8 +6,7 @@ import { createFormHandler } from '../../components/form/form-handler.js';
 import { validateNickname, setupFormValidation } from '../../utils/common/validation.js';
 import { getElementValue, setElementValue, initializeElements, getSubmitButton, setupPlaceholders } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
-import { renderProfileImage, createProfilePlaceholder } from '../../utils/common/image.js';
-import { setupProfileImage } from '../../utils/common/profile.js';
+import { renderProfileImage, createProfilePlaceholder, setupProfileImage } from '../../utils/common/image.js';
 import { getUserFromStorage, saveUserToStorage, dispatchUserUpdatedEvent, removeUserFromStorage } from '../../utils/common/user.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
@@ -31,6 +30,32 @@ let originalNickname = '';
 let originalProfileImageKey = null;
 let user = null;
 let editButton = null;
+
+// 기본 프로필 아이콘 렌더링 (회원가입 페이지와 동일한 SVG)
+function renderDefaultProfileIcon() {
+    if (!elements.profileImage) return;
+    elements.profileImage.replaceChildren();
+    
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('class', 'profile-placeholder');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.5');
+    
+    const circle = document.createElementNS(svgNS, 'circle');
+    circle.setAttribute('cx', '12');
+    circle.setAttribute('cy', '8');
+    circle.setAttribute('r', '4');
+    
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', 'M20 21a8 8 0 1 0-16 0');
+    
+    svg.appendChild(circle);
+    svg.appendChild(path);
+    elements.profileImage.appendChild(svg);
+}
 
 // 삭제 버튼 표시 상태 업데이트
 function updateRemoveButtonVisibility(show) {
@@ -83,11 +108,11 @@ function updateSubmitButtonState() {
 }
 
 // 원본 프로필 이미지 복원 (변경 취소 시)
-function restoreOriginalImage() {
+async function restoreOriginalImage() {
     clearImageContainer();
     
     if (originalProfileImageKey) {
-        renderProfileImage(elements.profileImage, originalProfileImageKey);
+        await renderProfileImage(elements.profileImage, originalProfileImageKey);
         updateRemoveButtonVisibility(true);
     } else {
         createProfilePlaceholder(elements.profileImage);
@@ -106,7 +131,7 @@ function clearImageContainer() {
 // 프로필 이미지 제거 (placeholder 표시)
 function removeProfileImage() {
     clearImageContainer();
-    createProfilePlaceholder(elements.profileImage);
+    renderDefaultProfileIcon();
     updateRemoveButtonVisibility(false);
     elements.profileImageInput.value = '';
     updateSubmitButtonState();
@@ -155,7 +180,7 @@ async function removeUser(userId) {
         dispatchUserUpdatedEvent();
         
         Toast.success(TOAST_MESSAGE.USER_DELETE_SUCCESS);
-        setTimeout(() => navigateTo('/'), 2000);
+        setTimeout(() => navigateTo('/post-list'), 2000);
     } catch (error) {
         Toast.error(error.message || TOAST_MESSAGE.USER_DELETE_FAILED);
     }
@@ -222,10 +247,10 @@ async function loadUserData() {
     clearImageContainer();
     
     if (originalProfileImageKey) {
-        renderProfileImage(elements.profileImage, originalProfileImageKey);
+        await renderProfileImage(elements.profileImage, originalProfileImageKey);
         updateRemoveButtonVisibility(true);
     } else {
-        createProfilePlaceholder(elements.profileImage);
+        renderDefaultProfileIcon();
         updateRemoveButtonVisibility(false);
     }
     
@@ -247,20 +272,19 @@ async function uploadProfileImage(userId, file) {
     return response.objectKey;
 }
 
-function updateProfileImageDisplay(imageKey) {
+async function updateProfileImageDisplay(imageKey) {
     clearImageContainer();
     
     if (imageKey) {
-        renderProfileImage(elements.profileImage, imageKey);
+        await renderProfileImage(elements.profileImage, imageKey);
         updateRemoveButtonVisibility(true);
     } else {
-        createProfilePlaceholder(elements.profileImage);
+        renderDefaultProfileIcon();
         updateRemoveButtonVisibility(false);
     }
 }
 
-// 프로필 이미지 키 결정 (삭제/업로드/유지)
-// 사용자가 이미지를 삭제했는지, 새로 업로드했는지, 그대로 유지하는지 판단하여 적절한 값 반환
+// 프로필 이미지 키 결정 (삭제/업로드/유지 판단)
 async function determineProfileImageKey(profileImageFile) {
     const hasOriginalImage = !!originalProfileImageKey;
     const hasCurrentImage = !!elements.profileImage.querySelector('img');
@@ -268,7 +292,7 @@ async function determineProfileImageKey(profileImageFile) {
     const isImageRemoved = hasOriginalImage && !hasCurrentImage && !profileImageFile;
     
     if (isImageRemoved) {
-        return ''; // 빈 문자열은 이미지 삭제를 의미
+        return '';
     }
     
     if (profileImageFile) {
@@ -281,7 +305,7 @@ async function determineProfileImageKey(profileImageFile) {
 
 // 사용자 정보 업데이트 후 상태 동기화
 // 서버에서 받은 업데이트된 사용자 정보로 로컬 상태와 UI를 동기화
-function syncUserState(updatedUser, nickname) {
+async function syncUserState(updatedUser, nickname) {
     user = updatedUser;
     // rememberMe 상태 확인 (localStorage에 있으면 true)
     const isRemembered = localStorage.getItem('user') !== null;
@@ -291,7 +315,7 @@ function syncUserState(updatedUser, nickname) {
     originalNickname = nickname;
     originalProfileImageKey = user.profileImageKey || null;
     
-    updateProfileImageDisplay(user.profileImageKey || null);
+    await updateProfileImageDisplay(user.profileImageKey || null);
     elements.profileImageInput.value = '';
     updateSubmitButtonState();
     dispatchUserUpdatedEvent();
@@ -330,11 +354,11 @@ function setupFormSubmission() {
                 throw new Error(TOAST_MESSAGE.USER_UPDATE_FAILED);
             }
             
-            syncUserState(response.data, nickname);
+            await syncUserState(response.data, nickname);
             return { success: true };
         },
         onSuccess: () => {
-            setTimeout(() => navigateTo('/'), 1200);
+            setTimeout(() => navigateTo('/post-list'), 1200);
         }
     });
 }
@@ -347,15 +371,16 @@ function setupPlaceholdersAndHelperTexts() {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
+    PageLayout.init();
+    
     setupPlaceholdersAndHelperTexts();
-    PageLayout.initializePage();
     createUserEditButtons();
     setupProfileImageChange();
     setupFormFields();
     setupWithdrawal();
     setupFormSubmission();
     
-    window.handleBackNavigation = () => navigateTo('/');
+    window.handleBackNavigation = () => navigateTo('/post-list');
     
     await loadUserData();
 });

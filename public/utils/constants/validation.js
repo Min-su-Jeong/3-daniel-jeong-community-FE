@@ -1,4 +1,4 @@
-/* Validation 메시지 상수 */
+// Validation 메시지 상수
 export const VALIDATION_MESSAGE = Object.freeze({
     EMAIL_VALID: '유효한 이메일 주소입니다',
     EMAIL_INVALID: '이메일을 확인해주세요.',

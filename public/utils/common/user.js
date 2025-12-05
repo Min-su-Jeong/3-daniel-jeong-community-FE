@@ -31,15 +31,13 @@ export function saveUserToStorage(userData, rememberMe = false) {
     }
 }
 
-/**
- * 저장소에서 사용자 정보 완전 삭제 (localStorage/sessionStorage 모두)
- */
+// 저장소에서 사용자 정보 삭제
 export function removeUserFromStorage() {
     localStorage.removeItem('user');
     sessionStorage.removeItem('user');
 }
 
-// 사용자 정보 업데이트 커스텀 이벤트 발생 (전역 리스너에 알림)
+// 사용자 정보 업데이트 이벤트 발생
 export function dispatchUserUpdatedEvent() {
     window.dispatchEvent(new CustomEvent('userUpdated'));
 }

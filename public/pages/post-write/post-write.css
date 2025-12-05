@@ -1,6 +1,4 @@
 /* 공통 스타일 import */
 @import url('../../styles/common.css');
-@import url('../../styles/post-editor.css');
 @import url('../../components/form/form.css');
-
-/* 게시글 작성 전용 스타일 - post-editor.css에서 공통 스타일 사용 */
+@import url('../../styles/post-editor.css');

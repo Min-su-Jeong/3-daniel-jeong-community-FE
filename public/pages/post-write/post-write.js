@@ -1,4 +1,4 @@
-import { initializeElements, setupPlaceholders, setupStandaloneHelperText } from '../../utils/common/element.js';
+import { initializeElements, setupPlaceholders, setupStandaloneHelperText, showButtonLoading, hideButtonLoading } from '../../utils/common/element.js';
 import { navigateTo, handlePostEditorBackNavigation } from '../../utils/common/navigation.js';
 import { requireLogin } from '../../utils/common/user.js';
 import { uploadImages } from '../../utils/common/image.js';
@@ -31,6 +31,8 @@ let loadingToast = null;
 
 // 페이지 초기화
 function init() {
+    PageLayout.init();
+    
     setupPlaceholders([
         { element: elements.postTitle, placeholder: PLACEHOLDER.POST_TITLE },
         { element: elements.postContent, placeholder: PLACEHOLDER.POST_CONTENT }
@@ -39,7 +41,6 @@ function init() {
     if (elements.helperText) {
         setupStandaloneHelperText(elements.helperText, HELPER_TEXT.POST_FORM);
     }
-    PageLayout.initializePage();
     
     postEditor = new PostEditor({
         ...elements,
@@ -47,9 +48,9 @@ function init() {
     });
 }
 
-// 게시글 생성 (이미지 없이 먼저 생성하여 postId 획득)
-// 이미지 업로드에 postId가 필요하므로 게시글을 먼저 생성
+// 게시글 초안 생성 (이미지 없이 먼저 생성하여 ID 확보)
 async function createPostDraft(user, formData) {
+    // 이미지 없이 먼저 게시글 생성 (ID 확보)
     const createResponse = await createPost({
         userId: user.id,
         title: formData.title,
@@ -69,11 +70,12 @@ async function createPostDraft(user, formData) {
     return postId;
 }
 
-// 이미지 업로드 및 게시글 업데이트
-// 생성된 게시글에 이미지를 업로드한 후 게시글 정보 업데이트
+// 이미지 업로드 및 게시글 업데이트 (이미지 업로드 후 게시글 정보 업데이트)
 async function uploadAndUpdatePost(postId, formData, selectedImages) {
+    // 이미지 업로드 후 objectKey 배열 획득
     const imageObjectKeys = await uploadImages(selectedImages, postId, 'POST');
     
+    // 업로드된 이미지 포함하여 게시글 정보 업데이트
     const updateResponse = await updatePost(postId, {
         title: formData.title,
         content: formData.content,
@@ -85,24 +87,27 @@ async function uploadAndUpdatePost(postId, formData, selectedImages) {
     }
 }
 
-// 폼 제출 상태 초기화
+// 제출 상태 초기화 (에러 발생 시 재시도 가능하도록)
 function resetFormSubmitting() {
     isPostSubmitted = false;
     postEditor.setSubmitting(false);
 }
 
-// 폼 제출 처리
+// 게시글 생성 처리
 async function handlePostCreate() {
+    // 폼 유효성 검사
     if (!postEditor.validateForm()) {
         Toast.error(VALIDATION_MESSAGE.POST_FORM_INCOMPLETE);
         return;
     }
     
+    // 중복 제출 방지
     if (isPostSubmitted) return;
     isPostSubmitted = true;
     postEditor.setSubmitting(true);
     
     try {
+        // 로그인 상태 확인
         const { isLoggedIn, user } = requireLogin();
         if (!isLoggedIn) {
             Toast.error(TOAST_MESSAGE.LOGIN_REQUIRED);
@@ -110,13 +115,18 @@ async function handlePostCreate() {
             return;
         }
         
-        showLoading();
+        const originalText = elements.submitBtn?.textContent || '';
+        showButtonLoading(elements.submitBtn, '처리 중...');
+        // 무한 지속 토스트 표시
+        loadingToast = Toast.info(TOAST_MESSAGE.POST_CREATING, '처리 중', { duration: 0, showClose: false });
         
         const formData = postEditor.getFormData();
         const selectedImages = postEditor.getSelectedImages();
         
+        // 1단계: 이미지 없이 게시글 생성 (ID 확보)
         const postId = await createPostDraft(user, formData);
         
+        // 2단계: 이미지가 있으면 업로드 후 게시글 업데이트
         if (selectedImages.length > 0) {
             await uploadAndUpdatePost(postId, formData, selectedImages);
         }
@@ -128,42 +138,31 @@ async function handlePostCreate() {
     }
 }
 
-// 로딩 상태 표시
-function showLoading() {
-    if (elements.submitBtn) {
-        elements.submitBtn.disabled = true;
-        elements.submitBtn.style.opacity = '0.6';
-        elements.submitBtn.style.cursor = 'not-allowed';
-    }
-    loadingToast = Toast.info(TOAST_MESSAGE.POST_CREATING, '처리 중', { duration: 0, showClose: false });
-}
 
-// 로딩 상태 해제
-function hideLoading() {
-    if (elements.submitBtn) {
-        elements.submitBtn.disabled = false;
-        elements.submitBtn.style.opacity = '1';
-        elements.submitBtn.style.cursor = 'pointer';
-    }
+// 에러 처리
+function showError(message) {
+    const originalText = elements.submitBtn?.textContent || '';
+    hideButtonLoading(elements.submitBtn, originalText);
     if (loadingToast) {
         loadingToast.hide();
         loadingToast = null;
     }
-}
-
-// 에러 표시
-function showError(message) {
-    hideLoading();
     Toast.error(message, '오류 발생');
 }
 
-// 성공 표시
+// 성공 처리
 function showSuccess(message) {
-    hideLoading();
+    const originalText = elements.submitBtn?.textContent || '';
+    hideButtonLoading(elements.submitBtn, originalText);
+    if (loadingToast) {
+        loadingToast.hide();
+        loadingToast = null;
+    }
     isPostSubmitted = true;
     Toast.success(message, '등록 완료', { duration: 2000 });
     setTimeout(() => navigateTo('/post-list'), 1000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
+// 뒤로가기 시 미저장 변경사항 확인
 window.handleBackNavigation = () => handlePostEditorBackNavigation(postEditor);

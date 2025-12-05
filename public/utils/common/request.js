@@ -15,9 +15,7 @@ import { removeUserFromStorage, dispatchUserUpdatedEvent } from './user.js';
 // 세션 만료 모달 중복 표시 방지 플래그
 let isShowingExpiredModal = false;
 
-/**
- * 로그아웃 처리 (API 호출 후 저장소 정리 및 로그인 페이지 이동)
- */
+// 로그아웃 처리 (API 호출 후 저장소 정리 및 로그인 페이지 이동)
 async function handleLogout() {
     try {
         await logout();
@@ -59,9 +57,7 @@ async function handleRefreshToken() {
     }
 }
 
-/**
- * 세션 만료 모달 표시 (중복 표시 방지, 갱신/로그아웃 선택)
- */
+// 세션 만료 모달 표시 (중복 표시 방지, 갱신/로그아웃 선택)
 async function showSessionExpiredModal() {
     if (isShowingExpiredModal) return;
     isShowingExpiredModal = true;
@@ -87,9 +83,7 @@ async function showSessionExpiredModal() {
     modal.show();
 }
 
-/**
- * 세션 만료 처리 (모달 표시 후 401 에러 throw)
- */
+// 세션 만료 처리 (모달 표시 후 401 에러 throw)
 async function handleSessionExpired() {
     await showSessionExpiredModal();
     const error = new Error('세션이 만료되었습니다.');
@@ -97,7 +91,7 @@ async function handleSessionExpired() {
     throw error;
 }
 
-// Fetch 요청 옵션 생성 (FormData/JSON 자동 처리)
+// Fetch 요청 옵션 생성 (credentials: 'include' 설정)
 function buildRequestOptions(method, body, isFormData) {
     const options = { method, credentials: 'include' };
     
@@ -125,7 +119,7 @@ async function parseResponse(response) {
     }
 }
 
-// API 에러 객체 생성 (배열/단일 메시지 모두 처리)
+// API 에러 객체 생성 (데이터 배열 처리)
 function createError(data, status) {
     const errorMessage = Array.isArray(data.data) 
         ? data.data.join(', ') 

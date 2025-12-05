@@ -1,13 +1,13 @@
 import { signup } from '../../utils/api/auth.js';
 import { checkEmail, checkNickname } from '../../utils/api/users.js';
-import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { Toast } from '../../components/toast/toast.js';
+import { PageLayout } from '../../components/layout/page-layout.js';
 import { createFormHandler } from '../../components/form/form-handler.js';
-import { validateEmail, validatePassword, validateNickname, setupFormValidation, setupDuplicateCheck } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements, getSubmitButton, setupPlaceholders, setupHelperTexts } from '../../utils/common/element.js';
+import { validateEmail, validatePassword, validateNickname, setupFormValidation, setupDuplicateCheck, createPasswordMatchValidator } from '../../utils/common/validation.js';
+import { getElementValue, initializeElements, getSubmitButton, setupPlaceholders, setupHelperTexts, findHelperText } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
-import { setupProfileImage, validateProfileImage } from '../../utils/common/profile.js';
+import { setupProfileImage, validateProfileImage } from '../../utils/common/image.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { HELPER_TEXT } from '../../utils/constants/helper-text.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
@@ -25,40 +25,29 @@ const elements = initializeElements({
     nickname: 'nickname'
 });
 
-// 회원가입 페이지 버튼 생성 (회원가입/로그인하러 가기 버튼)
+/**
+ * 회원가입 버튼 생성
+ * 폼 제출용 회원가입 버튼만 생성
+ */
 function createSignupButtons() {
     if (!elements.buttonGroup) return;
     
-    Button.createGroup(elements.buttonGroup, [
-        {
-            text: '회원가입',
-            type: 'submit',
-            variant: 'primary',
-            size: 'medium'
-        },
-        {
-            text: '로그인하러 가기',
-            type: 'button',
-            variant: 'secondary',
-            size: 'medium',
-            onClick: () => navigateTo('/login')
-        }
-    ]);
+    Button.create(elements.buttonGroup, {
+        text: '회원가입',
+        type: 'submit',
+        variant: 'primary',
+        size: 'medium'
+    });
 }
 
-// 비밀번호 확인 필드 유효성 검사 함수
-function checkPasswordMatch(value) {
-    const password = getElementValue(elements.password, '');
-    const isValid = value === password && value.length > 0;
-    return {
-        isValid,
-        message: isValid ? '' : VALIDATION_MESSAGE.PASSWORD_MISMATCH
-    };
-}
 
-// 중복 체크 설정
+/**
+ * 중복 체크 설정
+ * 이메일과 닉네임의 중복 여부를 실시간으로 확인
+ * 디바운스를 적용하여 API 호출 최적화
+ */
 function configureDuplicateChecks() {
-    const duplicateChecks = [
+    const configs = [
         {
             input: elements.email,
             checkFunction: checkEmail,
@@ -75,23 +64,18 @@ function configureDuplicateChecks() {
         }
     ];
 
-    duplicateChecks.forEach(({ input, checkFunction, validateFunction, successMessage, errorMessage }) => {
-        const helperText = input?.nextElementSibling;
-        if (input && helperText) {
-            setupDuplicateCheck({
-                input,
-                helperText,
-                checkFunction,
-                validateFunction,
-                successMessage,
-                errorMessage
-            });
+    configs.forEach(config => {
+        const helperText = findHelperText(config.input);
+        if (helperText) {
+            setupDuplicateCheck({ ...config, helperText });
         }
     });
 }
 
-// 비밀번호 변경 시 비밀번호 확인 필드 재검증 설정
-// 비밀번호가 변경되면 비밀번호 확인 필드도 자동으로 재검증하여 일치 여부 확인
+/**
+ * 비밀번호와 비밀번호 확인 필드 동기화
+ * 비밀번호 필드가 변경되면 비밀번호 확인 필드도 자동으로 재검증하여 일치 여부 확인
+ */
 function syncPasswordConfirmation() {
     if (!elements.password || !elements.confirmPassword) return;
     
@@ -103,7 +87,10 @@ function syncPasswordConfirmation() {
     });
 }
 
-// 회원가입 폼 필드 유효성 검사 설정 (이메일/비밀번호/닉네임 실시간 검증, 중복 체크)
+/**
+ * 회원가입 폼 필드 유효성 검사 설정
+ * 이메일, 비밀번호, 비밀번호 확인, 닉네임 필드에 대한 실시간 검증 및 중복 체크 설정
+ */
 function setupSignupFormFields() {
     setupFormValidation('signupForm', [
         {
@@ -125,7 +112,7 @@ function setupSignupFormFields() {
         },
         {
             id: 'confirmPassword',
-            validation: checkPasswordMatch,
+            validation: createPasswordMatchValidator(elements.password),
             options: {
                 successMessage: VALIDATION_MESSAGE.PASSWORD_MATCH,
                 defaultText: HELPER_TEXT.PASSWORD_CONFIRM,
@@ -149,7 +136,10 @@ function setupSignupFormFields() {
     syncPasswordConfirmation();
 }
 
-// 프로필 이미지 업로드 설정 (미리보기, 삭제 버튼 처리)
+/**
+ * 프로필 이미지 업로드 설정
+ * 이미지 선택, 미리보기, 삭제 버튼 처리
+ */
 function setupProfileImageHandler() {
     setupProfileImage({
         imageContainer: elements.profileImage,
@@ -158,7 +148,10 @@ function setupProfileImageHandler() {
     });
 }
     
-// 폼 데이터 유효성 검사 (이메일/비밀번호/닉네임 형식 검증)
+/**
+ * 폼 데이터 유효성 검사
+ * 이메일, 비밀번호, 닉네임 형식 및 비밀번호 일치 여부 검증
+ */
 function validateSignupFormFields() {
     const email = getElementValue(elements.email, '');
     const password = getElementValue(elements.password, '');
@@ -185,7 +178,10 @@ function validateSignupFormFields() {
     return true;
 }
 
-// 이메일 중복 체크 (API 호출)
+/**
+ * 이메일 중복 체크 (API 호출)
+ * 서버에 이메일 사용 가능 여부 확인
+ */
 async function checkEmailAvailability(email) {
     try {
         const response = await checkEmail(email);
@@ -203,7 +199,10 @@ async function checkEmailAvailability(email) {
     }
 }
 
-// 회원가입 폼 데이터 수집
+/**
+ * 회원가입 폼 데이터 수집
+ * 모든 입력 필드의 값을 객체로 반환
+ */
 function getSignupFormData() {
     return {
         email: getElementValue(elements.email, ''),
@@ -214,7 +213,10 @@ function getSignupFormData() {
     };
 }
 
-// 폼 제출 전 유효성 검사
+/**
+ * 폼 제출 전 최종 유효성 검사
+ * 필드 형식 검증, 이메일 중복 체크, 프로필 이미지 검증 수행
+ */
 async function validateForm() {
     if (!validateSignupFormFields()) return false;
     
@@ -225,7 +227,10 @@ async function validateForm() {
     return validateProfileImage(profileImage);
 }
 
-// 폼 제출 핸들러 설정 (유효성 검사, API 호출, 성공 시 로그인 페이지 이동)
+/**
+ * 폼 제출 핸들러 설정
+ * 유효성 검사, API 호출, 성공 시 로그인 페이지로 이동 처리
+ */
 function setupFormSubmission() {
     if (!elements.signupForm) return;
 
@@ -248,12 +253,18 @@ function setupFormSubmission() {
             return { success: true };
         },
         onSuccess: () => {
-            navigateTo('/login');
+            // 회원가입 성공 토스트가 충분히 보이도록 약간의 지연 후 이동
+            setTimeout(() => {
+                navigateTo('/login');
+            }, 1200);
         }
     });
 }
 
-// Placeholder 및 Helper Text 설정
+/**
+ * Placeholder 및 Helper Text 설정
+ * 각 입력 필드의 플레이스홀더와 도움말 텍스트 초기화
+ */
 function setupPlaceholdersAndHelperTexts() {
     const fieldConfigs = [
         { element: elements.email, placeholder: PLACEHOLDER.EMAIL, helperText: HELPER_TEXT.EMAIL },
@@ -267,8 +278,9 @@ function setupPlaceholdersAndHelperTexts() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    PageLayout.init();
+    
     setupPlaceholdersAndHelperTexts();
-    PageLayout.initializePage();
     createSignupButtons();
     setupSignupFormFields();
     setupProfileImageHandler();

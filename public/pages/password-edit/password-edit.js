@@ -2,10 +2,9 @@ import { PageLayout } from '../../components/layout/page-layout.js';
 import { Button } from '../../components/button/button.js';
 import { Toast } from '../../components/toast/toast.js';
 import { createFormHandler } from '../../components/form/form-handler.js';
-import { validatePassword, setupFormValidation } from '../../utils/common/validation.js';
-import { getElementValue, initializeElements } from '../../utils/common/element.js';
+import { validatePassword, setupFormValidation, setupPasswordConfirmationUI } from '../../utils/common/validation.js';
+import { getElementValue, initializeElements, debounce } from '../../utils/common/element.js';
 import { navigateTo } from '../../utils/common/navigation.js';
-import { debounce } from '../../utils/common/debounce-helper.js';
 import { getUserFromStorage } from '../../utils/common/user.js';
 import { updatePassword } from '../../utils/api/users.js';
 import { checkCurrentPassword } from '../../utils/api/auth.js';
@@ -81,22 +80,6 @@ function setupCurrentPasswordValidation() {
     });
 }
 
-// 새 비밀번호 확인 UI 업데이트
-function updateConfirmPasswordUI() {
-    const helper = elements.confirmPassword?.nextElementSibling;
-    if (!helper) return;
-    
-    const confirmValue = elements.confirmPassword.value;
-    if (!confirmValue) {
-        updateHelperText(helper, '', '');
-        return;
-    }
-    
-    const isMatch = elements.newPassword.value === confirmValue;
-    const message = isMatch ? '비밀번호가 일치합니다' : '비밀번호가 일치하지 않습니다';
-    const className = isMatch ? 'success' : 'error';
-    updateHelperText(helper, message, className);
-}
 
 // 폼 필드 설정
 function setupFormFields() {
@@ -115,9 +98,15 @@ function setupFormFields() {
     
     setupCurrentPasswordValidation();
     
-    if (elements.newPassword && elements.confirmPassword) {
-        elements.newPassword.addEventListener('input', updateConfirmPasswordUI);
-        elements.confirmPassword.addEventListener('input', updateConfirmPasswordUI);
+    const helperText = elements.confirmPassword?.nextElementSibling;
+    if (helperText && helperText.classList.contains('helper-text')) {
+        setupPasswordConfirmationUI(
+            elements.newPassword,
+            elements.confirmPassword,
+            helperText,
+            '비밀번호가 일치합니다',
+            '비밀번호가 일치하지 않습니다'
+        );
     }
 }
 
@@ -200,7 +189,7 @@ function setupFormSubmission() {
         submitButtonSelector: elements.buttonGroup?.querySelector('.btn-primary'),
         validate: async () => await validateFormData(),
         onSubmit: handlePasswordUpdate,
-        onSuccess: () => navigateTo('/')
+        onSuccess: () => navigateTo('/post-list')
     });
 }
 
@@ -218,7 +207,7 @@ function createPasswordEditButton() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    PageLayout.initializePage();
+    PageLayout.init();
     createPasswordEditButton();
     setupFormFields();
     setupFormSubmission();

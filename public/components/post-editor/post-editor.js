@@ -1,50 +1,17 @@
 /**
  * 게시글 작성/수정 공통 컴포넌트
- * post-write와 post-edit에서 공통으로 사용되는 로직
  */
-
 import { validateImageFiles, createImagePreviews, updateImageGalleryCount, setupImageUploadEvents } from '../../utils/common/image.js';
 import { IMAGE_CONSTANTS, S3_CONFIG } from '../../utils/constants/image.js';
 import { Toast } from '../toast/toast.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 
-/**
- * 게시글 에디터 클래스
- * 이미지 갤러리, 폼 검증 등 공통 로직 관리
- */
 export class PostEditor {
     constructor(options) {
-        const {
-            postForm,
-            postTitle,
-            postContent,
-            postImages,
-            charCount,
-            imageUploadArea,
-            imageGallery,
-            galleryGrid,
-            galleryCount,
-            submitBtn,
-            helperText,
-            onImageChange,
-            onFormChange,
-            onSubmit
-        } = options;
+        // 콜백 함수와 DOM 요소 분리
+        const { onImageChange, onFormChange, onSubmit, ...elements } = options;
 
-        this.elements = {
-            postForm,
-            postTitle,
-            postContent,
-            postImages,
-            charCount,
-            imageUploadArea,
-            imageGallery,
-            galleryGrid,
-            galleryCount,
-            submitBtn,
-            helperText
-        };
-
+        this.elements = elements;
         this.selectedImages = [];
         this.isSubmitting = false;
         this.onImageChange = onImageChange;
@@ -70,16 +37,14 @@ export class PostEditor {
         if (postContent) {
             postContent.addEventListener('input', () => {
                 this.validateForm();
-                if (this.onFormChange) this.onFormChange();
+                this.onFormChange?.();
             });
         }
 
         if (postForm) {
             postForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                if (this.onSubmit) {
-                    this.onSubmit();
-                }
+                this.onSubmit?.();
             });
         }
 
@@ -90,12 +55,13 @@ export class PostEditor {
         }
     }
 
-    // 필드 유효성 검사 설정 (제목 길이 제한, 문자 카운터 업데이트)
+    // 필드 유효성 검사 설정 (제목 문자 카운터 업데이트 및 폼 유효성 검사)
     setupFieldValidation() {
         const { postTitle, charCount } = this.elements;
         if (!postTitle || !charCount) return;
 
         postTitle.addEventListener('input', () => {
+            // 최대 26자 제한
             if (postTitle.value.length > 26) {
                 postTitle.value = postTitle.value.substring(0, 26);
             }
@@ -111,27 +77,22 @@ export class PostEditor {
 
         const count = postTitle.value.length;
         charCount.textContent = count;
-        if (charCount.parentElement) {
-            charCount.parentElement.classList.toggle('warning', count >= 24);
-        }
+        charCount.parentElement?.classList.toggle('warning', count >= 24);
     }
 
-    // 이미지 파일 처리 (검증, 미리보기 생성, 갤러리 업데이트)
+    // 이미지 파일 처리 (검증 실패 시 종료, 최대 개수 초과 시 종료, 유효한 이미지 파일 처리)
     async handleImageFiles(files) {
         const validation = this.validateImageFiles(files);
         
-        if (!this.isValidationValid(validation)) {
-            return;
-        }
-
-        if (!this.canAddMoreImages(validation.validFiles.length)) {
-            return;
-        }
+        // 검증 실패 시 종료
+        if (!this.isValidationValid(validation)) return;
+        // 최대 개수 초과 시 종료
+        if (!this.canAddMoreImages(validation.validFiles.length)) return;
 
         await this.processValidImageFiles(validation.validFiles);
     }
 
-    // 이미지 파일 검증
+    // 이미지 파일 검증 (최대 크기, 최대 개수 초과 시 종료)
     validateImageFiles(files) {
         return validateImageFiles(
             files,
@@ -140,23 +101,16 @@ export class PostEditor {
         );
     }
 
-    // 검증 결과 확인
+    // 검증 결과 확인 (에러 있으면 종료, 유효한 파일 있으면 종료)
     isValidationValid(validation) {
         if (validation.errors.length > 0) {
-            validation.errors.forEach(error => {
-                Toast.error(error);
-            });
+            validation.errors.forEach(error => Toast.error(error));
             return false;
         }
-
-        if (validation.validFiles.length === 0) {
-            return false;
-        }
-
-        return true;
+        return validation.validFiles.length > 0;
     }
 
-    // 추가 가능한 이미지 개수 확인
+    // 추가 가능한 이미지 개수 확인 (최대 개수 초과 시 종료)
     canAddMoreImages(newFilesCount) {
         if (this.selectedImages.length + newFilesCount > IMAGE_CONSTANTS.MAX_IMAGES) {
             Toast.error(`${TOAST_MESSAGE.IMAGE_MAX_EXCEEDED} (최대 ${IMAGE_CONSTANTS.MAX_IMAGES}개)`);
@@ -165,7 +119,7 @@ export class PostEditor {
         return true;
     }
 
-    // 유효한 이미지 파일 처리
+    // 유효한 이미지 파일 처리 (미리보기 생성, 에러 처리, 갤러리 업데이트, 이미지 변경 알림)
     async processValidImageFiles(validFiles) {
         try {
             const { previews, errors } = await createImagePreviews(validFiles);
@@ -185,11 +139,9 @@ export class PostEditor {
         }
     }
 
-    // 이미지 변경 알림
+    // 이미지 변경 알림 (이미지 변경 시 호출)
     notifyImageChange() {
-        if (this.onImageChange) {
-            this.onImageChange(this.selectedImages);
-        }
+        this.onImageChange?.(this.selectedImages);
     }
 
     // 이미지 갤러리 UI 업데이트 (갤러리 표시/숨김, 미리보기 렌더링)
@@ -200,37 +152,27 @@ export class PostEditor {
         const isEmpty = this.selectedImages.length === 0;
         const isFull = this.selectedImages.length >= IMAGE_CONSTANTS.MAX_IMAGES;
 
-        this.updateGalleryVisibility(imageGallery, imageUploadArea, isEmpty, isFull);
+        // 이미지가 없으면 갤러리 숨김, 최대 개수면 업로드 영역 숨김
+        imageGallery.style.display = isEmpty ? 'none' : 'block';
+        imageUploadArea.style.display = isFull ? 'none' : 'block';
 
         if (isEmpty) return;
 
-        this.updateGalleryCount(galleryCount);
-        this.renderImagePreviews(galleryGrid);
-    }
-
-    // 갤러리 표시/숨김 업데이트
-    updateGalleryVisibility(imageGallery, imageUploadArea, isEmpty, isFull) {
-        imageGallery.style.display = isEmpty ? 'none' : 'block';
-        imageUploadArea.style.display = isFull ? 'none' : 'block';
-    }
-
-    // 갤러리 카운트 업데이트
-    updateGalleryCount(galleryCount) {
         if (galleryCount) {
             updateImageGalleryCount(galleryCount, this.selectedImages);
         }
+        this.renderImagePreviews(galleryGrid);
     }
 
-    // 이미지 미리보기 렌더링
+    // 이미지 미리보기 렌더링 (갤러리 그리드 정리 후 미리보기 추가)
     renderImagePreviews(galleryGrid) {
         galleryGrid.replaceChildren();
-
         this.selectedImages.forEach((imageData, index) => {
             galleryGrid.appendChild(this.createImagePreviewItem(imageData.url, index));
         });
     }
 
-    // 이미지 미리보기 아이템 DOM 생성 (이미지, 순서 번호, 삭제 버튼 포함)
+    // 이미지 미리보기 아이템 생성 (이미지, 순서, 삭제 버튼 추가)
     createImagePreviewItem(imageSrc, index) {
         const item = document.createElement('div');
         item.className = 'image-preview-item';
@@ -248,7 +190,6 @@ export class PostEditor {
         const removeButton = document.createElement('button');
         removeButton.type = 'button';
         removeButton.className = 'remove-image';
-        removeButton.setAttribute('data-index', index);
         removeButton.textContent = '×';
         removeButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -259,8 +200,9 @@ export class PostEditor {
         return item;
     }
 
-    // 선택된 이미지 제거 (배열에서 삭제 후 갤러리 UI 업데이트)
+    // 선택된 이미지 제거 (배열에서 삭제 후 갤러리 UI 업데이트, 이미지 입력 필드 초기화, 이미지 변경 알림)
     removeImage(index) {
+        // 배열에서 해당 인덱스 이미지 제거
         this.selectedImages.splice(index, 1);
         this.updateImageGallery();
         this.resetImageInput();
@@ -269,13 +211,10 @@ export class PostEditor {
 
     // 이미지 입력 필드 초기화
     resetImageInput() {
-        const { postImages } = this.elements;
-        if (postImages) {
-            postImages.value = '';
-        }
+        this.elements.postImages && (this.elements.postImages.value = '');
     }
 
-    // 폼 유효성 검사 (제목/내용 필수, 제출 버튼 활성화 제어)
+    // 폼 유효성 검사 (제목/내용 필수, 제출 버튼 활성화 제어, 폼 유효/불효 상태 설정)
     validateForm() {
         const { postTitle, postContent, submitBtn, helperText } = this.elements;
         if (!postTitle || !postContent || !submitBtn) return false;
@@ -292,7 +231,7 @@ export class PostEditor {
         return true;
     }
 
-    // 폼 유효하지 않음 상태 설정
+    // 폼 유효하지 않음 상태 설정 (제출 버튼 비활성화, 에러 메시지 표시)
     setFormInvalid(submitBtn, helperText) {
         submitBtn.disabled = true;
         if (helperText) {
@@ -302,34 +241,33 @@ export class PostEditor {
         }
     }
 
-    // 폼 유효함 상태 설정
+    // 폼 유효함 상태 설정 (제출 버튼 활성화, 에러 메시지 숨김)
     setFormValid(submitBtn, helperText) {
         submitBtn.disabled = false;
-        if (helperText) {
-            helperText.style.display = 'none';
-        }
+        helperText && (helperText.style.display = 'none');
     }
 
-    // 기존 이미지 로드
-    loadExistingImages(imageObjectKeys, apiServerUri) {
-        if (!imageObjectKeys || imageObjectKeys.length === 0) return;
+    // 기존 이미지 로드 (수정 모드에서 사용, S3 Public URL 조회 후 selectedImages에 추가)
+    async loadExistingImages(imageObjectKeys) {
+        if (!imageObjectKeys?.length) return;
 
+        // 각 objectKey에 대해 S3 Public URL 조회
         const loadPromises = imageObjectKeys.map(async (objectKey) => {
             const url = await S3_CONFIG.getPublicUrl(objectKey);
-            this.selectedImages.push({
+            return {
                 file: null,
                 url,
                 isExisting: true,
                 objectKey
-            });
+            };
         });
 
-        Promise.all(loadPromises).then(() => {
-            this.updateImageGallery();
-        });
+        // 모든 이미지 URL 조회 완료 후 selectedImages에 추가
+        this.selectedImages.push(...await Promise.all(loadPromises));
+        this.updateImageGallery();
     }
 
-    // 폼 데이터 추출 (제목, 내용, 선택된 이미지)
+    // 폼 데이터 추출 (제목, 내용, 이미지 배열)
     getFormData() {
         const { postTitle, postContent } = this.elements;
         return {
@@ -342,17 +280,14 @@ export class PostEditor {
     // 폼 데이터 설정 (수정 모드에서 기존 데이터 로드)
     setFormData(data) {
         const { postTitle, postContent } = this.elements;
-        if (postTitle && data.title) {
-            postTitle.value = data.title;
-        }
-        if (postContent && data.content) {
-            postContent.value = data.content;
-        }
+        if (postTitle && data.title) postTitle.value = data.title;
+        if (postContent && data.content) postContent.value = data.content;
+        // 문자 카운터 및 폼 유효성 검사 업데이트
         this.updateCharCounter();
         this.validateForm();
     }
 
-    // 제출 상태 설정 (중복 제출 방지용)
+    // 제출 상태 설정 (중복 제출 방지)
     setSubmitting(isSubmitting) {
         this.isSubmitting = isSubmitting;
     }
@@ -367,5 +302,3 @@ export class PostEditor {
         return this.selectedImages;
     }
 }
-
-
