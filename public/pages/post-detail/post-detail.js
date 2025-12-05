@@ -2,8 +2,7 @@ import { Button } from '../../components/button/button.js';
 import { Modal } from '../../components/modal/modal.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Toast } from '../../components/toast/toast.js';
-import { formatNumber, formatDate } from '../../utils/common/format.js';
-import { initializeElements, getElementValue, setElementValue } from '../../utils/common/element.js';
+import { formatNumber, formatDate, debounce, initializeElements, getElementValue, setElementValue } from '../../utils/common/element.js';
 import { navigateTo, getUrlParam } from '../../utils/common/navigation.js';
 import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
 import { S3_CONFIG } from '../../utils/constants/image.js';
@@ -11,12 +10,10 @@ import { getCurrentUserInfo } from '../../utils/common/user.js';
 import { getPostById, deletePost as deletePostApi } from '../../utils/api/posts.js';
 import { addPostLike, removePostLike } from '../../utils/api/post-like.js';
 import { getComments, createComment, updateComment, deleteComment as deleteCommentApi } from '../../utils/api/comments.js';
-import { API_SERVER_URI } from '../../utils/constants/api.js';
 import { PLACEHOLDER } from '../../utils/constants/placeholders.js';
 import { TOAST_MESSAGE } from '../../utils/constants/toast.js';
 import { MODAL_MESSAGE } from '../../utils/constants/modal.js';
 import { VALIDATION_MESSAGE } from '../../utils/constants/validation.js';
-import { debounce } from '../../utils/common/debounce-helper.js';
 
 let isLiked = false;
 let isLikePending = false;
@@ -97,10 +94,10 @@ const initElements = () => {
     });
 };
 
-// 게시글 이미지 렌더링
-// 이미지가 1개면 단일 이미지로, 2개 이상이면 갤러리 형태로 표시
+// 게시글 이미지 렌더링 (이미지가 1개면 단일 이미지로, 2개 이상이면 갤러리 형태로 표시)
 const renderPostImages = (imageKeys) => {
     if (!elements.postImage || !imageKeys?.length) {
+        // 이미지가 없으면 영역 숨김
         if (elements.postImage) {
             elements.postImage.replaceChildren();
             elements.postImage.style.display = 'none';
@@ -121,10 +118,13 @@ const renderPostImages = (imageKeys) => {
     
     imageKeys.forEach(imageKey => {
         if (isSingleImage) {
+            // 단일 이미지: img 태그 직접 생성
             const imageItem = document.createElement('img');
             imageItem.className = 'post-image-item';
+            // 이미지 로드 실패 시 제거
             imageItem.onerror = () => imageItem.remove();
             
+            // S3에서 Public URL 조회 후 src 설정
             S3_CONFIG.getPublicUrl(imageKey).then(url => {
                 if (url) imageItem.src = url;
             });
@@ -137,8 +137,10 @@ const renderPostImages = (imageKeys) => {
             
             const image = document.createElement('img');
             image.className = 'post-image-item';
+            // 이미지 로드 실패 시 제거
             image.onerror = () => imageItem.remove();
             
+            // S3에서 Public URL 조회 후 src 설정
             S3_CONFIG.getPublicUrl(imageKey).then(url => {
                 if (url) image.src = url;
             });
@@ -148,6 +150,7 @@ const renderPostImages = (imageKeys) => {
         }
     });
     
+    // 갤러리인 경우 컨테이너를 postImage에 추가
     if (!isSingleImage) {
         elements.postImage.appendChild(container);
     }
@@ -211,7 +214,7 @@ const removeComment = (commentList, targetId) => {
     return false;
 };
 
-// 댓글 데이터 변환 (API 응답 형식을 통일된 형식으로 변환)
+// 댓글 데이터 변환 (API 응답을 통일된 형식으로 변환)
 const transformComment = (commentData) => {
     // parentId 정규화: 0은 null로 변환 
     const parentId = commentData.parentId || commentData.parent_id;
@@ -265,7 +268,7 @@ const sortComments = (commentList) => {
 };
 
 // 댓글 데이터 처리 및 렌더링
-// API 응답 데이터를 변환 -> 계층 구조 구성 -> 정렬 -> 렌더링 순서로 처리
+// API 응답 데이터를 변환, 계층 구조 구성, 정렬, 렌더링 순서로 처리
 const processComments = (commentsData) => {
     const allComments = commentsData.map(transformComment);
     const rootComments = buildCommentHierarchy(allComments);
@@ -312,27 +315,30 @@ const toggleLike = async () => {
         return;
     }
 
-    // 낙관적 업데이트: 서버 응답 전에 UI 업데이트
+    // 낙관적 업데이트: 서버 응답 전에 UI 업데이트 (빠른 사용자 피드백)
     const previousLiked = isLiked;
     const nextLiked = !previousLiked;
     const nextLikeCount = nextLiked ? likeCountValue + 1 : Math.max(0, likeCountValue - 1);
 
     updateLikeUI(nextLiked);
     updateLikeCount(nextLikeCount);
-    // 클릭 피드백 애니메이션
+    // 클릭 피드백 애니메이션 (시각적 피드백)
     elements.likeBtn.style.transform = 'scale(1.1)';
     setTimeout(() => { elements.likeBtn.style.transform = 'scale(1)'; }, 200);
 
     try {
         isLikePending = true;
+        // 좋아요 추가 또는 제거 API 호출
         const response = nextLiked
             ? await addPostLike(currentPostId, currentUserId)
             : await removePostLike(currentPostId, currentUserId);
         
+        // 서버 응답으로 UI 업데이트 (낙관적 업데이트 보정)
         const responseData = response.data;
         if (responseData?.likeCount !== undefined) updateLikeCount(responseData.likeCount);
         if (typeof responseData?.isLiked === 'boolean') updateLikeUI(responseData.isLiked);
     } catch (error) {
+        // 에러 발생 시 이전 상태로 롤백
         updateLikeUI(previousLiked);
         updateLikeCount(likeCountValue);
         Toast.error(error.message || TOAST_MESSAGE.LIKE_FAILED);
@@ -471,7 +477,6 @@ function getCommentInput(parentId) {
 }
 
 // 댓글 객체 생성 (API 응답 데이터를 댓글 객체로 변환)
-// 새로 등록한 댓글이므로 현재 사용자의 프로필 이미지 키를 우선 사용
 function mapCommentData(responseData, parentId) {
     const { profileImageKey } = getCurrentUserInfo();
     const authorImageKey = profileImageKey || extractProfileImageKey(responseData.author) || null;
@@ -746,10 +751,13 @@ const initPostData = async () => {
             return;
         }
 
-        currentPost = post; // 게시글 데이터 저장 (프로필 업데이트용)
+        // 게시글 데이터 저장 (프로필 업데이트용)
+        currentPost = post;
         displayPostData(post);
+        // 작성자만 수정/삭제 버튼 표시
         createActionButtons(post.author?.id || post.author?.userId || null);
         
+        // 댓글 로드 (게시글 응답에 포함되어 있으면 사용, 없으면 별도 조회)
         await loadComments(postId, post.comments);
     } catch (error) {
         Toast.error(error.message || TOAST_MESSAGE.POST_LOAD_FAILED);
@@ -794,7 +802,7 @@ const updateCurrentUserProfileImages = () => {
 
 // 페이지 초기화
 const initPage = async () => {
-    PageLayout.initializePage();
+    PageLayout.init();
     initElements();
     await initPostData();
     
