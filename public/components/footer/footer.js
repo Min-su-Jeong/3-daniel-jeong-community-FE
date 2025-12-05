@@ -2,6 +2,8 @@
  * Footer 컴포넌트
  */
 
+import { API_SERVER_URI } from '../../utils/constants/api.js';
+
 class AppFooter extends HTMLElement {
     constructor() {
         super();
@@ -173,8 +175,8 @@ class AppFooter extends HTMLElement {
         heading.textContent = '정책';
         
         const links = [
-            { href: '/policy/terms', text: '커뮤니티 이용약관' },
-            { href: '/policy/privacy', text: '개인정보처리방침' }
+            { href: `${API_SERVER_URI}/policy/terms`, text: '커뮤니티 이용약관' },
+            { href: `${API_SERVER_URI}/policy/privacy`, text: '개인정보처리방침' }
         ];
         
         column.appendChild(heading);

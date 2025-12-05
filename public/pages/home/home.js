@@ -2,13 +2,16 @@ import { navigateTo } from '../../utils/common/navigation.js';
 import { debounce } from '../../utils/common/element.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { S3_CONFIG } from '../../utils/constants/image.js';
+import { API_SERVER_URI } from '../../utils/constants/api.js';
 
 // 스크롤 애니메이션 초기화
 function initScrollAnimations() {
     const sections = document.querySelectorAll('.quote-section, .features-section, .brands-section, .cta-section');
     const cards = document.querySelectorAll('.feature-card, .brand-card');
     
-    const sectionObserver = new IntersectionObserver((entries) => {
+    if (sections.length === 0 && cards.length === 0) return;
+    
+    const createObserver = (rootMargin) => new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
@@ -16,19 +19,11 @@ function initScrollAnimations() {
         });
     }, { 
         threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
+        rootMargin
     });
     
-    const cardObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, { 
-        threshold: 0.1,
-        rootMargin: '0px 0px -30px 0px'
-    });
+    const sectionObserver = createObserver('0px 0px -50px 0px');
+    const cardObserver = createObserver('0px 0px -30px 0px');
     
     sections.forEach(section => sectionObserver.observe(section));
     cards.forEach(card => cardObserver.observe(card));
@@ -46,30 +41,27 @@ function initHeroScroll() {
         });
     }
     
-    const handleScroll = debounce(() => {
-        if (heroScroll) {
+    if (heroScroll) {
+        const handleScroll = debounce(() => {
             heroScroll.style.opacity = window.scrollY > 100 ? '0' : '1';
             heroScroll.style.pointerEvents = window.scrollY > 100 ? 'none' : 'auto';
-        }
-    }, 50);
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
+        }, 50);
+        
+        window.addEventListener('scroll', handleScroll, { passive: true });
+    }
 }
 
 // 버튼 이벤트 초기화
 function initButtons() {
     const exploreBtn = document.getElementById('exploreBtn');
     const aboutBtn = document.getElementById('aboutBtn');
-    const quoteSection = document.getElementById('quoteSection');
-    
+
     if (exploreBtn) {
         exploreBtn.addEventListener('click', () => navigateTo('/post-list'));
     }
     
     if (aboutBtn) {
-        aboutBtn.addEventListener('click', () => {
-            navigateTo('/signup');
-        });
+        aboutBtn.addEventListener('click', () => navigateTo('/signup'));
     }
 }
 
@@ -91,6 +83,15 @@ function initVideoErrorHandling() {
     }
 }
 
+// 정책 링크 초기화
+function initPolicyLinks() {
+    const policyLinks = document.querySelectorAll('a[data-policy-link]');
+    policyLinks.forEach(link => {
+        const policyType = link.getAttribute('data-policy-link');
+        link.href = `${API_SERVER_URI}/policy/${policyType}`;
+    });
+}
+
 // 페이지 초기화
 function init() {
     PageLayout.init();
@@ -99,6 +100,7 @@ function init() {
     initHeroScroll();
     initButtons();
     initVideoErrorHandling();
+    initPolicyLinks();
 }
 
 document.addEventListener('DOMContentLoaded', init);
