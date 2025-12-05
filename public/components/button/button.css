@@ -9,16 +9,16 @@
     border-radius: var(--border-radius-md);
     font-size: var(--font-size-lg);
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    letter-spacing: -0.3px;
     text-decoration: none;
+    cursor: pointer;
     outline: none;
     position: relative;
     overflow: hidden;
     z-index: var(--z-button);
-    letter-spacing: -0.3px;
     box-shadow: var(--shadow-xs);
-    font-family: inherit;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn:disabled,
@@ -51,35 +51,32 @@
     border-radius: 14px;
 }
 
-/* 버튼 Variant */
-.btn.btn-primary {
+/* 버튼 변형 */
+.btn-primary {
     background: var(--primary-color);
     color: var(--white);
-    border: none;
     box-shadow: var(--shadow-md);
 }
 
-.btn.btn-primary:disabled,
-.btn.btn-primary.disabled {
+.btn-primary:disabled,
+.btn-primary.disabled {
     background: var(--disabled-bg);
-    color: var(--white);
     box-shadow: none;
     opacity: 0.6;
 }
 
-.btn.btn-primary:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled) {
     background: var(--primary-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow-lg);
 }
 
-.btn.btn-primary:active:not(:disabled) {
+.btn-primary:active:not(:disabled) {
     transform: translateY(0);
     box-shadow: var(--shadow-xs);
 }
 
-.btn.btn-primary:focus {
-    outline: none;
+.btn-primary:focus {
     box-shadow: var(--primary-focus-shadow);
 }
 
@@ -91,7 +88,6 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: var(--white);
     color: var(--primary-color);
     border-color: var(--primary-color);
     transform: translateY(-1px);
@@ -103,39 +99,35 @@
     box-shadow: var(--shadow-xs);
 }
 
-/* 위험 버튼 (삭제 등) */
-.btn.btn-danger {
+.btn-danger {
     background: var(--red);
     color: var(--white);
-    border: none;
     box-shadow: var(--error-shadow-sm);
 }
 
-.btn.btn-danger:disabled,
-.btn.btn-danger.disabled {
+.btn-danger:disabled,
+.btn-danger.disabled {
     background: var(--disabled-bg);
-    color: var(--white);
     box-shadow: none;
     opacity: 0.6;
 }
 
-.btn.btn-danger:hover:not(:disabled) {
+.btn-danger:hover:not(:disabled) {
     background: var(--red-hover);
     transform: translateY(-1px);
     box-shadow: var(--error-shadow-md);
 }
 
-.btn.btn-danger:active:not(:disabled) {
+.btn-danger:active:not(:disabled) {
     transform: translateY(0);
     box-shadow: var(--shadow-xs);
 }
 
-.btn.btn-danger:focus {
-    outline: none;
+.btn-danger:focus {
     box-shadow: var(--error-focus-shadow);
 }
 
-/* 버튼 내부 요소 */
+/* 버튼 요소 */
 .btn-icon {
     display: flex;
     align-items: center;
@@ -151,30 +143,28 @@
     width: var(--icon-size-md);
     height: var(--icon-size-md);
     border: 2px solid transparent;
-    border-top: 2px solid currentColor;
+    border-top-color: currentColor;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin-left: var(--spacing-sm);
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* 버튼 클릭 효과 */
 .btn::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
+    inset: 50% auto auto 50%;
     width: 0;
     height: 0;
     border-radius: 50%;
     background: var(--button-click-bg);
     transform: translate(-50%, -50%);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn:active::before {
@@ -198,18 +188,18 @@
 /* 이미지 삭제 버튼 */
 .btn-remove-image {
     padding: var(--spacing-xs) var(--spacing-md);
+    min-height: 32px;
     background: transparent;
     color: var(--red);
     border: 1px solid var(--red);
     border-radius: var(--border-radius-md);
     font-size: var(--font-size-sm);
     font-weight: 600;
+    font-family: inherit;
     cursor: pointer;
     visibility: hidden;
     opacity: 0;
-    transition: opacity var(--transition-normal), visibility var(--transition-normal);
-    font-family: inherit;
-    min-height: 32px;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal), transform var(--transition-fast);
 }
 
 .btn-remove-image.visible {
@@ -226,19 +216,6 @@
 
 .btn-remove-image:active {
     transform: translateY(0);
-}
-
-/* 다크모드 스타일 */
-.dark .btn-secondary {
-    background: var(--container-bg);
-    color: var(--text-dark);
-    border-color: var(--card-border);
-}
-
-.dark .btn-secondary:hover:not(:disabled) {
-    background: var(--background-secondary);
-    color: var(--primary-color);
-    border-color: var(--primary-color);
 }
 
 /* 반응형 */
@@ -261,7 +238,6 @@
     
     .button-group {
         flex-direction: column;
-        gap: var(--spacing-md);
     }
     
     .button-group .btn {

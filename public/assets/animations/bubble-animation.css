@@ -1,86 +1,42 @@
-/* 말풍선 컨테이너 */
-.bubbles-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: var(--z-background);
-}
+/* 
+ * Bubble Animation Styles
+ * 떠오르는 물방울 애니메이션 스타일
+ */
 
-/* 개별 말풍선 */
-.bubble {
-    position: absolute;
-    background: white;
-    border-radius: 30px;
-    padding: 12px 24px;
-    box-shadow: var(--shadow-bubble);
-    font-size: 1.1rem;
-    font-weight: 500;
-    white-space: nowrap;
-    max-width: 280px;
-    text-align: center;
-    transform: scale(1.6);
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-    transform-style: preserve-3d;
-    transition: transform 0.8s ease-in-out;
-}
-
-/* 말풍선 꼬리 */
-.bubble::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 20px;
-    width: 0;
-    height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 12px solid white;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-/* 말풍선 애니메이션 */
-@keyframes bubbleFloat {
+@keyframes bubble-rise {
     0% {
+        transform: translateY(100%) scale(0);
         opacity: 0;
-        bottom: -100px;
-        transform: translateX(0px) scale(1.4);
     }
     10% {
-        opacity: 0.9;
-        transform: translateX(0px) scale(1.4);
+        opacity: 0.6;
     }
-    15% {
-        transform: translateX(10px) scale(1.4);
-    }
-    30% {
-        transform: translateX(-8px) scale(1.4);
-    }
-    45% {
-        transform: translateX(6px) scale(1.4);
-    }
-    55% {
-        opacity: 0.9;
-        transform: translateX(0px) scale(1.4);
+    90% {
+        opacity: 0.4;
     }
     100% {
+        transform: translateY(-100vh) scale(1);
         opacity: 0;
-        bottom: 120vh;
-        transform: translateX(0px) scale(1.4);
     }
 }
 
-/* 다크모드 스타일 */
-.dark .bubble {
-    background: var(--container-bg);
-    color: var(--text-dark);
-    box-shadow: var(--shadow-bubble);
+/* Bubble Container */
+.bubbles {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: var(--z-bubble);
 }
 
-.dark .bubble::after {
-    border-top-color: var(--container-bg);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+.bubble {
+    position: absolute;
+    bottom: -50px;
+    background: radial-gradient(circle at 30% 30%, 
+        rgba(255, 255, 255, 0.3) 0%, 
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    animation: bubble-rise linear infinite;
 }

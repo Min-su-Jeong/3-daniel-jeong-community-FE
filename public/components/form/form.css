@@ -14,7 +14,7 @@
     display: block;
     font-size: 15px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--theme-text-dark);
     margin-bottom: var(--spacing-sm);
     letter-spacing: -0.3px;
 }
@@ -30,16 +30,18 @@
 .form-textarea {
     width: 100%;
     padding: 14px var(--spacing-lg);
-    border: 2px solid var(--border-light);
+    border: 2px solid var(--theme-input-border);
     border-radius: var(--border-radius-lg);
     font-size: 16px;
-    background: var(--input-bg);
-    backdrop-filter: blur(10px);
+    background: var(--theme-input-bg);
+    backdrop-filter: blur(var(--lg-blur-md));
+    -webkit-backdrop-filter: blur(var(--lg-blur-md));
     transition: var(--transition-normal);
     outline: none;
     font-weight: 500;
     letter-spacing: -0.2px;
     font-family: inherit;
+    color: var(--theme-text-dark);
 }
 
 .form-textarea {
@@ -48,17 +50,17 @@
     line-height: 1.6;
 }
 
+/* 입력 필드 상태별 스타일 */
 .form-input:focus,
 .form-textarea:focus {
-    border-color: var(--primary-color);
-    background: var(--input-bg-focus);
-    box-shadow: var(--input-focus-shadow-lg);
-    transform: translateY(-1px);
+    border-color: var(--theme-input-focus-border);
+    background: var(--theme-card-hover-bg);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
 .form-input::placeholder,
 .form-textarea::placeholder {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.6);
     font-weight: 400;
 }
 
@@ -66,7 +68,26 @@
 .form-textarea:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: var(--input-bg);
+    background: var(--theme-input-bg);
+}
+
+/* 입력 필드 상태별 스타일 (success, error, warning) */
+.form-input.success,
+.form-textarea.success {
+    border-color: var(--green);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.form-input.error,
+.form-textarea.error {
+    border-color: var(--red);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.form-input.warning,
+.form-textarea.warning {
+    border-color: var(--warning);
+    background: rgba(245, 158, 11, 0.1);
 }
 
 /* 브라우저 자동완성 스타일 오버라이드 */
@@ -74,24 +95,22 @@
 .form-input:-webkit-autofill:hover,
 .form-input:-webkit-autofill:focus,
 .form-input:-webkit-autofill:active {
-    -webkit-box-shadow: var(--input-autofill-shadow);
-    -webkit-text-fill-color: var(--text-primary);
-    caret-color: var(--text-primary);
-    background-color: var(--input-bg);
+    -webkit-box-shadow: 0 0 0 30px var(--theme-input-bg) inset !important;
+    -webkit-text-fill-color: var(--theme-text-dark) !important;
+    caret-color: var(--theme-text-dark);
     transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
 }
 
 .form-input:focus:-webkit-autofill,
 .form-input:focus:-webkit-autofill:hover,
 .form-input:focus:-webkit-autofill:active {
-    -webkit-box-shadow: var(--input-autofill-shadow-focus);
-    background-color: var(--input-bg-focus);
+    -webkit-box-shadow: 0 0 0 30px var(--theme-card-hover-bg) inset !important;
 }
 
 /* Helper Text */
 .helper-text {
     font-size: 13px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.75);
     margin-top: var(--spacing-sm);
     margin-left: var(--spacing-xs);
     font-weight: 500;
@@ -123,25 +142,6 @@
     font-weight: 600;
 }
 
-/* 입력 필드 상태별 스타일 */
-.form-input.success,
-.form-textarea.success {
-    border-color: var(--green);
-    background: var(--success-bg-light);
-}
-
-.form-input.error,
-.form-textarea.error {
-    border-color: var(--red);
-    background: var(--error-bg-light);
-}
-
-.form-input.warning,
-.form-textarea.warning {
-    border-color: var(--warning);
-    background: var(--warning-bg-light);
-}
-
 /* Helper Text 아이콘 */
 .helper-text::before {
     content: '';
@@ -169,19 +169,19 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23f59e0b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'/%3E%3C/svg%3E");
 }
 
-/* 기본 상태에서는 아이콘 숨김 */
 .helper-text:not(.success):not(.error):not(.warning)::before {
     display: none;
 }
 
 /* Form 컨테이너 */
 .form-container {
-    background: var(--container-bg);
-    backdrop-filter: blur(20px);
+    background: var(--theme-card-bg);
+    backdrop-filter: blur(var(--lg-blur-lg));
+    -webkit-backdrop-filter: blur(var(--lg-blur-lg));
     border-radius: var(--border-radius-xl);
     padding: var(--spacing-5xl) var(--spacing-4xl);
-    box-shadow: var(--container-shadow);
-    border: 1px solid var(--container-border);
+    box-shadow: var(--theme-shadow);
+    border: 1px solid var(--theme-border);
     position: relative;
     overflow: hidden;
 }
@@ -193,64 +193,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--container-divider), transparent);
-}
-
-/* 다크모드 스타일 */
-.dark .form-input,
-.dark .form-textarea {
-    background: var(--input-bg);
-    border-color: var(--border-light);
-    color: var(--text-dark);
-}
-
-.dark .form-input:focus,
-.dark .form-textarea:focus {
-    background: var(--input-bg-focus);
-    border-color: var(--primary-color);
-    box-shadow: var(--input-focus-shadow-lg);
-}
-
-.dark .form-input::placeholder,
-.dark .form-textarea::placeholder {
-    color: var(--text-muted-gray);
-}
-
-.dark .form-input.success,
-.dark .form-textarea.success {
-    background: var(--success-bg-light);
-    border-color: var(--green);
-}
-
-.dark .form-input.error,
-.dark .form-textarea.error {
-    background: var(--error-bg-light);
-    border-color: var(--red);
-}
-
-.dark .form-input.warning,
-.dark .form-textarea.warning {
-    background: var(--warning-bg-light);
-    border-color: var(--warning);
-}
-
-/* 다크모드 자동완성 스타일 오버라이드 */
-.dark .form-input:-webkit-autofill,
-.dark .form-input:-webkit-autofill:hover,
-.dark .form-input:-webkit-autofill:focus,
-.dark .form-input:-webkit-autofill:active {
-    -webkit-box-shadow: var(--input-autofill-shadow);
-    -webkit-text-fill-color: var(--text-dark);
-    caret-color: var(--text-dark);
-    background-color: var(--input-bg);
-    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
-}
-
-.dark .form-input:focus:-webkit-autofill,
-.dark .form-input:focus:-webkit-autofill:hover,
-.dark .form-input:focus:-webkit-autofill:active {
-    -webkit-box-shadow: var(--input-autofill-shadow-focus);
-    background-color: var(--input-bg-focus);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
 }
 
 /* 반응형 */
@@ -270,4 +213,3 @@
         padding: var(--spacing-2xl) var(--spacing-xl);
     }
 }
-
