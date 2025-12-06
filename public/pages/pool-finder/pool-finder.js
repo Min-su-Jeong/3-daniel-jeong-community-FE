@@ -18,7 +18,7 @@ class PoolFinder {
         
         // 환경 변수에서 Kakao Map API 키 가져오기
         try {
-            const response = await fetch('/api/config');
+            const response = await fetch('/config');
             const config = await response.json();
             const apiKey = config.KAKAO_MAP_JAVASCRIPT_KEY;
             

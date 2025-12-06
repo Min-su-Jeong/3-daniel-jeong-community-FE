@@ -16,8 +16,13 @@ const port = process.env.PORT;
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// 헬스체크 엔드포인트
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // 환경 변수 API 엔드포인트
-app.get('/api/config', (req, res) => {
+app.get('/config', (req, res) => {
   res.json({
     KAKAO_MAP_JAVASCRIPT_KEY: process.env.KAKAO_MAP_JAVASCRIPT_KEY || ''
   });
