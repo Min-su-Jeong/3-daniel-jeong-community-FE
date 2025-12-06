@@ -58,7 +58,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Get GitHub Actions IP Address
         id: get_ip
@@ -168,6 +168,10 @@ jobs:
               echo "Docker network community-network already exists"
             fi
           REMOTE_EOF
+
+      - name: Docker Hub Login on EC2
+        run: |
+          echo "${{ secrets.DOCKER_TOKEN }}" | ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin"
 
       - name: Deploy to EC2 via Docker Compose
         run: |
