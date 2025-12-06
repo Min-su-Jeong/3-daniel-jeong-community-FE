@@ -53,6 +53,34 @@ jobs:
     if: github.ref == 'refs/heads/develop'
 
     steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Get GitHub Actions IP Address
+        id: get_ip
+        run: |
+          RUNNER_IP=$(curl -s https://api64.ipify.org)
+          echo "runner_ip=$RUNNER_IP" >> $GITHUB_OUTPUT
+          echo "GitHub Actions Runner IP: $RUNNER_IP"
+
+      - name: Add GitHub Actions IP to EC2 Security Group
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ secrets.SECURITY_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.get_ip.outputs.runner_ip }}/32 \
+            --description "GitHub Actions temporary access - $(date +%Y%m%d-%H%M%S)" || echo "Rule might already exist, continuing..."
+
+      - name: Wait for Security Group Rule to Propagate
+        run: |
+          echo "Waiting 5 seconds for security group rule to propagate..."
+          sleep 5
+
       - name: Prepare SSH Key
         run: |
           mkdir -p ~/.ssh
@@ -125,3 +153,13 @@ jobs:
             sudo docker compose pull frontend
             sudo docker compose up -d frontend
           REMOTE_EOF
+
+      - name: Remove GitHub Actions IP from EC2 Security Group
+        if: always()
+        run: |
+          echo "Removing GitHub Actions IP (${{ steps.get_ip.outputs.runner_ip }}) from Security Group..."
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ secrets.SECURITY_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.get_ip.outputs.runner_ip }}/32 || echo "Rule might not exist or already removed, continuing..."
