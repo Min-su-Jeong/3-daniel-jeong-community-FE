@@ -63,49 +63,29 @@ jobs:
       - name: Get GitHub Actions IP Address
         id: get_ip
         run: |
-          RUNNER_IP=$(curl -s https://api64.ipify.org)
+          set +x
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          echo "::add-mask::$RUNNER_IP"
+          echo "::add-mask::${{ secrets.SECURITY_GROUP_ID }}"
           echo "runner_ip=$RUNNER_IP" >> $GITHUB_OUTPUT
-          echo "GitHub Actions Runner IP: $RUNNER_IP"
 
       - name: Add GitHub Actions IP to EC2 Security Group
         run: |
-          echo "Adding IP ${{ steps.get_ip.outputs.runner_ip }}/32 to Security Group ${{ secrets.SECURITY_GROUP_ID }}"
-          OUTPUT=$(aws ec2 authorize-security-group-ingress \
+          set +x
+          aws ec2 authorize-security-group-ingress \
             --group-id ${{ secrets.SECURITY_GROUP_ID }} \
-            --protocol tcp \
-            --port 22 \
-            --cidr ${{ steps.get_ip.outputs.runner_ip }}/32 2>&1) || {
-            EXIT_CODE=$?
-            if echo "$OUTPUT" | grep -q "InvalidPermission.Duplicate\|already exists"; then
-              echo "Rule already exists, continuing..."
-            else
-              echo "Failed to add Security Group rule: $OUTPUT"
-              exit $EXIT_CODE
-            fi
-          }
-          echo "$OUTPUT"
+            --ip-permissions "IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[{CidrIp=${{ steps.get_ip.outputs.runner_ip }}/32,Description='GitHub Actions'}]" \
+            || echo "Rule might already exist, continuing..."
 
-      - name: Verify Security Group Rule Added
-        run: |
-          echo "Verifying Security Group rule was added..."
-          RULE_EXISTS=$(aws ec2 describe-security-groups \
-            --group-ids ${{ secrets.SECURITY_GROUP_ID }} \
-            --query "SecurityGroups[0].IpPermissions[?FromPort==\`22\` && ToPort==\`22\` && IpProtocol==\`tcp\`].IpRanges[?CidrIp==\`${{ steps.get_ip.outputs.runner_ip }}/32\`].CidrIp" \
-            --output text)
-          
-          if [ -z "$RULE_EXISTS" ] || [ "$RULE_EXISTS" = "None" ] || [ "$RULE_EXISTS" = "" ]; then
-            echo "Warning: Security Group rule not found in query, but this may be due to propagation delay. Continuing..."
-          else
-            echo "Security Group rule verified: $RULE_EXISTS"
-          fi
-          
       - name: Wait for Security Group Rule to Propagate
-        run: |
-          echo "Waiting 10 seconds for security group rule to propagate..."
-          sleep 10
+        run: sleep 5
 
       - name: Prepare SSH Key
         run: |
+          set +x
+          echo "::add-mask::${{ secrets.SSH_PRIVATE_KEY }}"
+          echo "::add-mask::${{ secrets.SERVER_HOST }}"
+          echo "::add-mask::${{ secrets.SERVER_USER }}"
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
@@ -113,23 +93,27 @@ jobs:
 
       - name: Test SSH Connection
         run: |
+          set +x
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'echo "SSH connection successful"' || (echo "SSH connection failed" && exit 1)
 
       - name: Check if Docker is installed
         id: check-docker
         run: |
+          set +x
           DOCKER_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v docker >/dev/null && echo "true" || echo "false"')
           echo "docker_exists=$DOCKER_EXISTS" >> $GITHUB_OUTPUT
 
       - name: Check if Node.js is installed
         id: check-nodejs
         run: |
+          set +x
           NODE_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v node >/dev/null && echo "true" || echo "false"')
           echo "node_exists=$NODE_EXISTS" >> $GITHUB_OUTPUT
 
       - name: Install Docker on EC2
         if: steps.check-docker.outputs.docker_exists == 'false'
         run: |
+          set +x
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
             sudo apt-get update
             sudo apt-get install -y \
@@ -153,6 +137,7 @@ jobs:
       - name: Install Node.js on EC2
         if: steps.check-nodejs.outputs.node_exists == 'false'
         run: |
+          set +x
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
             sudo apt-get install -y nodejs
@@ -160,6 +145,7 @@ jobs:
 
       - name: Check if Docker Network Exists
         run: |
+          set +x
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
             if ! sudo docker network inspect community-network >/dev/null 2>&1; then
               sudo docker network create community-network
@@ -171,11 +157,16 @@ jobs:
 
       - name: Docker Hub Login on EC2
         run: |
+          set +x
+          echo "::add-mask::${{ secrets.DOCKER_TOKEN }}"
+          echo "::add-mask::${{ secrets.DOCKER_USERNAME }}"
           echo "${{ secrets.DOCKER_TOKEN }}" | ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin"
 
       - name: Deploy to EC2 via Docker Compose
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
+          set +x
+          echo "::add-mask::${{ secrets.DOCKER_USERNAME }}"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << REMOTE_EOF
             cd /home/ubuntu/prod
             sudo docker compose pull frontend
             sudo docker compose up -d frontend
@@ -184,9 +175,10 @@ jobs:
       - name: Remove GitHub Actions IP from EC2 Security Group
         if: always()
         run: |
-          echo "Removing GitHub Actions IP (${{ steps.get_ip.outputs.runner_ip }}) from Security Group..."
+          set +x
           aws ec2 revoke-security-group-ingress \
             --group-id ${{ secrets.SECURITY_GROUP_ID }} \
             --protocol tcp \
             --port 22 \
-            --cidr ${{ steps.get_ip.outputs.runner_ip }}/32 || echo "Rule might not exist or already removed, continuing..."
+            --cidr ${{ steps.get_ip.outputs.runner_ip }}/32 \
+            || echo "Rule might not exist or already removed, continuing..."
