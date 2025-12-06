@@ -7,7 +7,7 @@ services:
       PORT: ${FRONTEND_PORT}
       KAKAO_MAP_JAVASCRIPT_KEY: ${KAKAO_MAP_JAVASCRIPT_KEY}
     volumes:
-      - ./logs:/app/logs
+      - frontend_logs:/app/logs
     networks:
       - community-network
 
@@ -15,3 +15,6 @@ networks:
   community-network:
     name: community-network
     external: true
+
+volumes:
+  frontend_logs:
