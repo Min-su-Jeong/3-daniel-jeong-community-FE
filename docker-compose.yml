@@ -3,6 +3,8 @@ services:
     image: ${ECR_FRONTEND_IMAGE}
     container_name: community-frontend
     restart: unless-stopped
+    ports:
+      - "3000:3000"
     environment:
       PORT: ${FRONTEND_PORT}
       KAKAO_MAP_JAVASCRIPT_KEY: ${KAKAO_MAP_JAVASCRIPT_KEY}
