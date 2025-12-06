@@ -69,17 +69,40 @@ jobs:
 
       - name: Add GitHub Actions IP to EC2 Security Group
         run: |
-          aws ec2 authorize-security-group-ingress \
+          echo "Adding IP ${{ steps.get_ip.outputs.runner_ip }}/32 to Security Group ${{ secrets.SECURITY_GROUP_ID }}"
+          OUTPUT=$(aws ec2 authorize-security-group-ingress \
             --group-id ${{ secrets.SECURITY_GROUP_ID }} \
             --protocol tcp \
             --port 22 \
-            --cidr ${{ steps.get_ip.outputs.runner_ip }}/32 \
-            --description "GitHub Actions temporary access - $(date +%Y%m%d-%H%M%S)" || echo "Rule might already exist, continuing..."
+            --cidr ${{ steps.get_ip.outputs.runner_ip }}/32 2>&1) || {
+            EXIT_CODE=$?
+            if echo "$OUTPUT" | grep -q "InvalidPermission.Duplicate\|already exists"; then
+              echo "Rule already exists, continuing..."
+            else
+              echo "Failed to add Security Group rule: $OUTPUT"
+              exit $EXIT_CODE
+            fi
+          }
+          echo "$OUTPUT"
 
+      - name: Verify Security Group Rule Added
+        run: |
+          echo "Verifying Security Group rule was added..."
+          RULE_EXISTS=$(aws ec2 describe-security-groups \
+            --group-ids ${{ secrets.SECURITY_GROUP_ID }} \
+            --query "SecurityGroups[0].IpPermissions[?FromPort==\`22\` && ToPort==\`22\` && IpProtocol==\`tcp\`].IpRanges[?CidrIp==\`${{ steps.get_ip.outputs.runner_ip }}/32\`].CidrIp" \
+            --output text)
+          
+          if [ -z "$RULE_EXISTS" ] || [ "$RULE_EXISTS" = "None" ] || [ "$RULE_EXISTS" = "" ]; then
+            echo "Warning: Security Group rule not found in query, but this may be due to propagation delay. Continuing..."
+          else
+            echo "Security Group rule verified: $RULE_EXISTS"
+          fi
+          
       - name: Wait for Security Group Rule to Propagate
         run: |
-          echo "Waiting 5 seconds for security group rule to propagate..."
-          sleep 5
+          echo "Waiting 10 seconds for security group rule to propagate..."
+          sleep 10
 
       - name: Prepare SSH Key
         run: |
