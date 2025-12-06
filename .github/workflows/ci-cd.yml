@@ -32,19 +32,52 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Create ECR Repository if not exists
+        run: |
+          set +x
+          echo "::add-mask::${{ secrets.AWS_REGION }}"
+          aws ecr describe-repositories --repository-names community-frontend --region ${{ secrets.AWS_REGION }} 2>/dev/null || \
+          aws ecr create-repository \
+            --repository-name community-frontend \
+            --image-scanning-configuration scanOnPush=true \
+            --encryption-configuration encryptionType=AES256 \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Update Parameter Store with ECR Image URI
+        run: |
+          set +x
+          echo "::add-mask::${{ secrets.AWS_REGION }}"
+          ECR_URI=$(aws ecr describe-repositories --repository-names community-frontend --query 'repositories[0].repositoryUri' --output text --region ${{ secrets.AWS_REGION }})
+          echo "::add-mask::$ECR_URI"
+          ECR_FRONTEND_IMAGE="${ECR_URI}:latest"
+          echo "::add-mask::$ECR_FRONTEND_IMAGE"
+          aws ssm put-parameter \
+            --name "/community/ecr_frontend_image" \
+            --value "$ECR_FRONTEND_IMAGE" \
+            --type "String" \
+            --overwrite \
+            --region ${{ secrets.AWS_REGION }} || echo "Parameter Store update failed, but continuing..."
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Docker Hub Login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-      - name: Build and Push Docker Image
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker Image to ECR
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/community-frontend:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/community-frontend:latest
           platforms: linux/arm64
 
   deploy:
@@ -53,132 +86,155 @@ jobs:
     if: github.ref == 'refs/heads/develop'
 
     steps:
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Get GitHub Actions IP Address
-        id: get_ip
-        run: |
-          set +x
-          RUNNER_IP=$(curl -s https://api.ipify.org)
-          echo "::add-mask::$RUNNER_IP"
-          echo "::add-mask::${{ secrets.SECURITY_GROUP_ID }}"
-          echo "runner_ip=$RUNNER_IP" >> $GITHUB_OUTPUT
-
-      - name: Add GitHub Actions IP to EC2 Security Group
-        run: |
-          set +x
-          aws ec2 authorize-security-group-ingress \
-            --group-id ${{ secrets.SECURITY_GROUP_ID }} \
-            --ip-permissions "IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[{CidrIp=${{ steps.get_ip.outputs.runner_ip }}/32,Description='GitHub Actions'}]" \
-            || echo "Rule might already exist, continuing..."
-
-      - name: Wait for Security Group Rule to Propagate
-        run: sleep 5
-
-      - name: Prepare SSH Key
-        run: |
-          set +x
-          echo "::add-mask::${{ secrets.SSH_PRIVATE_KEY }}"
-          echo "::add-mask::${{ secrets.SERVER_HOST }}"
-          echo "::add-mask::${{ secrets.SERVER_USER }}"
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || echo "Warning: ssh-keyscan failed, but continuing..."
-
-      - name: Test SSH Connection
-        run: |
-          set +x
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'echo "SSH connection successful"' || (echo "SSH connection failed" && exit 1)
-
       - name: Check if Docker is installed
-        id: check-docker
         run: |
           set +x
-          DOCKER_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v docker >/dev/null && echo "true" || echo "false"')
-          echo "docker_exists=$DOCKER_EXISTS" >> $GITHUB_OUTPUT
+          echo "::add-mask::${{ secrets.EC2_INSTANCE_ID }}"
+          echo "::add-mask::${{ secrets.AWS_REGION }}"
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["command -v docker >/dev/null && echo \"true\" || echo \"false\""]' \
+            --output text \
+            --query 'Command.CommandId')
+          
+          echo "Waiting for command to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }}
+          
+          DOCKER_EXISTS=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query 'StandardOutputContent' \
+            --output text | tr -d '\r\n')
+          
+          if [ "$DOCKER_EXISTS" != "true" ]; then
+            echo "Error: Docker is not installed on the EC2 instance"
+            exit 1
+          fi
+          
+          echo "Docker is installed"
 
-      - name: Check if Node.js is installed
-        id: check-nodejs
+      - name: Ensure Docker Network Exists
         run: |
           set +x
-          NODE_EXISTS=$(ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'command -v node >/dev/null && echo "true" || echo "false"')
-          echo "node_exists=$NODE_EXISTS" >> $GITHUB_OUTPUT
+          echo "::add-mask::${{ secrets.EC2_INSTANCE_ID }}"
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["if ! sudo docker network inspect community-network >/dev/null 2>&1; then sudo docker network create community-network && echo \"Created docker network: community-network\"; else echo \"Docker network community-network already exists\"; fi"]' \
+            --output text \
+            --query 'Command.CommandId')
+          
+          echo "Waiting for network setup to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }}
+          
+          OUTPUT=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query 'StandardOutputContent' \
+            --output text)
+          
+          echo "$OUTPUT"
 
-      - name: Install Docker on EC2
-        if: steps.check-docker.outputs.docker_exists == 'false'
+      - name: Login to ECR on EC2
         run: |
           set +x
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
-            sudo apt-get update
-            sudo apt-get install -y \
-              ca-certificates \
-              curl \
-              gnupg \
-              lsb-release
-            sudo mkdir -p /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-              | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            echo \
-              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-              https://download.docker.com/linux/ubuntu \
-              $(lsb_release -cs) stable" \
-              | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-            sudo apt-get update
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-            sudo usermod -aG docker $USER
-          REMOTE_EOF
-
-      - name: Install Node.js on EC2
-        if: steps.check-nodejs.outputs.node_exists == 'false'
-        run: |
-          set +x
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
-            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-          REMOTE_EOF
-
-      - name: Check if Docker Network Exists
-        run: |
-          set +x
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_EOF'
-            if ! sudo docker network inspect community-network >/dev/null 2>&1; then
-              sudo docker network create community-network
-              echo "Created docker network: community-network"
-            else
-              echo "Docker network community-network already exists"
-            fi
-          REMOTE_EOF
-
-      - name: Docker Hub Login on EC2
-        run: |
-          set +x
-          echo "::add-mask::${{ secrets.DOCKER_TOKEN }}"
-          echo "::add-mask::${{ secrets.DOCKER_USERNAME }}"
-          echo "${{ secrets.DOCKER_TOKEN }}" | ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin"
+          echo "::add-mask::${{ secrets.EC2_INSTANCE_ID }}"
+          echo "::add-mask::${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY=$(aws ecr describe-repositories --repository-names community-frontend --query 'repositories[0].repositoryUri' --output text --region ${{ secrets.AWS_REGION }} | sed 's|/.*||')
+          echo "::add-mask::$ECR_REGISTRY"
+          
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters "commands=[\"aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin $ECR_REGISTRY\"]" \
+            --output text \
+            --query 'Command.CommandId')
+          
+          echo "Waiting for ECR login to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }}
+          
+          OUTPUT=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query 'StandardOutputContent' \
+            --output text)
+          
+          ERROR=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query 'StandardErrorContent' \
+            --output text)
+          
+          if [ -n "$ERROR" ] && [ "$ERROR" != "None" ]; then
+            echo "ECR login error occurred"
+            exit 1
+          fi
+          
+          echo "ECR login successful"
 
       - name: Deploy to EC2 via Docker Compose
         run: |
           set +x
-          echo "::add-mask::${{ secrets.DOCKER_USERNAME }}"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << REMOTE_EOF
-            cd /home/ubuntu/prod
-            sudo docker compose pull frontend
-            sudo docker compose up -d frontend
-          REMOTE_EOF
-
-      - name: Remove GitHub Actions IP from EC2 Security Group
-        if: always()
-        run: |
-          set +x
-          aws ec2 revoke-security-group-ingress \
-            --group-id ${{ secrets.SECURITY_GROUP_ID }} \
-            --protocol tcp \
-            --port 22 \
-            --cidr ${{ steps.get_ip.outputs.runner_ip }}/32 \
-            || echo "Rule might not exist or already removed, continuing..."
+          echo "::add-mask::${{ secrets.EC2_INSTANCE_ID }}"
+          echo "::add-mask::${{ secrets.AWS_REGION }}"
+          ECR_FRONTEND_IMAGE=$(aws ssm get-parameter --name "/community/ecr_frontend_image" --query 'Parameter.Value' --output text --region ${{ secrets.AWS_REGION }})
+          echo "::add-mask::$ECR_FRONTEND_IMAGE"
+          
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters "commands=[\"cd /home/ubuntu/prod && export ECR_FRONTEND_IMAGE=$ECR_FRONTEND_IMAGE && sudo -E docker compose pull frontend && sudo -E docker compose up -d frontend\"]" \
+            --output text \
+            --query 'Command.CommandId')
+          
+          echo "Waiting for deployment to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }}
+          
+          OUTPUT=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query 'StandardOutputContent' \
+            --output text)
+          
+          ERROR=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query 'StandardErrorContent' \
+            --output text)
+          
+          STATUS=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query 'Status' \
+            --output text)
+          
+          echo "=== Deployment Output ==="
+          echo "$OUTPUT"
+          
+          if [ -n "$ERROR" ] && [ "$ERROR" != "None" ]; then
+            echo "=== Error Output ==="
+            echo "$ERROR" | sed 's/password[^[:space:]]*/[REDACTED]/gi' | sed 's/token[^[:space:]]*/[REDACTED]/gi' | sed 's/key[^[:space:]]*/[REDACTED]/gi'
+          fi
+          
+          if [ "$STATUS" != "Success" ]; then
+            echo "Deployment failed with status: $STATUS"
+            exit 1
+          fi
+          
+          echo "Deployment completed successfully"

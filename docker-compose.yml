@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ${DOCKER_USERNAME}/community-frontend:latest
+    image: ${ECR_FRONTEND_IMAGE}
     container_name: community-frontend
     restart: unless-stopped
     environment:
