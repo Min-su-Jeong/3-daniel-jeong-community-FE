@@ -1,0 +1,4 @@
+/* 공통 스타일 import */
+@import url('../../styles/common.css');
+@import url('../../components/form/form.css');
+@import url('../../styles/post-editor.css');

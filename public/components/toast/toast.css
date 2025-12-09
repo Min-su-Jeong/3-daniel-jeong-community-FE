@@ -1,0 +1,156 @@
+/* Toast 컴포넌트 스타일 */
+.toast-container {
+    position: fixed;
+    top: calc(var(--header-height) + var(--spacing-4xl));
+    right: var(--spacing-lg);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    pointer-events: none;
+}
+
+.toast {
+    min-width: 300px;
+    max-width: 400px;
+    background: var(--card-bg-light);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    border: 1px solid var(--border-light);
+    border-left: 4px solid;
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    box-shadow: var(--toast-shadow);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    position: relative;
+    overflow: hidden;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: auto;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+/* Toast 타입별 스타일 */
+.toast.success { border-left-color: var(--primary-light); }
+.toast.error { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--warning); }
+.toast.info { border-left-color: var(--primary-light); }
+
+/* Toast 아이콘 */
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.toast.success .toast-icon { background: var(--primary-light); color: var(--text-on-glass); }
+.toast.error .toast-icon { background: var(--danger); color: var(--text-on-glass); }
+.toast.warning .toast-icon { background: var(--warning); color: var(--text-on-glass); }
+.toast.info .toast-icon { background: var(--primary-light); color: var(--text-on-glass); }
+
+/* Toast 내용 */
+.toast-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.toast-title {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text-on-glass);
+    letter-spacing: -0.3px;
+    transition: color 0.3s ease;
+}
+
+.toast-message {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    line-height: 1.4;
+    letter-spacing: -0.2px;
+    transition: color 0.3s ease;
+}
+
+/* Toast 닫기 버튼 */
+.toast-close {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    color: var(--text-disabled);
+    border-radius: 50%;
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition-fast);
+}
+
+.toast-close:hover {
+    background: var(--glass-bg-hover);
+    color: var(--text-on-glass);
+}
+
+/* Toast 진행 바 */
+.toast-progress {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 3px;
+    opacity: 0.3;
+    transition: width linear;
+}
+
+.toast.success .toast-progress { background: var(--primary-light); }
+.toast.error .toast-progress { background: var(--danger); }
+.toast.warning .toast-progress { background: var(--warning); }
+.toast.info .toast-progress { background: var(--primary-light); }
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .toast-container {
+        top: calc(var(--header-height) + var(--spacing-2xl));
+        inset: auto var(--spacing-sm) auto var(--spacing-sm);
+    }
+    
+    .toast {
+        min-width: auto;
+        max-width: none;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .toast {
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+    
+    .toast-title {
+        font-size: var(--font-size-sm);
+    }
+    
+    .toast-message {
+        font-size: var(--font-size-xs);
+    }
+}

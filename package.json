@@ -1,0 +1,34 @@
+{
+  "name": "ktb3-daniel-community-fe",
+  "version": "1.0.0",
+  "description": "KTB3 Daniel Community Frontend",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "keywords": [
+    "community",
+    "frontend",
+    "express",
+    "html",
+    "css",
+    "javascript"
+  ],
+  "author": "Daniel",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "5.1.0"
+  },
+  "devDependencies": {
+    "jest": "30.2.0",
+    "nodemon": "3.1.10",
+    "supertest": "7.1.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

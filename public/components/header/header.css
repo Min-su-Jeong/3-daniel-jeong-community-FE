@@ -1,0 +1,653 @@
+/* 네비게이션 컨테이너 */
+.nav-glass {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 72px;
+    background: var(--card-bg-light);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    border-bottom: 1px solid var(--border-light);
+    z-index: var(--z-header);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-2xl);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* 로고 */
+.nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-on-glass);
+    transition: opacity var(--transition-fast);
+}
+
+.nav-logo:hover {
+    opacity: 0.8;
+}
+
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: var(--icon-color);
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text-accent);
+}
+
+/* 네비게이션 메뉴 */
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.nav-link {
+    padding: 10px var(--spacing-lg);
+    color: var(--text-on-glass);
+    text-decoration: none;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    border-radius: var(--border-radius-full);
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--card-hover-bg-light);
+    border-radius: var(--border-radius-full);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.nav-link:hover::before,
+.nav-link.active::before {
+    opacity: 1;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--text-accent);
+}
+
+/* 네비게이션 액션 */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.nav-btn {
+    padding: 10px var(--spacing-2xl);
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    border-radius: var(--border-radius-full);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.nav-btn-ghost {
+    background: transparent;
+    color: var(--text-on-glass);
+    border: 1px solid var(--border-light);
+}
+
+.nav-btn-ghost:hover,
+.nav-btn-ghost.active {
+    background: var(--card-hover-bg-light);
+    border-color: var(--border);
+}
+
+.nav-btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    box-shadow: var(--button-shadow);
+}
+
+.nav-btn-primary:hover,
+.nav-btn-primary.active {
+    box-shadow: var(--button-shadow-hover);
+    transform: translateY(-1px);
+}
+
+/* 사용자 프로필 */
+.user-profile {
+    display: flex;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-icon {
+    width: var(--profile-size-nav);
+    height: var(--profile-size-nav);
+    border-radius: 50%;
+    background: transparent;
+    border: 2px solid var(--border);
+    display: grid;
+    place-items: center;
+    font-size: var(--font-size-lg);
+    color: var(--text-on-glass);
+    transition: transform var(--transition-normal);
+    overflow: hidden;
+}
+
+.profile-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.user-profile:hover .profile-icon {
+    transform: scale(1.05);
+}
+
+/* 프로필 드롭다운 */
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + var(--spacing-xl));
+    right: 0;
+    min-width: 240px;
+    background: var(--dropdown-bg);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--dropdown-shadow);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.96);
+    transition: all var(--transition-normal);
+    z-index: var(--z-dropdown);
+    pointer-events: none;
+    display: none;
+    overflow: hidden;
+}
+
+.profile-dropdown.active {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* 드롭다운 아이템 */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 13px var(--spacing-2xl);
+    color: var(--text-on-glass);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background: none;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.profile-dropdown:not(.has-user-info) .dropdown-item:first-child {
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+}
+
+.dropdown-item:only-child {
+    border-radius: var(--border-radius-lg);
+}
+
+.dropdown-item:hover {
+    background: var(--glass-bg-hover);
+    padding-left: var(--spacing-xl);
+}
+
+.dropdown-item:active {
+    background: var(--glass-bg-hover);
+    transform: scale(0.98);
+}
+
+.dropdown-item.logout-item:hover {
+    color: var(--danger-hover);
+    background: var(--danger-bg-light);
+}
+
+.dropdown-item.logout-item:active {
+    background: var(--danger-bg-light);
+}
+
+/* 드롭다운 사용자 정보 */
+.dropdown-user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: var(--user-info-gradient);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.dropdown-user-info::before,
+.dropdown-user-info::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(59, 130, 246, 0.4), 
+        rgba(139, 92, 246, 0.4), 
+        rgba(236, 72, 153, 0.3), 
+        transparent);
+}
+
+.dropdown-user-info::before {
+    top: 0;
+}
+
+.dropdown-user-info::after {
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(59, 130, 246, 0.25), 
+        rgba(99, 102, 241, 0.25), 
+        rgba(139, 92, 246, 0.25), 
+        rgba(236, 72, 153, 0.2), 
+        transparent);
+}
+
+.dropdown-profile-image {
+    width: var(--profile-size-md);
+    height: var(--profile-size-md);
+    border-radius: 50%;
+    background: var(--card-bg);
+    backdrop-filter: blur(var(--blur-sm));
+    -webkit-backdrop-filter: blur(var(--blur-sm));
+    border: 2px solid var(--border);
+    display: grid;
+    place-items: center;
+    font-size: var(--font-size-4xl);
+    color: var(--text-on-glass);
+    box-shadow: var(--profile-shadow);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.dropdown-profile-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.dropdown-user-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.dropdown-user-name,
+.dropdown-user-email {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-user-name {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-on-glass);
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+}
+
+.dropdown-user-email {
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    color: var(--text-disabled);
+    line-height: 1.4;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-border-light), transparent);
+    margin: 0;
+}
+
+/* 모바일 메뉴 토글 */
+.nav-mobile-toggle {
+    display: none;
+    position: relative;
+    width: 22px;
+    height: 17px;
+    padding: var(--spacing-sm);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.nav-mobile-toggle span {
+    position: absolute;
+    left: 0;
+    width: 22px;
+    height: 2px;
+    background: var(--text-on-glass);
+    border-radius: 2px;
+    transition: all var(--transition-normal);
+    transform-origin: center;
+}
+
+.nav-mobile-toggle span:nth-child(1) {
+    top: 0;
+}
+
+.nav-mobile-toggle span:nth-child(2) {
+    top: 50%;
+    margin-top: -1px;
+}
+
+.nav-mobile-toggle span:nth-child(3) {
+    bottom: 0;
+}
+
+.nav-mobile-toggle.active span:nth-child(1) {
+    top: 50%;
+    margin-top: -1px;
+    transform: rotate(45deg);
+}
+
+.nav-mobile-toggle.active span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.nav-mobile-toggle.active span:nth-child(3) {
+    top: 50%;
+    margin-top: -1px;
+    transform: rotate(-45deg);
+}
+
+/* 모바일 메뉴 */
+.mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 72px 0 auto;
+    background: var(--card-bg);
+    backdrop-filter: blur(var(--blur-xl));
+    -webkit-backdrop-filter: blur(var(--blur-xl));
+    border-bottom: 1px solid var(--border-light);
+    padding: var(--spacing-lg);
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: all var(--transition-normal);
+    z-index: var(--z-mobile-menu);
+    box-shadow: var(--shadow);
+}
+
+.mobile-menu::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--mobile-menu-overlay-bg);
+    z-index: -1;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
+}
+
+.mobile-menu.active {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.mobile-menu.active::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-menu-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    position: relative;
+    z-index: 1;
+}
+
+.mobile-menu-link {
+    padding: 14px var(--spacing-lg);
+    color: var(--text-on-glass);
+    text-decoration: none;
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    transition: background var(--transition-fast);
+}
+
+.mobile-menu-link:hover,
+.mobile-menu-link.active {
+    background: var(--card-hover-bg-light);
+    color: var(--text-accent);
+}
+
+.mobile-menu-link-danger {
+    color: var(--danger-hover);
+}
+
+.mobile-menu-link-danger:hover {
+    background: var(--danger-bg-light);
+}
+
+.mobile-menu-divider {
+    height: 1px;
+    background: var(--border-light);
+    margin: var(--spacing-sm) 0;
+}
+
+/* 모바일 메뉴 사용자 정보 (고급스러운 디자인) */
+.mobile-menu-user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: var(--user-info-gradient);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: var(--spacing-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-menu-user-info::before,
+.mobile-menu-user-info::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(59, 130, 246, 0.4), 
+        rgba(139, 92, 246, 0.4), 
+        rgba(236, 72, 153, 0.3), 
+        transparent);
+}
+
+.mobile-menu-user-info::before {
+    top: 0;
+}
+
+.mobile-menu-user-info::after {
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(59, 130, 246, 0.25), 
+        rgba(99, 102, 241, 0.25), 
+        rgba(139, 92, 246, 0.25), 
+        rgba(236, 72, 153, 0.2), 
+        transparent);
+}
+
+.mobile-menu-profile-image {
+    width: var(--profile-size-md);
+    height: var(--profile-size-md);
+    border-radius: 50%;
+    background: var(--card-bg);
+    backdrop-filter: blur(var(--blur-sm));
+    -webkit-backdrop-filter: blur(var(--blur-sm));
+    border: 2px solid var(--border);
+    display: grid;
+    place-items: center;
+    font-size: var(--font-size-4xl);
+    color: var(--text-on-glass);
+    box-shadow: var(--profile-shadow);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.mobile-menu-profile-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.mobile-menu-user-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.mobile-menu-user-name {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-on-glass);
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-menu-user-email {
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    color: var(--text-disabled);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+    .nav-menu {
+        display: none;
+    }
+    
+    /* 모바일에서도 프로필 아이콘 표시 */
+    .nav-actions {
+        display: flex;
+    }
+    
+    .nav-mobile-toggle {
+        display: flex;
+    }
+    
+    .mobile-menu {
+        display: block;
+        pointer-events: none;
+    }
+    
+    .mobile-menu.active {
+        pointer-events: auto;
+    }
+    
+    /* 모바일 프로필 아이콘 크기 조정 */
+    .profile-icon {
+        width: var(--profile-size-nav);
+        height: var(--profile-size-nav);
+        border-width: 2px;
+    }
+    
+    /* 모바일에서 프로필 드롭다운 위치 조정 */
+    .profile-dropdown {
+        top: calc(100% + var(--spacing-md));
+        right: 0;
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-container {
+        padding: 0 var(--spacing-lg);
+    }
+    
+    .logo-text {
+        font-size: 20px;
+    }
+    
+    .logo-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    /* 작은 화면에서 프로필 아이콘 크기 조정 */
+    .profile-icon {
+        width: calc(var(--profile-size-nav) - var(--spacing-md));
+        height: calc(var(--profile-size-nav) - var(--spacing-md));
+    }
+    
+    /* 모바일 메뉴 사용자 정보 패딩 조정 */
+    .mobile-menu-user-info {
+        padding: var(--spacing-lg);
+        gap: var(--spacing-md);
+    }
+    
+    .mobile-menu-profile-image {
+        width: var(--profile-size-nav);
+        height: var(--profile-size-nav);
+    }
+    
+    .mobile-menu-user-name {
+        font-size: var(--font-size-lg);
+    }
+}

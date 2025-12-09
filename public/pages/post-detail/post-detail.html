@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 상세조회</title>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="post-detail.css">
+</head>
+<body class="theme">
+    <!-- 네비게이션 -->
+    <app-header show-menu="true" show-actions="true" show-profile="true" active-path="/post-list"></app-header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <div class="container">
+            <!-- 게시글 상세 정보 -->
+            <article class="post-detail card-section">
+                <!-- 게시글 헤더 -->
+                <div class="post-header">
+                    <h2 class="post-title" id="postTitle">제목 1</h2>
+                    <div class="post-actions" id="postActions"></div>
+                </div>
+
+                <!-- 게시글 메타 정보 -->
+                <div class="post-meta">
+                    <div class="author-info">
+                        <div class="author-avatar" id="authorAvatar">👤</div>
+                        <span class="author-name" id="authorName">더미 작성자 1</span>
+                    </div>
+                    <span class="post-date" id="postDate">2021-01-01 00:00:00</span>
+                </div>
+
+
+                <!-- 게시글 이미지 -->
+                <div class="post-image" id="postImage">
+                    <div class="image-placeholder">이미지</div>
+                </div>
+
+                <!-- 게시글 내용 -->
+                <div class="post-content" id="postContent">
+                    게시글 내용이 여기에 표시됩니다.
+                </div>
+
+                <!-- 게시글 통계 -->
+                <div class="post-stats">
+                    <button class="like-btn" id="likeBtn">
+                        <img class="stat-icon" id="likeIcon" data-path="post/like.svg" alt="좋아요">
+                        <span class="like-count" id="likeCount">123</span>
+                        <span class="stat-label">좋아요</span>
+                    </button>
+                    <div class="stat-item">
+                        <img class="stat-icon" id="viewIcon" data-path="post/view.svg" alt="조회수">
+                        <span class="view-count" id="viewCount">123</span>
+                        <span class="stat-label">조회수</span>
+                    </div>
+                    <div class="stat-item">
+                        <img class="stat-icon" id="commentIcon" data-path="post/comment.svg" alt="댓글">
+                        <span class="comment-count" id="commentCount">123</span>
+                        <span class="stat-label">댓글</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 댓글 섹션 -->
+            <section class="comments-section card-section">
+                <h3 class="comments-title">댓글</h3>
+                
+                <!-- 댓글 입력 -->
+                <div class="comment-input-section">
+                    <textarea 
+                        class="comment-input text-input" 
+                        id="commentInput" 
+                        placeholder="댓글을 남겨주세요."
+                        rows="3"
+                    ></textarea>
+                    <div id="commentSubmitBtn"></div>
+                </div>
+
+                <!-- 댓글 목록 -->
+                <div class="comments-list" id="commentsList"></div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module" src="../../components/layout/page-layout.js"></script>
+    <script type="module" src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/footer/footer.js"></script>
+    <script type="module" src="post-detail.js"></script>
+</body>
+</html>

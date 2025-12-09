@@ -1,0 +1,844 @@
+/* 공통 CSS 변수 및 기본 스타일 */
+
+/* 모달 컴포넌트 스타일 */
+@import url('../components/modal/modal.css');
+
+/* 헤더 컴포넌트 스타일 */
+@import url('../components/header/header.css');
+
+/* 버블 애니메이션 스타일 */
+@import url('../assets/animations/bubble-animation.css');
+
+:root {
+    /* 추가 색상 */
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --toast-shadow: 0 8px 32px rgba(59, 130, 246, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+    --disabled-bg: #95a5a6;
+    --success-bg-light: rgba(16, 185, 129, 0.05);
+    --danger-bg-light: rgba(239, 68, 68, 0.05);
+    --warning-bg-light: rgba(245, 158, 11, 0.05);
+    --primary-focus-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    --danger-focus-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    --danger-shadow-sm: 0 2px 8px rgba(239, 68, 68, 0.3);
+    --danger-shadow-md: 0 4px 12px rgba(239, 68, 68, 0.4);
+    --dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    --dropdown-bg: rgba(30, 41, 59, 0.95);
+    --mobile-menu-overlay-bg: rgba(0, 0, 0, 0.7);
+    --user-info-gradient: linear-gradient(135deg, rgba(59, 130, 246, 0.10) 0%, rgba(99, 102, 241, 0.08) 25%, rgba(139, 92, 246, 0.10) 50%, rgba(236, 72, 153, 0.08) 75%, rgba(251, 191, 36, 0.06) 100%);
+    --profile-shadow: 0 4px 12px rgba(59, 130, 246, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.8);
+    --button-click-bg: rgba(255, 255, 255, 0.2);
+    --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+    --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    
+    /* 간격 */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 20px;
+    --spacing-2xl: 24px;
+    --spacing-3xl: 32px;
+    --spacing-4xl: 40px;
+    --spacing-5xl: 48px;
+    --spacing-6xl: 64px;
+    
+    /* 폰트 크기 */
+    --font-size-xs: 12px;
+    --font-size-sm: 13px;
+    --font-size-md: 14px;
+    --font-size-base: 15px;
+    --font-size-lg: 16px;
+    --font-size-xl: 17px;
+    --font-size-2xl: 18px;
+    --font-size-3xl: 20px;
+    --font-size-4xl: 22px;
+    
+    /* 프로필 이미지 크기 */
+    --profile-size-md: 52px;
+    --profile-size-nav: 44px;
+    
+    /* 그림자 */
+    --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 20px rgba(59, 130, 246, 0.3);
+    --shadow-lg: 0 8px 30px rgba(59, 130, 246, 0.4);
+    
+    /* 애니메이션 */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* 레이아웃 */
+    --header-height: 56px;
+    
+    /* Z-Index 레이어별 관리 */
+    --z-background: 1;
+    --z-bubble: 2;
+    --z-content: 100;
+    --z-card: 200;
+    --z-button: 300;
+    --z-dropdown: 400;
+    --z-mobile-menu: 999;
+    --z-header: 1000;
+    --z-modal: 2100;
+    --z-toast: 2300;
+    
+    /* 기본 색상 */
+    --primary: #2563EB;
+    --primary-light: #3B82F6;
+    --secondary: #1D4ED8;
+    
+    /* 유리 효과 색상 */
+    --glass-bg: rgba(255, 255, 255, 0.18);
+    --glass-bg-hover: rgba(255, 255, 255, 0.25);
+    --glass-border: rgba(255, 255, 255, 0.35);
+    --glass-border-light: rgba(255, 255, 255, 0.45);
+    
+    /* 버튼 그림자 */
+    --button-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    --button-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.4);
+    --button-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+    --button-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+    --focus-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+    
+    /* 표면 색상 */
+    --surface: rgba(255, 255, 255, 0.95);
+    
+    /* 텍스트 색상 */
+    --text-on-glass: #FFFFFF;
+    --text-dark: var(--text-on-glass);
+    --text-light: rgba(255, 255, 255, 0.9);
+    --text-muted: rgba(255, 255, 255, 0.8);
+    --text-disabled: rgba(255, 255, 255, 0.6);
+    --text-accent: var(--text-on-glass);
+    
+    /* 아이콘 색상 */
+    --icon-color: var(--text-on-glass);
+    
+    /* 폼 및 입력 필드 색상 */
+    --input-bg: rgba(255, 255, 255, 0.1);
+    --input-border: rgba(255, 255, 255, 0.3);
+    --input-focus-border: var(--primary-light);
+    
+    /* 카드 색상 */
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-bg-light: rgba(255, 255, 255, 0.01);
+    --card-hover-bg: rgba(255, 255, 255, 0.25);
+    --card-hover-bg-light: rgba(255, 255, 255, 0.15);
+    --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    
+    /* 테두리 */
+    --border: rgba(255, 255, 255, 0.25);
+    --border-light: rgba(255, 255, 255, 0.2);
+    
+    /* 그림자 */
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    
+    /* 강조 색상 */
+    --accent: var(--primary-light);
+    
+    /* 버튼 배경 */
+    --button-primary-bg: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    --button-primary-hover-bg: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+    
+    /* 모서리 둥글기 */
+    --border-radius-sm: 6px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 16px;
+    --border-radius-xl: 24px;
+    --border-radius-full: 9999px;
+    
+    /* 블러 값 */
+    --blur-sm: 8px;
+    --blur-md: 16px;
+    --blur-lg: 24px;
+    --blur-xl: 40px;
+    
+    /* 배경 그라데이션 */
+    --bg-gradient-dark: linear-gradient(180deg,
+        #0F172A 0%,
+        #1E3A8A 50%,
+        #2563EB 100%);
+    
+    /* 물결 오버레이 그라데이션 */
+    --water-overlay-gradient: linear-gradient(
+        180deg,
+        rgba(12, 74, 110, 0.04) 0%,
+        rgba(14, 116, 144, 0.03) 30%,
+        rgba(8, 145, 178, 0.025) 60%,
+        rgba(6, 182, 212, 0.02) 100%
+    );
+    
+    /* 비디오 배경용 물결 오버레이 그라데이션 */
+    --water-overlay-video-gradient: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.06) 0%,
+        rgba(0, 0, 0, 0.04) 30%,
+        rgba(0, 0, 0, 0.03) 60%,
+        rgba(0, 0, 0, 0.02) 100%
+    );
+    
+}
+
+/* 기본 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    color: var(--text-dark);
+    line-height: 1.5;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* 공통 애니메이션 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 페이지 공통 레이아웃 스타일 */
+
+/* 메인 컨텐츠 영역 */
+.main {
+    padding: var(--spacing-4xl) var(--spacing-2xl);
+    padding-top: calc(var(--header-height) + var(--spacing-4xl));
+    min-height: calc(100vh - 88px);
+    position: relative;
+    z-index: var(--z-content);
+}
+
+/* 공통 컨테이너 */
+.container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card-bg);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-5xl) var(--spacing-4xl);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    animation: slideUp var(--transition-slow);
+    position: relative;
+    overflow: hidden;
+    z-index: var(--z-card);
+    margin: 0 auto;
+    transition: background var(--transition-normal), border-color var(--transition-normal);
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+/* 페이지 제목 */
+.page-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-dark);
+    text-align: center;
+    margin-bottom: var(--spacing-4xl);
+    letter-spacing: -0.5px;
+    animation: fadeIn 0.8s ease-out 0.2s both;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: var(--text-light);
+    font-weight: 500;
+    text-align: center;
+}
+
+/* 반응형 페이지 레이아웃 */
+@media (max-width: 768px) {
+    
+    .main {
+        padding: var(--spacing-2xl) var(--spacing-lg);
+        padding-top: calc(var(--header-height) + var(--spacing-2xl));
+    }
+    
+    .container {
+        padding: var(--spacing-3xl) var(--spacing-2xl);
+        max-width: 100%;
+    }
+    
+    .page-title {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main {
+        padding: var(--spacing-lg);
+        padding-top: calc(var(--header-height) + var(--spacing-lg));
+    }
+    
+    .container {
+        padding: var(--spacing-2xl) var(--spacing-xl);
+    }
+    
+    .page-title {
+        font-size: 22px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+    }
+}
+
+/* 추가 링크 스타일 */
+.additional-links {
+    text-align: center;
+    margin-top: var(--spacing-2xl);
+    animation: fadeIn 0.8s ease-out 0.8s both;
+}
+
+.additional-links .link,
+.additional-links .withdrawal-link {
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: var(--transition-normal);
+    position: relative;
+    padding: var(--spacing-sm) 0;
+}
+
+.additional-links .link:hover,
+.additional-links .withdrawal-link:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.additional-links .link::after,
+.additional-links .withdrawal-link::after {
+    content: '';
+    position: absolute;
+    bottom: var(--spacing-xs);
+    left: 50%;
+    width: 0;
+    height: 2px;
+    transition: var(--transition-normal);
+    transform: translateX(-50%);
+}
+
+.additional-links .link:hover::after,
+.additional-links .withdrawal-link:hover::after {
+    width: 100%;
+}
+
+/* 일반 링크 */
+.additional-links .link {
+    color: #ffffff;
+}
+
+.additional-links .link::after {
+    background: #ffffff;
+}
+
+/* 탈퇴 링크 */
+.additional-links .withdrawal-link {
+    color: var(--danger);
+}
+
+.additional-links .withdrawal-link::after {
+    background: var(--danger);
+}
+
+/* 테마 스타일 - 물결/유리 효과 */
+
+/* 기본 유리 카드 */
+.lg-glass {
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    border-radius: var(--border-radius-xl);
+}
+
+.lg-glass-light {
+    background: var(--glass-bg-hover);
+    backdrop-filter: blur(var(--blur-md));
+    -webkit-backdrop-filter: blur(var(--blur-md));
+    border: 1px solid var(--glass-border-light);
+    border-radius: var(--border-radius-lg);
+}
+
+.lg-glass-solid {
+    background: var(--surface);
+    backdrop-filter: blur(var(--blur-xl));
+    -webkit-backdrop-filter: blur(var(--blur-xl));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    border-radius: var(--border-radius-xl);
+}
+
+/* 유리 효과 버튼 */
+.lg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-md));
+    -webkit-backdrop-filter: blur(var(--blur-md));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-full);
+    color: #FFFFFF;
+    font-weight: 500;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.lg-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        transparent 50%);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.lg-btn:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-light);
+}
+
+.lg-btn:hover::before {
+    opacity: 1;
+}
+
+.lg-btn:active {
+    transform: translateY(0);
+}
+
+.lg-btn-primary {
+    background: var(--primary);
+    border: none;
+    color: #FFFFFF;
+    box-shadow: var(--button-shadow-sm);
+}
+
+.lg-btn-primary:hover {
+    background: var(--primary-light);
+    box-shadow: var(--button-shadow);
+}
+
+/* 카드 호버 효과 */
+.lg-card-hover {
+    transition: all var(--transition-normal);
+}
+
+.lg-card-hover:hover {
+    border-color: var(--glass-border-light);
+}
+
+/* 로딩 스피너 */
+.lg-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--glass-border);
+    border-top-color: var(--primary-light);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Water Background */
+body.theme {
+    font-family: 'Outfit', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    position: relative;
+    min-height: 100vh;
+}
+
+body.theme::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--bg-gradient-dark);
+}
+
+body.theme::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--water-overlay-gradient);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* 물결 배경 클래스 */
+.water-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--bg-gradient-dark);
+}
+
+.water-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--water-overlay-gradient);
+    z-index: var(--z-background);
+    pointer-events: none;
+}
+
+/* 네비게이션 유리 효과 스타일 */
+.nav-glass {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    background: var(--card-bg-light);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    border-bottom: 1px solid var(--border-light);
+    z-index: var(--z-header);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-on-glass);
+}
+
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: var(--icon-color);
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text-accent);
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-link {
+    padding: 10px 16px;
+    color: var(--text-on-glass);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: var(--border-radius-full);
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--glass-bg-hover);
+    border-radius: var(--border-radius-full);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.nav-link:hover::before {
+    opacity: 1;
+}
+
+.nav-link:hover {
+    color: var(--text-accent);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-full);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: none;
+    text-decoration: none;
+}
+
+.nav-btn-ghost {
+    background: transparent;
+    color: var(--text-on-glass);
+    border: 1px solid var(--glass-border);
+}
+
+.nav-btn-ghost:hover,
+.nav-btn-ghost.active {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-light);
+}
+
+.nav-btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    box-shadow: var(--button-shadow);
+}
+
+.nav-btn-primary:hover {
+    box-shadow: var(--button-shadow-hover);
+    transform: translateY(-1px);
+}
+
+.nav-mobile-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.nav-mobile-toggle span {
+    width: 22px;
+    height: 2px;
+    background: var(--text-on-glass);
+    border-radius: 2px;
+    transition: all var(--transition-normal);
+}
+
+/* 모바일 메뉴 */
+.mobile-menu {
+    display: none;
+    position: fixed;
+    top: 72px;
+    left: 0;
+    right: 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-xl));
+    -webkit-backdrop-filter: blur(var(--blur-xl));
+    border-bottom: 1px solid var(--glass-border);
+    z-index: var(--z-mobile-menu);
+    padding: 16px;
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: all var(--transition-normal);
+}
+
+.mobile-menu.active {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.mobile-menu-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mobile-menu-link {
+    padding: 14px 16px;
+    color: var(--text-on-glass);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    transition: background var(--transition-fast);
+}
+
+.mobile-menu-link:hover {
+    background: var(--glass-bg-hover);
+}
+
+.mobile-menu-link-primary {
+    color: var(--text-accent);
+}
+
+.mobile-menu-divider {
+    height: 1px;
+    background: var(--glass-border);
+    margin: 8px 0;
+}
+
+/* 푸터 */
+.footer-glass {
+    background: rgba(12, 74, 110, 0.6);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    border-top: 1px solid var(--glass-border);
+    padding: 64px 24px 32px;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 64px;
+}
+
+.footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer-logo {
+    text-decoration: none;
+}
+
+.footer-logo .logo-text {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-on-glass);
+}
+
+.footer-tagline {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+
+.footer-links {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+}
+
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer-heading {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.footer-link {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.footer-link:hover {
+    color: var(--text-accent);
+}
+
+.footer-bottom {
+    max-width: 1200px;
+    margin: 48px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.footer-copyright {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+    .nav-menu {
+        display: none;
+    }
+    
+    .nav-actions {
+        display: none;
+    }
+    
+    .nav-mobile-toggle {
+        display: flex;
+    }
+    
+    .mobile-menu {
+        display: block;
+    }
+    
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 48px;
+    }
+    
+    .footer-links {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .footer-links {
+        grid-template-columns: 1fr;
+    }
+    
+    .footer-glass {
+        padding: 48px 20px 24px;
+    }
+}

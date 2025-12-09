@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원정보 수정</title>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/form/form.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="user-edit.css">
+</head>
+<body class="theme">
+    <!-- Navigation -->
+    <app-header show-menu="true" show-actions="true" show-profile="true" active-path="/post-list"></app-header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <div class="container">
+            <h2 class="page-title">회원정보 수정</h2>
+            
+            <!-- 회원정보 수정 폼 -->
+            <form class="user-edit-form" id="userEditForm">
+                <!-- 프로필 사진 -->
+                <div class="form-group profile-section">
+                    <div class="profile-upload">
+                        <div class="profile-image" id="profileImage">
+                            <span id="profilePlaceholderIcon"></span>
+                        </div>
+                        <input type="file" id="profileImageInput" style="display: none;">
+                        <button type="button" class="btn-remove-image" id="removeImageBtn">삭제</button>
+                    </div>
+                    <p class="profile-hint">프로필 이미지 (선택)</p>
+                </div>
+
+                <!-- 이메일 -->
+                <div class="form-group">
+                    <label class="form-label">이메일</label>
+                    <input type="email" class="form-input" readonly>
+                    <div class="helper-text">이메일은 변경할 수 없습니다</div>
+                </div>
+
+                <!-- 닉네임 -->
+                <div class="form-group">
+                    <label class="form-label">닉네임 *</label>
+                    <input type="text" class="form-input" id="nickname" placeholder="닉네임을 입력하세요" maxlength="10" required>
+                    <div class="helper-text"></div>
+                </div>
+
+                <!-- 버튼 그룹 -->
+                <div class="button-group" id="buttonGroup"></div>
+            </form>
+
+            <!-- 회원 탈퇴 링크 -->
+            <div class="additional-links">
+                <a href="#" class="link withdrawal-link" id="withdrawalLink">회원 탈퇴</a>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../../components/layout/page-layout.js"></script>
+    <script type="module" src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/footer/footer.js"></script>
+    <script type="module" src="../../components/toast/toast.js"></script>
+    <script type="module" src="../../components/modal/modal.js"></script>
+    <script type="module" src="user-edit.js"></script>
+</body>
+</html>

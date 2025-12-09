@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수영장 위치 찾기 - Swim Way Makers</title>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="pool-finder.css">
+</head>
+<body class="theme">
+    <app-header show-menu="true" show-actions="true" show-profile="true" active-path="/pool-finder"></app-header>
+
+    <main class="pool-finder-main">
+        <section class="page-hero">
+            <div class="page-hero-content">
+                <span class="page-tag">POOL FINDER</span>
+                <h1 class="page-title">수영장 위치 찾기</h1>
+                <p class="page-subtitle">내 주변 수영장을 찾고 시설 정보, 운영시간을 확인하세요</p>
+            </div>
+        </section>
+
+        <section class="search-section">
+            <div class="search-container lg-glass">
+                <div class="search-box">
+                    <img id="searchIcon" data-path="common/search.svg" alt="검색" style="width: 20px; height: 20px;">
+                    <input type="text" id="searchInput" placeholder="수영장 이름 또는 주소 검색" class="search-input">
+                    <button id="searchBtn" class="search-btn">주변 검색</button>
+                </div>
+                <button id="currentLocationBtn" class="location-btn">
+                    <img id="locationIcon" data-path="misc/location.svg" alt="위치" style="width: 20px; height: 20px;">
+                    내 위치
+                </button>
+            </div>
+        </section>
+
+        <section class="map-section">
+            <div class="map-container">
+                <div id="map" class="map"></div>
+                <div class="pool-finder-list lg-glass">
+                    <h3 class="list-title">주변 수영장</h3>
+                    <div class="pool-finder-list-content" id="poolsList"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="../../components/layout/page-layout.js"></script>
+    <script type="module" src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/footer/footer.js"></script>
+    <script type="module" src="pool-finder.js"></script>
+</body>
+</html>
+
+

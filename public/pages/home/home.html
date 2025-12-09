@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swim Way Makers - 수영 커뮤니티</title>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="home.css">
+</head>
+<body class="theme">
+    <!-- Water Background -->
+    <div class="water-bg">
+        <video class="water-video" autoplay muted playsinline loop>
+            <source src="" type="video/mp4">
+        </video>
+        <div class="water-overlay"></div>
+    </div>
+
+    <main class="home-main">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    Swimming Community
+                </div>
+                <h1 class="hero-title">
+                    <span class="title-line">Swim Way</span>
+                    <span class="title-line title-accent">Makers</span>
+                </h1>
+                <p class="hero-subtitle">자신만의 수영 길을 만들어가는 사람들</p>
+                <p class="hero-tagline">Make Your Own Swim Way</p>
+                <div class="hero-buttons">
+                    <button class="lg-btn lg-btn-primary hero-cta" id="exploreBtn">
+                        <img id="exploreBtnIcon" data-path="misc/users.svg" alt="커뮤니티" style="width: 20px; height: 20px;">
+                        커뮤니티 둘러보기
+                    </button>
+                    <button class="lg-btn hero-cta-secondary" id="aboutBtn">
+                        <img id="aboutBtnIcon" data-path="auth/user-plus.svg" alt="가입하기" style="width: 20px; height: 20px;">
+                        지금 가입하기
+                    </button>
+                </div>
+            </div>
+            <div class="hero-scroll" id="heroScroll">
+                <span>스크롤</span>
+                <div class="scroll-indicator">
+                    <div class="scroll-dot"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section">
+            <div class="section-header">
+                <span class="section-tag">EXPLORE</span>
+                <h2 class="section-title">다양한 서비스를 경험하세요</h2>
+                <p class="section-desc">수영에 필요한 모든 정보를 한 곳에서 만나보세요</p>
+            </div>
+            <div class="features-grid">
+                <!-- Community Feature -->
+                <a href="/post-list" class="feature-card lg-glass lg-card-hover">
+                    <div class="feature-icon">
+                        <img class="feature-icon-img" data-path="misc/users.svg" alt="커뮤니티" style="width: 28px; height: 28px;">
+                    </div>
+                    <h3 class="feature-title">커뮤니티</h3>
+                    <p class="feature-desc">수영에 대한 경험과 노하우를 나누고, 함께 성장하는 공간입니다.</p>
+                    <div class="feature-arrow">
+                        <img class="arrow-icon" data-path="common/arrow-right.svg" alt="화살표" style="width: 20px; height: 20px;">
+                    </div>
+                </a>
+
+                <!-- Competition Schedule Feature -->
+                <a href="/competitions" class="feature-card lg-glass lg-card-hover">
+                    <div class="feature-icon feature-icon-schedule">
+                        <img class="feature-icon-img" data-path="misc/calendar.svg" alt="대회 일정" style="width: 28px; height: 28px;">
+                    </div>
+                    <h3 class="feature-title">대회 일정</h3>
+                    <p class="feature-desc">전국 수영대회 및 마스터즈 대회 일정을 한눈에 확인하세요.</p>
+                    <div class="feature-arrow">
+                        <img class="arrow-icon" data-path="common/arrow-right.svg" alt="화살표" style="width: 20px; height: 20px;">
+                    </div>
+                </a>
+
+                <!-- Certification Feature -->
+                <a href="/certifications" class="feature-card lg-glass lg-card-hover">
+                    <div class="feature-icon feature-icon-cert">
+                        <img class="feature-icon-img" data-path="cert/certificate.svg" alt="자격증 정보" style="width: 28px; height: 28px;">
+                    </div>
+                    <h3 class="feature-title">자격증 정보</h3>
+                    <p class="feature-desc">생활스포츠지도사, 인명구조원 등 수영 관련 자격증 정보를 제공합니다.</p>
+                    <div class="feature-arrow">
+                        <img class="arrow-icon" data-path="common/arrow-right.svg" alt="화살표" style="width: 20px; height: 20px;">
+                    </div>
+                </a>
+
+                <!-- Official Brands Feature -->
+                <a href="/brands" class="feature-card lg-glass lg-card-hover">
+                    <div class="feature-icon feature-icon-brand">
+                        <img class="feature-icon-img" data-path="common/verified-badge.svg" alt="공식 브랜드" style="width: 28px; height: 28px;">
+                    </div>
+                    <h3 class="feature-title">공식 브랜드</h3>
+                    <p class="feature-desc">미즈노, 아레나, 스피도 등 공식 수영용품 브랜드를 소개합니다.</p>
+                    <div class="feature-arrow">
+                        <img class="arrow-icon" data-path="common/arrow-right.svg" alt="화살표" style="width: 20px; height: 20px;">
+                    </div>
+                </a>
+
+                <!-- Marketplace Feature -->
+                <a href="/marketplace-list" class="feature-card lg-glass lg-card-hover">
+                    <div class="feature-icon feature-icon-marketplace">
+                        <img class="feature-icon-img" data-path="misc/shopping-cart.svg" alt="중고거래" style="width: 28px; height: 28px;">
+                    </div>
+                    <h3 class="feature-title">중고거래</h3>
+                    <p class="feature-desc">수영 용품을 사고팔며 합리적인 가격으로 장비를 구매하세요.</p>
+                    <div class="feature-arrow">
+                        <img class="arrow-icon" data-path="common/arrow-right.svg" alt="화살표" style="width: 20px; height: 20px;">
+                    </div>
+                </a>
+
+                <!-- Pool Finder Feature -->
+                <a href="/pool-finder" class="feature-card lg-glass lg-card-hover">
+                    <div class="feature-icon feature-icon-pool">
+                        <img class="feature-icon-img" data-path="misc/location.svg" alt="수영장 위치 찾기" style="width: 28px; height: 28px;">
+                    </div>
+                    <h3 class="feature-title">수영장 위치 찾기</h3>
+                    <p class="feature-desc">내 주변 수영장을 찾고 시설 정보, 운영시간을 확인하세요.</p>
+                    <div class="feature-arrow">
+                        <img class="arrow-icon" data-path="common/arrow-right.svg" alt="화살표" style="width: 20px; height: 20px;">
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Brand Showcase Section -->
+        <section class="brands-section">
+            <div class="section-header">
+                <span class="section-tag">OFFICIAL PARTNERS</span>
+                <h2 class="section-title">공식 수영용품 브랜드</h2>
+                <p class="section-desc">신뢰할 수 있는 공식 브랜드 사이트를 방문하세요</p>
+            </div>
+            <div class="brands-grid">
+                <a href="https://kor.mizuno.com/" target="_blank" rel="noopener noreferrer" class="brand-card lg-glass lg-card-hover">
+                    <div class="brand-logo">
+                        <span class="brand-name-text">MIZUNO</span>
+                    </div>
+                    <span class="brand-name">미즈노</span>
+                    <img class="brand-link-icon" data-path="common/external-link.svg" alt="외부 링크" style="width: 16px; height: 16px;">
+                </a>
+                <a href="https://www.swim.co.kr/" target="_blank" rel="noopener noreferrer" class="brand-card lg-glass lg-card-hover">
+                    <div class="brand-logo">
+                        <span class="brand-name-text">GANASWIM</span>
+                    </div>
+                    <span class="brand-name">가나스윔</span>
+                    <img class="brand-link-icon" data-path="common/external-link.svg" alt="외부 링크" style="width: 16px; height: 16px;">
+                </a>
+                <a href="https://www.arena.co.kr/" target="_blank" rel="noopener noreferrer" class="brand-card lg-glass lg-card-hover">
+                    <div class="brand-logo">
+                        <span class="brand-name-text">ARENA</span>
+                    </div>
+                    <span class="brand-name">아레나</span>
+                    <img class="brand-link-icon" data-path="common/external-link.svg" alt="외부 링크" style="width: 16px; height: 16px;">
+                </a>
+                <a href="https://speedo.co.kr/" target="_blank" rel="noopener noreferrer" class="brand-card lg-glass lg-card-hover">
+                    <div class="brand-logo">
+                        <span class="brand-name-text">SPEEDO</span>
+                    </div>
+                    <span class="brand-name">스피도</span>
+                    <img class="brand-link-icon" data-path="common/external-link.svg" alt="외부 링크" style="width: 16px; height: 16px;">
+                </a>
+            </div>
+        </section>
+
+        <!-- Quote Section -->
+        <section class="quote-section" id="quoteSection">
+            <div class="quote-card lg-glass">
+                <blockquote class="quote">
+                    <p class="quote-text-en">"You can't put a limit on anything. The more you dream, the farther you get."</p>
+                    <p class="quote-text-ko">"무엇에도 한계를 두지 마라. 꿈을 더 많이 품을수록 더 멀리 갈 수 있다."</p>
+                    <cite class="quote-author">
+                        <div class="author-avatar">
+                            <img id="olympicRingsIcon" data-path="misc/olympic-rings.svg" alt="올림픽 링" aria-hidden="true" style="width: 100%; height: 100%; object-fit: contain;">
+                        </div>
+                        <div class="author-info">
+                            <span class="author-name">Michael Phelps</span>
+                            <span class="author-title">Olympic Champion</span>
+                        </div>
+                    </cite>
+                </blockquote>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-glass">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <a href="/home" class="footer-logo">
+                    <span class="logo-text">S.W.M</span>
+                </a>
+                <p class="footer-tagline">Make Your Own Swim Way</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4 class="footer-heading">서비스</h4>
+                    <a href="/post-list" class="footer-link">커뮤니티</a>
+                    <a href="/competitions" class="footer-link">대회일정</a>
+                    <a href="/certifications" class="footer-link">자격증</a>
+                    <a href="/brands" class="footer-link">브랜드</a>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-heading">브랜드</h4>
+                    <a href="https://kor.mizuno.com/" target="_blank" rel="noopener noreferrer" class="footer-link">미즈노</a>
+                    <a href="https://www.swim.co.kr/" target="_blank" rel="noopener noreferrer" class="footer-link">가나스윔</a>
+                    <a href="https://www.arena.co.kr/" target="_blank" rel="noopener noreferrer" class="footer-link">아레나</a>
+                    <a href="https://speedo.co.kr/" target="_blank" rel="noopener noreferrer" class="footer-link">스피도</a>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-heading">관련 사이트</h4>
+                    <a href="https://www.koreaaquatics.or.kr/" target="_blank" rel="noopener noreferrer" class="footer-link">대한수영연맹</a>
+                    <a href="https://www.sports.or.kr/" target="_blank" rel="noopener noreferrer" class="footer-link">대한체육회</a>
+                    <a href="https://www.kspo.or.kr/" target="_blank" rel="noopener noreferrer" class="footer-link">국민체육진흥공단</a>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-heading">정책</h4>
+                    <a href="/policy/terms" class="footer-link" data-policy-link="terms">커뮤니티 이용약관</a>
+                    <a href="/policy/privacy" class="footer-link" data-policy-link="privacy">개인정보처리방침</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p class="footer-copyright">2025 Swim Way Makers. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="../../components/layout/page-layout.js"></script>
+    <script type="module" src="home.js"></script>
+</body>
+</html>

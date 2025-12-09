@@ -1,0 +1,169 @@
+/* 모달 오버레이 */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-overlay-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.show,
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 모달 컨테이너 */
+.modal {
+    max-width: 400px;
+    width: 90%;
+    max-height: 80vh;
+    background: var(--card-bg-light);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--modal-shadow);
+    overflow: hidden;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.visible .modal {
+    transform: scale(1) translateY(0);
+}
+
+/* 모달 헤더 */
+.modal-header {
+    padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-lg);
+    text-align: center;
+    border-bottom: 1px solid var(--border-light);
+    transition: border-color 0.3s ease;
+}
+
+.modal-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: -0.3px;
+    margin: 0 0 var(--spacing-sm) 0;
+    transition: color 0.3s ease;
+}
+
+.modal-subtitle {
+    font-size: var(--font-size-md);
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+/* 모달 내용 */
+.modal-content {
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    color: var(--text-dark);
+    line-height: 1.6;
+    transition: color 0.3s ease;
+}
+
+/* 모달 액션 */
+.modal-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-2xl) var(--spacing-2xl);
+}
+
+.modal-actions .btn-cancel {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-2xl);
+    background: var(--input-bg);
+    backdrop-filter: blur(var(--blur-md));
+    -webkit-backdrop-filter: blur(var(--blur-md));
+    color: var(--text-on-glass);
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-actions .btn-cancel:hover {
+    background: var(--card-hover-bg-light);
+    transform: translateY(-1px);
+}
+
+.modal-actions .btn-confirm {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-2xl);
+    background: #0064ff;
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 100, 255, 0.3);
+    transition: all 0.2s ease;
+}
+
+.modal-actions .btn-confirm:hover {
+    background: #0052cc;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 100, 255, 0.4);
+}
+
+.modal-actions .btn-confirm.danger {
+    background: #ff4757;
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+}
+
+.modal-actions .btn-confirm.danger:hover {
+    background: #ff3742;
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+}
+
+.modal-actions .btn-confirm.success {
+    background: #2ed573;
+    box-shadow: 0 2px 8px rgba(46, 213, 115, 0.3);
+}
+
+.modal-actions .btn-confirm.success:hover {
+    background: #26d065;
+    box-shadow: 0 4px 12px rgba(46, 213, 115, 0.4);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .modal {
+        width: 95%;
+        margin: var(--spacing-2xl);
+    }
+    
+    .modal-header {
+        padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-md);
+    }
+    
+    .modal-title {
+        font-size: var(--font-size-2xl);
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-2xl) var(--spacing-2xl);
+    }
+    
+    .modal-actions .btn-cancel,
+    .modal-actions .btn-confirm {
+        flex: none;
+        width: 100%;
+    }
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - Swim Way Makers</title>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../components/button/button.css">
+    <link rel="stylesheet" href="../../components/form/form.css">
+    <link rel="stylesheet" href="../../components/toast/toast.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body class="theme">
+    <!-- Navigation -->
+    <app-header show-menu="false" show-actions="true" active-path="/login"></app-header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="login-container">
+            <div class="login-card lg-glass">
+                <div class="login-header">
+                    <h1 class="login-title">로그인</h1>
+                    <p class="login-subtitle">Swim Way Makers에 오신 것을 환영합니다</p>
+                </div>
+                
+                <form class="login-form" id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="email">이메일</label>
+                        <div class="input-wrapper">
+                            <img class="input-icon" id="emailIcon" data-path="auth/mail.svg" alt="이메일" style="width: 20px; height: 20px;">
+                            <input type="email" class="form-input" id="email" placeholder="이메일을 입력하세요" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">비밀번호</label>
+                        <div class="input-wrapper">
+                            <img class="input-icon" id="passwordIcon" data-path="auth/lock.svg" alt="비밀번호" style="width: 20px; height: 20px;">
+                            <input type="password" class="form-input" id="password" placeholder="비밀번호를 입력하세요" required>
+                        </div>
+                    </div>
+
+                    <div class="login-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberMe">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">로그인 상태 유지</span>
+                        </label>
+                        <a href="/password-reset" class="forgot-link">비밀번호 찾기</a>
+                    </div>
+
+                    <div class="button-group" id="buttonGroup"></div>
+                </form>
+
+                <div class="login-footer">
+                    <p class="login-footer-text">아직 회원이 아니신가요?</p>
+                    <a href="/signup" class="signup-link">회원가입</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../../components/layout/page-layout.js"></script>
+    <script type="module" src="../../components/header/header.js"></script>
+    <script type="module" src="../../components/footer/footer.js"></script>
+    <script type="module" src="login.js"></script>
+</body>
+</html>
