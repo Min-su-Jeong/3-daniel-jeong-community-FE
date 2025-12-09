@@ -71,12 +71,18 @@
                 
                 <!-- 댓글 입력 -->
                 <div class="comment-input-section">
-                    <textarea 
-                        class="comment-input text-input" 
-                        id="commentInput" 
-                        placeholder="댓글을 남겨주세요."
-                        rows="3"
-                    ></textarea>
+                    <div class="comment-input-wrapper">
+                        <textarea 
+                            class="comment-input text-input" 
+                            id="commentInput" 
+                            placeholder="댓글을 남겨주세요."
+                            rows="3"
+                            maxlength="500"
+                        ></textarea>
+                        <div class="comment-char-counter">
+                            <span id="commentCharCount">0</span>/500
+                        </div>
+                    </div>
                     <div id="commentSubmitBtn"></div>
                 </div>
 

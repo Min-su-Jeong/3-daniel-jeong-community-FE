@@ -70,14 +70,13 @@ export class PostEditor {
         });
     }
 
-    // 제목 문자 카운터 업데이트 (24자 이상 시 경고 표시)
+    // 제목 문자 카운터 업데이트
     updateCharCounter() {
         const { postTitle, charCount } = this.elements;
         if (!postTitle || !charCount) return;
 
         const count = postTitle.value.length;
         charCount.textContent = count;
-        charCount.parentElement?.classList.toggle('warning', count >= 24);
     }
 
     // 이미지 파일 처리 (검증 실패 시 종료, 최대 개수 초과 시 종료, 유효한 이미지 파일 처리)
