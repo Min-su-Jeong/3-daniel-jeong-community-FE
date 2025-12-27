@@ -869,25 +869,5 @@ const initPage = async () => {
     }
 };
 
-// 페이지 나갔다가 돌아올 때 상태 복원 방지
-window.addEventListener('pageshow', async (event) => {
-    if (!event.persisted) return;
-    
-    // 복원될 때 댓글 데이터가 없으면 다시 로드
-    if (!comments || comments.length === 0) {
-        await initPostData();
-    } else {
-        // 수정 모드나 답글 입력창이 열려있으면 닫기
-        if (editingCommentId) {
-            editingCommentId = null;
-            renderComments();
-        }
-    }
-    
-    document.querySelectorAll('.reply-input-container').forEach(container => {
-        container.style.display = 'none';
-        container.replaceChildren();
-    });
-});
 
 document.addEventListener('DOMContentLoaded', initPage);

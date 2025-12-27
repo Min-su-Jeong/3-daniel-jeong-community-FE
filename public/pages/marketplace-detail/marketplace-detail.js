@@ -839,24 +839,6 @@ const init = async () => {
     }
 };
 
-// 페이지 나갔다가 돌아올 때 상태 복원 방지 (post-detail과 동일한 패턴)
-window.addEventListener('pageshow', async (event) => {
-    if (!event.persisted) return;
-
-    if (!comments || comments.length === 0) {
-        await initProductData();
-    } else {
-        if (editingCommentId) {
-            editingCommentId = null;
-            renderComments();
-        }
-    }
-
-    document.querySelectorAll('.reply-input-container').forEach(container => {
-        container.style.display = 'none';
-        container.replaceChildren();
-    });
-});
 
 document.addEventListener('DOMContentLoaded', init);
 

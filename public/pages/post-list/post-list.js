@@ -17,7 +17,6 @@ const PAGE_SIZE = 10;
 let cursor = null;
 let isLoading = false;
 let hasMorePosts = true;
-let isInitialLoad = true;
 
 const elements = {
     postsContainer: null,
@@ -327,7 +326,6 @@ async function loadPosts() {
     } finally {
         isLoading = false;
         toggleLoadingIndicator(elements.loadingIndicator, false);
-        isInitialLoad = false;
     }
 }
 
@@ -354,23 +352,9 @@ function handleScroll() {
 
 const debouncedHandleScroll = debounce(handleScroll, 50);
 
-// 페이지 표시 처리
-function handlePageShow(event) {
-    if (isInitialLoad) {
-        isInitialLoad = false;
-        return;
-    }
-    
-    const navType = performance.getEntriesByType('navigation')[0]?.type;
-    if (event.persisted || navType === 'back_forward') {
-        refreshList();
-    }
-}
-
 // 이벤트 바인딩
 function bindEvents() {
     window.addEventListener('scroll', debouncedHandleScroll, { passive: true });
-    window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('userUpdated', () => {
         updateNavigation();
         updateCurrentUserProfileImages();
