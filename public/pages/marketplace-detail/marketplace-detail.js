@@ -2,6 +2,7 @@ import { Button } from '../../components/button/button.js';
 import { Modal } from '../../components/modal/modal.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Toast } from '../../components/toast/toast.js';
+import { ImageViewer } from '../../components/image-viewer/image-viewer.js';
 import { formatNumber, formatDate, debounce, initializeElements, getElementValue, setElementValue } from '../../utils/common/element.js';
 import { navigateTo, getUrlParam } from '../../utils/common/navigation.js';
 import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
@@ -559,7 +560,7 @@ const loadComments = async (productId) => {
 };
 
 // 상품 이미지 렌더링
-const renderProductImages = (imageKeys) => {
+const renderProductImages = async (imageKeys) => {
     if (!elements.productImages) return;
 
     elements.productImages.replaceChildren();
@@ -579,14 +580,31 @@ const renderProductImages = (imageKeys) => {
         container.className = 'product-image-gallery';
     }
     
-    imageKeys.forEach(imageKey => {
+    // 모든 이미지 URL을 수집 (뷰어에서 사용)
+    const imageUrls = [];
+    const urlPromises = imageKeys.map(imageKey => S3_CONFIG.getPublicUrl(imageKey));
+    const urls = await Promise.all(urlPromises);
+    urls.forEach(url => {
+        if (url) imageUrls.push(url);
+    });
+    
+    // ImageViewer 인스턴스 생성
+    const imageViewer = new ImageViewer();
+    
+    imageKeys.forEach((imageKey, index) => {
+        const imageUrl = imageUrls[index];
+        if (!imageUrl) return;
+        
         if (isSingleImage) {
             const imageItem = document.createElement('img');
             imageItem.className = 'product-image-item';
+            imageItem.style.cursor = 'pointer';
+            imageItem.src = imageUrl;
             imageItem.onerror = () => imageItem.remove();
             
-            S3_CONFIG.getPublicUrl(imageKey).then(url => {
-                if (url) imageItem.src = url;
+            // 이미지 클릭 시 뷰어 열기
+            imageItem.addEventListener('click', () => {
+                imageViewer.show(imageUrls, index);
             });
             
             container.appendChild(imageItem);
@@ -596,10 +614,13 @@ const renderProductImages = (imageKeys) => {
             
             const image = document.createElement('img');
             image.className = 'product-image-item';
+            image.style.cursor = 'pointer';
+            image.src = imageUrl;
             image.onerror = () => imageItem.remove();
             
-            S3_CONFIG.getPublicUrl(imageKey).then(url => {
-                if (url) image.src = url;
+            // 이미지 클릭 시 뷰어 열기
+            image.addEventListener('click', () => {
+                imageViewer.show(imageUrls, index);
             });
             
             imageItem.appendChild(image);
@@ -707,7 +728,7 @@ const updateCurrentUserProfileImages = () => {
 };
 
 // 상품 데이터 표시
-const displayProductData = (product) => {
+const displayProductData = async (product) => {
     // 제목
     if (elements.productTitle) {
         elements.productTitle.textContent = product.title || '';
@@ -742,7 +763,7 @@ const displayProductData = (product) => {
     
     // 이미지
     if (product.imageObjectKeys) {
-        renderProductImages(product.imageObjectKeys);
+        await renderProductImages(product.imageObjectKeys);
     }
     
     // 내용
@@ -802,7 +823,7 @@ const initProductData = async () => {
         }
 
         currentProduct = product;
-        displayProductData(product);
+        await displayProductData(product);
         await loadComments(productId);
     } catch (error) {
         Toast.error(error.message || '상품 정보를 불러오는데 실패했습니다');

@@ -2,6 +2,7 @@ import { Button } from '../../components/button/button.js';
 import { Modal } from '../../components/modal/modal.js';
 import { PageLayout } from '../../components/layout/page-layout.js';
 import { Toast } from '../../components/toast/toast.js';
+import { ImageViewer } from '../../components/image-viewer/image-viewer.js';
 import { formatNumber, formatDate, debounce, initializeElements, getElementValue, setElementValue } from '../../utils/common/element.js';
 import { navigateTo, getUrlParam } from '../../utils/common/navigation.js';
 import { renderProfileImage, extractProfileImageKey } from '../../utils/common/image.js';
@@ -96,7 +97,7 @@ const initElements = () => {
 };
 
 // 게시글 이미지 렌더링 (이미지가 1개면 단일 이미지로, 2개 이상이면 갤러리 형태로 표시)
-const renderPostImages = (imageKeys) => {
+const renderPostImages = async (imageKeys) => {
     if (!elements.postImage || !imageKeys?.length) {
         // 이미지가 없으면 영역 숨김
         if (elements.postImage) {
@@ -117,17 +118,33 @@ const renderPostImages = (imageKeys) => {
         container.className = 'post-image-gallery';
     }
     
-    imageKeys.forEach(imageKey => {
+    // 모든 이미지 URL을 수집 (뷰어에서 사용)
+    const imageUrls = [];
+    const urlPromises = imageKeys.map(imageKey => S3_CONFIG.getPublicUrl(imageKey));
+    const urls = await Promise.all(urlPromises);
+    urls.forEach(url => {
+        if (url) imageUrls.push(url);
+    });
+    
+    // ImageViewer 인스턴스 생성
+    const imageViewer = new ImageViewer();
+    
+    imageKeys.forEach((imageKey, index) => {
+        const imageUrl = imageUrls[index];
+        if (!imageUrl) return;
+        
         if (isSingleImage) {
             // 단일 이미지: img 태그 직접 생성
             const imageItem = document.createElement('img');
             imageItem.className = 'post-image-item';
+            imageItem.style.cursor = 'pointer';
+            imageItem.src = imageUrl;
             // 이미지 로드 실패 시 제거
             imageItem.onerror = () => imageItem.remove();
             
-            // S3에서 Public URL 조회 후 src 설정
-            S3_CONFIG.getPublicUrl(imageKey).then(url => {
-                if (url) imageItem.src = url;
+            // 이미지 클릭 시 뷰어 열기
+            imageItem.addEventListener('click', () => {
+                imageViewer.show(imageUrls, index);
             });
             
             container.appendChild(imageItem);
@@ -138,12 +155,14 @@ const renderPostImages = (imageKeys) => {
             
             const image = document.createElement('img');
             image.className = 'post-image-item';
+            image.style.cursor = 'pointer';
+            image.src = imageUrl;
             // 이미지 로드 실패 시 제거
             image.onerror = () => imageItem.remove();
             
-            // S3에서 Public URL 조회 후 src 설정
-            S3_CONFIG.getPublicUrl(imageKey).then(url => {
-                if (url) image.src = url;
+            // 이미지 클릭 시 뷰어 열기
+            image.addEventListener('click', () => {
+                imageViewer.show(imageUrls, index);
             });
             
             imageItem.appendChild(image);
@@ -158,7 +177,7 @@ const renderPostImages = (imageKeys) => {
 };
 
 // 게시글 데이터 표시
-const displayPostData = (post) => {
+const displayPostData = async (post) => {
     elements.postTitle.textContent = post.title || '';
     elements.authorName.textContent = post.author?.nickname || post.author?.name || '작성자';
     elements.postDate.textContent = formatDate(new Date(post.createdAt));
@@ -176,7 +195,7 @@ const displayPostData = (post) => {
         renderProfileImage(elements.authorAvatar, profileImageKey);
     }
     
-    renderPostImages(post.imageObjectKeys || []);
+    await renderPostImages(post.imageObjectKeys || []);
     
     const stats = post.stats || {};
     updateLikeCount(stats.likeCount || 0);
@@ -788,7 +807,7 @@ const initPostData = async () => {
 
         // 게시글 데이터 저장 (프로필 업데이트용)
         currentPost = post;
-        displayPostData(post);
+        await displayPostData(post);
         // 작성자만 수정/삭제 버튼 표시
         createActionButtons(post.author?.id || post.author?.userId || null);
         
