@@ -102,7 +102,7 @@ async function loadPostData() {
         
         // 내용 글자 수 카운터 초기화
         if (elements.postContent && elements.contentCharCount) {
-            elements.contentCharCount.textContent = elements.postContent.value.length;
+            elements.contentCharCount.textContent = `${elements.postContent.value.length}/5000`;
         }
         
         // 기존 이미지 로드
