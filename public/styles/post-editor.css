@@ -45,7 +45,7 @@
     position: relative;
 }
 
-/* 문자 카운터 */
+/* 글자 수 카운터 */
 .char-counter {
     position: absolute;
     top: 50%;
@@ -57,6 +57,13 @@
     pointer-events: none;
 }
 
+/* textarea 내부 글자 수 카운터는 우측 하단에 배치 */
+.textarea-container .char-counter {
+    top: auto;
+    bottom: var(--spacing-md);
+    right: var(--spacing-xl);
+    transform: none;
+}
 /* 이미지 업로드 */
 .image-upload-container {
     position: relative;

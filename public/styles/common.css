@@ -113,6 +113,9 @@
     --text-muted: rgba(255, 255, 255, 0.8);
     --text-disabled: rgba(255, 255, 255, 0.6);
     --text-accent: var(--text-on-glass);
+    /* 어두운 배경용 텍스트 색상 */
+    --text-on-light: #000000;
+    --text-on-light-muted: #333333;
     
     /* 아이콘 색상 */
     --icon-color: var(--text-on-glass);

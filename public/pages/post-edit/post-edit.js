@@ -1,4 +1,4 @@
-import { initializeElements, setupPlaceholders, setupStandaloneHelperText } from '../../utils/common/element.js';
+import { initializeElements, setupPlaceholders, setupStandaloneHelperText, setupContentCharCounter } from '../../utils/common/element.js';
 import { navigateTo, getUrlParam, handlePostEditorBackNavigation } from '../../utils/common/navigation.js';
 import { getCurrentUserInfo } from '../../utils/common/user.js';
 import { uploadImages } from '../../utils/common/image.js';
@@ -17,6 +17,7 @@ const elements = initializeElements({
     postContent: 'postContent',
     postImages: 'postImages',
     charCount: 'charCount',
+    contentCharCount: 'contentCharCount',
     imageUploadArea: 'imageUploadArea',
     imageGallery: 'imageGallery',
     galleryGrid: 'galleryGrid',
@@ -46,6 +47,9 @@ async function init() {
         ...elements,
         onSubmit: handlePostUpdate
     });
+    
+    // 내용 글자 수 카운터 설정
+    setupContentCharCounter(elements.postContent, elements.contentCharCount, { maxLength: 5000 });
 
     await loadPostData();
 }
@@ -95,6 +99,11 @@ async function loadPostData() {
             title: postData.title || '',
             content: postData.content || ''
         });
+        
+        // 내용 글자 수 카운터 초기화
+        if (elements.postContent && elements.contentCharCount) {
+            elements.contentCharCount.textContent = `${elements.postContent.value.length}/5000`;
+        }
         
         // 기존 이미지 로드
         if (postData.imageObjectKeys?.length) {

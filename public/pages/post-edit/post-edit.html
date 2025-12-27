@@ -57,8 +57,12 @@
                             class="form-textarea" 
                             placeholder="내용을 입력해주세요."
                             rows="8"
+                            maxlength="5000"
                             required
                         ></textarea>
+                        <div class="char-counter">
+                            <span id="contentCharCount">0/5000</span>
+                        </div>
                     </div>
                     <div class="helper-text" id="helperText" data-default-text="제목, 내용을 모두 작성해주세요">제목, 내용을 모두 작성해주세요</div>
                 </div>

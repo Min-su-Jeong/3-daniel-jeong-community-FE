@@ -1,4 +1,4 @@
-import { initializeElements, setupPlaceholders, setupStandaloneHelperText, showButtonLoading, hideButtonLoading } from '../../utils/common/element.js';
+import { initializeElements, setupPlaceholders, setupStandaloneHelperText, showButtonLoading, hideButtonLoading, setupContentCharCounter } from '../../utils/common/element.js';
 import { navigateTo, handlePostEditorBackNavigation } from '../../utils/common/navigation.js';
 import { requireLogin } from '../../utils/common/user.js';
 import { uploadImages } from '../../utils/common/image.js';
@@ -17,6 +17,7 @@ const elements = initializeElements({
     postContent: 'postContent',
     postImages: 'postImages',
     charCount: 'charCount',
+    contentCharCount: 'contentCharCount',
     imageUploadArea: 'imageUploadArea',
     imageGallery: 'imageGallery',
     galleryGrid: 'galleryGrid',
@@ -46,6 +47,9 @@ function init() {
         ...elements,
         onSubmit: handlePostCreate
     });
+    
+    // 내용 글자 수 카운터 설정
+    setupContentCharCounter(elements.postContent, elements.contentCharCount, { maxLength: 5000 });
 }
 
 // 게시글 초안 생성 (이미지 없이 먼저 생성하여 ID 확보)

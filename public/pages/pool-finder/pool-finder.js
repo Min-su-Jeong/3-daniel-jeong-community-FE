@@ -16,12 +16,10 @@ class PoolFinder {
     async init() {
         PageLayout.init();
         
-        // 환경 변수에서 Kakao Map API 키 가져오기
+        // Kakao Map API 키 (빌드 시점에 주입)
+        const apiKey = '{{KAKAO_MAP_JAVASCRIPT_KEY}}';
+        
         try {
-            const response = await fetch('/config');
-            const config = await response.json();
-            const apiKey = config.KAKAO_MAP_JAVASCRIPT_KEY;
-            
             if (!apiKey) {
                 Toast.error('Kakao Map API 키가 설정되지 않았습니다.', '지도 서비스 오류');
                 this.showErrorMessage('지도 서비스를 사용할 수 없습니다.');

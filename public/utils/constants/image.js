@@ -9,8 +9,9 @@ export const IMAGE_CONSTANTS = Object.freeze({
 const publicUrlCache = new Map();
 
 export const S3_CONFIG = Object.freeze({
-    // S3 베이스 URL
-    BASE_URL: 'https://community-images-swimwaymakers.s3.ap-northeast-2.amazonaws.com',
+    // 정적 assets용 S3 베이스 URL
+    BASE_URL: window.APP_CONFIG?.BASE_URL || 
+        'https://community-frontend-static.s3.ap-northeast-2.amazonaws.com',
     
     // 배경 비디오 URL 가져오기
     getBackgroundVideoUrl: async () => {

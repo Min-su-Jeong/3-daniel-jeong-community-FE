@@ -3,310 +3,289 @@ name: Node.js CI/CD
 on:
   push:
     branches:
+      - main
       - develop
   pull_request:
     branches:
+      - main
       - develop
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [19.x, 20.x, 21.x, 22.x]
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-      - name: Install dependencies
-        run: npm install
-      - name: Run tests
-        run: npm test
+          node-version: '20'
+      - run: npm install
+      - run: npm test
 
-  build-and-push-image:
-    needs: test
+  build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
-
+    needs: test
     steps:
       - uses: actions/checkout@v4
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Create ECR Repository if not exists
+      - name: Fetch API keys from Parameter Store
         run: |
-          set +x
-          echo "::add-mask::${{ secrets.AWS_REGION }}"
-          aws ecr describe-repositories --repository-names community-frontend --region ${{ secrets.AWS_REGION }} 2>/dev/null || \
-          aws ecr create-repository \
-            --repository-name community-frontend \
-            --image-scanning-configuration scanOnPush=true \
-            --encryption-configuration encryptionType=AES256 \
-            --region ${{ secrets.AWS_REGION }}
-
-      - name: Update Parameter Store with ECR Image URI
-        run: |
-          set +x
-          echo "::add-mask::${{ secrets.AWS_REGION }}"
-          ECR_URI=$(aws ecr describe-repositories --repository-names community-frontend --query 'repositories[0].repositoryUri' --output text --region ${{ secrets.AWS_REGION }})
-          echo "::add-mask::$ECR_URI"
-          ECR_FRONTEND_IMAGE="${ECR_URI}:latest"
-          echo "::add-mask::$ECR_FRONTEND_IMAGE"
-          aws ssm put-parameter \
-            --name "/community/ecr_frontend_image" \
-            --value "$ECR_FRONTEND_IMAGE" \
-            --type "String" \
-            --overwrite \
-            --region ${{ secrets.AWS_REGION }} || echo "Parameter Store update failed, but continuing..."
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and Push Docker Image to ECR
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/community-frontend:latest
-          platforms: linux/arm64
-
-  deploy:
-    needs: build-and-push-image
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
-
-    steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Deploy to ASG
+          PARAM_VALUE=$(aws ssm get-parameter --name "${{ secrets.KAKAO_MAP_PARAM_NAME }}" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "")
+          if [ -z "$PARAM_VALUE" ] || [ "$PARAM_VALUE" == "None" ]; then
+            echo "Warning: KAKAO_MAP_JAVASCRIPT_KEY not found"
+            echo "KAKAO_MAP_JAVASCRIPT_KEY=" >> $GITHUB_ENV
+          else
+            echo "::add-mask::$PARAM_VALUE"
+            echo "KAKAO_MAP_JAVASCRIPT_KEY=$PARAM_VALUE" >> $GITHUB_ENV
+          fi
+      - name: Build static assets
+        env:
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          BASE_URL: ${{ secrets.CLOUDFRONT_URL }}
         run: |
           set -e
-          set +x
-          REGION="${{ secrets.AWS_REGION }}"
-          ASG_NAME="community-frontend-asg"
-          TARGET_GROUP_NAME="community-frontend-tg"
-          LAUNCH_TEMPLATE_NAME="community-frontend-lt"
-          ECR_REPO="community-frontend"
+          BUILD_DIR="dist"
+          rm -rf ${BUILD_DIR}
+          mkdir -p ${BUILD_DIR}
+          [ ! -d "public" ] && echo "Error: public directory not found" && exit 1
+          cp -r public/* ${BUILD_DIR}/
           
-          cleanup_on_error() {
-            if [ -n "$NEW_INSTANCE_ID" ] && [ "$NEW_INSTANCE_ID" != "" ]; then
-              aws autoscaling terminate-instance-in-auto-scaling-group \
-                --instance-id $NEW_INSTANCE_ID \
-                --should-decrement-desired-capacity \
-                --region $REGION 2>/dev/null || true
+          find ${BUILD_DIR} -type f \( -name ".DS_Store" -o -name "Thumbs.db" -o -name "*.swp" -o -name "*.swo" -o -name "*.bak" \) -delete
+          find ${BUILD_DIR} -type d \( -name ".git" -o -name "__pycache__" -o -name ".vscode" -o -name ".idea" \) -exec rm -rf {} + 2>/dev/null || true
+          
+          if [ -f "${BUILD_DIR}/pages/pool-finder/pool-finder.js" ]; then
+            if [ -n "${KAKAO_MAP_JAVASCRIPT_KEY}" ]; then
+              sed -i "s|'{{KAKAO_MAP_JAVASCRIPT_KEY}}'|'${KAKAO_MAP_JAVASCRIPT_KEY}'|g" "${BUILD_DIR}/pages/pool-finder/pool-finder.js"
+            else
+              sed -i "s|'{{KAKAO_MAP_JAVASCRIPT_KEY}}'|''|g" "${BUILD_DIR}/pages/pool-finder/pool-finder.js"
             fi
-            if [ -n "$MAX_SIZE_INCREASED" ] && [ "$MAX_SIZE_INCREASED" = "true" ]; then
-              aws autoscaling update-auto-scaling-group \
-                --auto-scaling-group-name $ASG_NAME \
-                --max-size $ORIGINAL_MAX_SIZE \
-                --region $REGION 2>/dev/null || true
+          fi
+          
+          cat > ${BUILD_DIR}/config.js <<EOF
+          window.APP_CONFIG = {
+            KAKAO_MAP_JAVASCRIPT_KEY: "${KAKAO_MAP_JAVASCRIPT_KEY:-}",
+            BASE_URL: "${BASE_URL:-}"
+          };
+          EOF
+          
+          find ${BUILD_DIR}/pages -name "*.html" -type f | while read htmlfile; do
+            if ! grep -q "config.js" "$htmlfile"; then
+              sed -i '/<\/head>/i\    <script src="/config.js"></script>' "$htmlfile"
             fi
-            if [ -n "$DESIRED_INCREASED" ] && [ "$DESIRED_INCREASED" = "true" ]; then
-              aws autoscaling update-auto-scaling-group \
-                --auto-scaling-group-name $ASG_NAME \
-                --desired-capacity $ORIGINAL_DESIRED \
-                --region $REGION 2>/dev/null || true
-            fi
-          }
-          trap cleanup_on_error ERR EXIT
+          done
           
-          if ! aws ecr describe-repositories --repository-names $ECR_REPO --region $REGION >/dev/null 2>&1; then
-            echo "Error: ECR repository $ECR_REPO not found"
-            exit 1
-          fi
+          cat > ${BUILD_DIR}/index.html <<EOF
+          <!DOCTYPE html>
+          <html lang="ko">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Community</title>
+              <script src="/config.js"></script>
+          </head>
+          <body>
+              <script>window.location.href = '/home';</script>
+          </body>
+          </html>
+          EOF
           
-          ECR_URI=$(aws ecr describe-repositories --repository-names $ECR_REPO --query 'repositories[0].repositoryUri' --output text --region $REGION)
-          if [ -z "$ECR_URI" ] || [ "$ECR_URI" = "None" ]; then
-            echo "Error: Failed to get ECR repository URI"
-            exit 1
-          fi
+          cat > ${BUILD_DIR}/error.html <<EOF
+          <!DOCTYPE html>
+          <html lang="ko">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>404</title>
+              <script src="/config.js"></script>
+          </head>
+          <body>
+              <h1>404 - Page Not Found</h1>
+              <a href="/home">Go to Home</a>
+          </body>
+          </html>
+          EOF
           
-          IMAGE_EXISTS=$(aws ecr describe-images --repository-name $ECR_REPO --image-ids imageTag=latest --query 'imageDetails[0].imageTags[0]' --output text --region $REGION 2>/dev/null || echo "None")
-          if [ "$IMAGE_EXISTS" = "None" ]; then
-            LATEST_DIGEST=$(aws ecr describe-images --repository-name $ECR_REPO --query 'sort_by(imageDetails, &imagePushedAt)[-1].imageDigest' --output text --region $REGION 2>/dev/null || echo "")
-            if [ -z "$LATEST_DIGEST" ]; then
-              echo "Error: No images found in ECR repository"
-              exit 1
-            fi
-            LATEST_IMAGE="${ECR_URI}@${LATEST_DIGEST}"
-          else
-            LATEST_IMAGE="${ECR_URI}:latest"
-          fi
-          
-          if ! aws ssm put-parameter --name "/community/ecr_frontend_image" --value "$LATEST_IMAGE" --type "String" --overwrite --region $REGION >/dev/null 2>&1; then
-            echo "Error: Failed to update Parameter Store"
-            exit 1
-          fi
-          
-          if ! aws ec2 describe-launch-templates --launch-template-names $LAUNCH_TEMPLATE_NAME --region $REGION >/dev/null 2>&1; then
-            echo "Error: Launch template $LAUNCH_TEMPLATE_NAME not found"
-            exit 1
-          fi
-          
-          LATEST_VERSION=$(aws ec2 describe-launch-template-versions --launch-template-name $LAUNCH_TEMPLATE_NAME --versions '$Latest' --query 'LaunchTemplateVersions[0].VersionNumber' --output text --region $REGION 2>/dev/null || echo "")
-          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "None" ]; then
-            echo "Error: Failed to get latest launch template version"
-            exit 1
-          fi
-          if ! aws ec2 create-launch-template-version --launch-template-name $LAUNCH_TEMPLATE_NAME --source-version $LATEST_VERSION --region $REGION >/dev/null 2>&1; then
-            echo "Warning: Failed to create new launch template version"
-          fi
-          
-          if ! aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names $ASG_NAME --region $REGION >/dev/null 2>&1; then
-            echo "Error: Auto Scaling Group $ASG_NAME not found"
-            exit 1
-          fi
-          
-          CURRENT_DESIRED=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names $ASG_NAME \
-            --query 'AutoScalingGroups[0].DesiredCapacity' \
-            --output text \
-            --region $REGION)
-          
-          if [ "$CURRENT_DESIRED" = "None" ] || [ -z "$CURRENT_DESIRED" ]; then
-            echo "Error: Failed to get current desired capacity"
-            exit 1
-          fi
-          
-          if [ "$CURRENT_DESIRED" = "0" ]; then
-            if ! aws autoscaling update-auto-scaling-group --auto-scaling-group-name $ASG_NAME --desired-capacity 1 --region $REGION >/dev/null 2>&1; then
-              echo "Error: Failed to start ASG instance"
-              exit 1
-            fi
-            exit 0
-          fi
-          
-          CURRENT_INSTANCES=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names $ASG_NAME \
-            --query 'AutoScalingGroups[0].Instances[*].InstanceId' \
-            --output text \
-            --region $REGION)
-          
-          CURRENT_MAX=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names $ASG_NAME \
-            --query 'AutoScalingGroups[0].MaxSize' \
-            --output text \
-            --region $REGION)
-          
-          if [ "$CURRENT_MAX" = "None" ] || [ -z "$CURRENT_MAX" ]; then
-            echo "Error: Failed to get current max size"
-            exit 1
-          fi
-          
-          ORIGINAL_DESIRED=$CURRENT_DESIRED
-          ORIGINAL_MAX_SIZE=$CURRENT_MAX
-          NEW_DESIRED=$((CURRENT_DESIRED + 1))
-          MAX_SIZE_INCREASED="false"
-          DESIRED_INCREASED="false"
-          
-          if [ "$CURRENT_MAX" -lt "$NEW_DESIRED" ]; then
-            if ! aws autoscaling update-auto-scaling-group --auto-scaling-group-name $ASG_NAME --max-size $NEW_DESIRED --region $REGION >/dev/null 2>&1; then
-              echo "Error: Failed to increase max size"
-              exit 1
-            fi
-            MAX_SIZE_INCREASED="true"
-          fi
-          
-          if ! aws autoscaling update-auto-scaling-group --auto-scaling-group-name $ASG_NAME --desired-capacity $NEW_DESIRED --region $REGION >/dev/null 2>&1; then
-            echo "Error: Failed to increase desired capacity"
-            exit 1
-          fi
-          DESIRED_INCREASED="true"
-          
-          NEW_INSTANCE_ID=""
-          for i in {1..30}; do
-            sleep 10
-            ALL_INSTANCES=$(aws autoscaling describe-auto-scaling-groups \
-              --auto-scaling-group-names $ASG_NAME \
-              --query 'AutoScalingGroups[0].Instances[*].InstanceId' \
-              --output text \
-              --region $REGION)
-            
-            for INSTANCE_ID in $ALL_INSTANCES; do
-              if [[ ! " $CURRENT_INSTANCES " =~ " $INSTANCE_ID " ]]; then
-                NEW_INSTANCE_ID=$INSTANCE_ID
-                break 2
+          for page_dir in ${BUILD_DIR}/pages/*/; do
+            if [ -d "$page_dir" ]; then
+              page_name=$(basename "$page_dir")
+              html_file="${page_dir}${page_name}.html"
+              if [ -f "$html_file" ]; then
+                mkdir -p "${BUILD_DIR}/${page_name}"
+                sed -e 's|href="/pages/'"${page_name}"'/|href="/'"${page_name}"'/|g' \
+                    -e 's|src="/pages/'"${page_name}"'/|src="/'"${page_name}"'/|g' \
+                    -e 's|href="\.\./\.\./|href="/|g' \
+                    -e 's|src="\.\./\.\./|src="/|g' \
+                    -e 's|href="\.\./|href="/|g' \
+                    -e 's|src="\.\./|src="/|g' \
+                    -e 's|"'${page_name}'\.css"|"/'${page_name}'/'${page_name}'.css"|g' \
+                    -e 's|"'${page_name}'\.js"|"/'${page_name}'/'${page_name}'.js"|g' \
+                    "$html_file" > "${BUILD_DIR}/${page_name}/index.html"
+                [ -f "${page_dir}${page_name}.css" ] && cp "${page_dir}${page_name}.css" "${BUILD_DIR}/${page_name}/"
+                [ -f "${page_dir}${page_name}.js" ] && cp "${page_dir}${page_name}.js" "${BUILD_DIR}/${page_name}/"
               fi
-            done
+            fi
           done
-          
-          if [ -z "$NEW_INSTANCE_ID" ]; then
-            echo "Error: New instance creation failed or timeout"
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist directory not found"
             exit 1
           fi
-          
-          if ! aws elbv2 describe-target-groups --names $TARGET_GROUP_NAME --region $REGION >/dev/null 2>&1; then
-            echo "Error: Target group $TARGET_GROUP_NAME not found"
+          echo "Build output verified: dist directory exists"
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Fetch API keys from Parameter Store
+        run: |
+          PARAM_VALUE=$(aws ssm get-parameter --name "${{ secrets.KAKAO_MAP_PARAM_NAME }}" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "")
+          if [ -z "$PARAM_VALUE" ] || [ "$PARAM_VALUE" == "None" ]; then
+            echo "Error: KAKAO_MAP_JAVASCRIPT_KEY not found"
             exit 1
           fi
+          echo "::add-mask::$PARAM_VALUE"
+          echo "KAKAO_MAP_JAVASCRIPT_KEY=$PARAM_VALUE" >> $GITHUB_ENV
+      - name: Build and upload to S3
+        env:
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          BASE_URL: ${{ secrets.CLOUDFRONT_URL }}
+        run: |
+          set -e
+          BUILD_DIR="dist"
+          rm -rf ${BUILD_DIR}
+          mkdir -p ${BUILD_DIR}
+          [ ! -d "public" ] && echo "Error: public directory not found" && exit 1
+          cp -r public/* ${BUILD_DIR}/
           
-          TARGET_GROUP_ARN=$(aws elbv2 describe-target-groups \
-            --names $TARGET_GROUP_NAME \
-            --query 'TargetGroups[0].TargetGroupArn' \
-            --output text \
-            --region $REGION)
+          find ${BUILD_DIR} -type f \( -name ".DS_Store" -o -name "Thumbs.db" -o -name "*.swp" -o -name "*.swo" -o -name "*.bak" \) -delete
+          find ${BUILD_DIR} -type d \( -name ".git" -o -name "__pycache__" -o -name ".vscode" -o -name ".idea" \) -exec rm -rf {} + 2>/dev/null || true
           
-          if [ -z "$TARGET_GROUP_ARN" ] || [ "$TARGET_GROUP_ARN" = "None" ]; then
-            echo "Error: Failed to get target group ARN"
-            exit 1
+          if [ -f "${BUILD_DIR}/pages/pool-finder/pool-finder.js" ]; then
+            if [ -n "${KAKAO_MAP_JAVASCRIPT_KEY}" ]; then
+              sed -i "s|'{{KAKAO_MAP_JAVASCRIPT_KEY}}'|'${KAKAO_MAP_JAVASCRIPT_KEY}'|g" "${BUILD_DIR}/pages/pool-finder/pool-finder.js"
+            else
+              sed -i "s|'{{KAKAO_MAP_JAVASCRIPT_KEY}}'|''|g" "${BUILD_DIR}/pages/pool-finder/pool-finder.js"
+            fi
           fi
           
-          HEALTH_STATUS=""
-          for i in {1..30}; do
-            sleep 10
-            HEALTH_STATUS=$(aws elbv2 describe-target-health \
-              --target-group-arn $TARGET_GROUP_ARN \
-              --targets Id=$NEW_INSTANCE_ID \
-              --query 'TargetHealthDescriptions[0].TargetHealth.State' \
-              --output text \
-              --region $REGION 2>/dev/null || echo "initial")
-            
-            if [ "$HEALTH_STATUS" = "healthy" ]; then
-              break
+          cat > ${BUILD_DIR}/config.js <<EOF
+          window.APP_CONFIG = {
+            KAKAO_MAP_JAVASCRIPT_KEY: "${KAKAO_MAP_JAVASCRIPT_KEY:-}",
+            BASE_URL: "${BASE_URL:-}"
+          };
+          EOF
+          
+          find ${BUILD_DIR}/pages -name "*.html" -type f | while read htmlfile; do
+            if ! grep -q "config.js" "$htmlfile"; then
+              sed -i '/<\/head>/i\    <script src="/config.js"></script>' "$htmlfile"
             fi
           done
           
-          if [ "$HEALTH_STATUS" != "healthy" ]; then
-            echo "Error: Health check failed. Status: $HEALTH_STATUS"
-            exit 1
-          fi
+          cat > ${BUILD_DIR}/index.html <<EOF
+          <!DOCTYPE html>
+          <html lang="ko">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Community</title>
+              <script src="/config.js"></script>
+          </head>
+          <body>
+              <script>window.location.href = '/home';</script>
+          </body>
+          </html>
+          EOF
           
-          for OLD_INSTANCE_ID in $CURRENT_INSTANCES; do
-            if [ -n "$OLD_INSTANCE_ID" ] && [ "$OLD_INSTANCE_ID" != "None" ]; then
-              aws autoscaling terminate-instance-in-auto-scaling-group \
-                --instance-id $OLD_INSTANCE_ID \
-                --should-decrement-desired-capacity \
-                --region $REGION >/dev/null 2>&1 || true
+          cat > ${BUILD_DIR}/error.html <<EOF
+          <!DOCTYPE html>
+          <html lang="ko">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>404</title>
+              <script src="/config.js"></script>
+          </head>
+          <body>
+              <h1>404 - Page Not Found</h1>
+              <a href="/home">Go to Home</a>
+          </body>
+          </html>
+          EOF
+          
+          for page_dir in ${BUILD_DIR}/pages/*/; do
+            if [ -d "$page_dir" ]; then
+              page_name=$(basename "$page_dir")
+              html_file="${page_dir}${page_name}.html"
+              if [ -f "$html_file" ]; then
+                mkdir -p "${BUILD_DIR}/${page_name}"
+                sed -e 's|href="/pages/'"${page_name}"'/|href="/'"${page_name}"'/|g' \
+                    -e 's|src="/pages/'"${page_name}"'/|src="/'"${page_name}"'/|g' \
+                    -e 's|href="\.\./\.\./|href="/|g' \
+                    -e 's|src="\.\./\.\./|src="/|g' \
+                    -e 's|href="\.\./|href="/|g' \
+                    -e 's|src="\.\./|src="/|g' \
+                    -e 's|"'${page_name}'\.css"|"/'${page_name}'/'${page_name}'.css"|g' \
+                    -e 's|"'${page_name}'\.js"|"/'${page_name}'/'${page_name}'.js"|g' \
+                    "$html_file" > "${BUILD_DIR}/${page_name}/index.html"
+                [ -f "${page_dir}${page_name}.css" ] && cp "${page_dir}${page_name}.css" "${BUILD_DIR}/${page_name}/"
+                [ -f "${page_dir}${page_name}.js" ] && cp "${page_dir}${page_name}.js" "${BUILD_DIR}/${page_name}/"
+              fi
             fi
           done
           
-          if ! aws autoscaling update-auto-scaling-group --auto-scaling-group-name $ASG_NAME --desired-capacity $ORIGINAL_DESIRED --region $REGION >/dev/null 2>&1; then
-            echo "Error: Failed to restore desired capacity"
-            exit 1
-          fi
-          DESIRED_INCREASED="false"
+          aws s3 sync ${BUILD_DIR}/ s3://${S3_BUCKET_NAME}/ \
+            --region ${AWS_REGION} \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*.html" \
+            --exclude "config.js" \
+            --exclude "*.map" \
+            --exclude "assets/**" \
+            --exclude ".DS_Store" \
+            --exclude "**/.DS_Store" \
+            --exclude "Thumbs.db" \
+            --exclude "**/Thumbs.db" \
+            --exclude "*.swp" \
+            --exclude "*.swo" \
+            --exclude "*.bak" \
+            --exclude ".git/**" \
+            --exclude "__pycache__/**" \
+            --exclude ".vscode/**" \
+            --exclude ".idea/**" || exit 1
           
-          if [ "$MAX_SIZE_INCREASED" = "true" ]; then
-            if ! aws autoscaling update-auto-scaling-group --auto-scaling-group-name $ASG_NAME --max-size $ORIGINAL_MAX_SIZE --region $REGION >/dev/null 2>&1; then
-              echo "Error: Failed to restore max size"
-              exit 1
-            fi
-            MAX_SIZE_INCREASED="false"
+          if [ -d "${BUILD_DIR}/assets/animations" ]; then
+            aws s3 sync ${BUILD_DIR}/assets/animations/ s3://${S3_BUCKET_NAME}/assets/animations/ \
+              --region ${AWS_REGION} \
+              --cache-control "public, max-age=31536000, immutable" \
+              --exclude ".DS_Store" \
+              --exclude "**/.DS_Store" || true
           fi
           
-          trap - ERR EXIT
+          aws s3 sync ${BUILD_DIR}/ s3://${S3_BUCKET_NAME}/ \
+            --region ${AWS_REGION} \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --include "*.html" \
+            --include "config.js" \
+            --exclude ".DS_Store" \
+            --exclude "**/.DS_Store" \
+            --exclude "Thumbs.db" \
+            --exclude "**/Thumbs.db" || exit 1
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --region ${{ secrets.AWS_REGION }}
