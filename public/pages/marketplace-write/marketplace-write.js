@@ -1,4 +1,4 @@
-import { initializeElements, setupPlaceholders, setupStandaloneHelperText, showButtonLoading, hideButtonLoading, setupLocationCharCounter, setupPriceFormatter, getPriceValue } from '../../utils/common/element.js';
+import { initializeElements, setupPlaceholders, setupStandaloneHelperText, showButtonLoading, hideButtonLoading, setupLocationCharCounter, setupPriceFormatter, getPriceValue, setupContentCharCounter } from '../../utils/common/element.js';
 import { navigateTo, handlePostEditorBackNavigation } from '../../utils/common/navigation.js';
 import { requireLogin } from '../../utils/common/user.js';
 import { Modal } from '../../components/modal/modal.js';
@@ -19,6 +19,7 @@ const elements = initializeElements({
     postContent: 'productContent',
     postImages: 'productImages',
     charCount: 'titleCharCount',
+    contentCharCount: 'contentCharCount',
     imageUploadArea: 'imageUploadArea',
     imageGallery: 'imageGallery',
     galleryGrid: 'galleryGrid',
@@ -55,6 +56,9 @@ function init() {
     setupLocationCharCounter(elements.productLocation, elements.locationCharCount);
     const priceInput = document.getElementById('productPrice');
     setupPriceFormatter(priceInput);
+    
+    // 상세 설명 글자 수 카운터 설정
+    setupContentCharCounter(elements.postContent, elements.contentCharCount, { maxLength: 5000 });
 }
 
 // 상품 초안 생성 (이미지 없이 먼저 생성하여 ID 확보)
