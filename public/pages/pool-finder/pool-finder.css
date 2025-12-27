@@ -244,25 +244,30 @@
     color: rgba(255, 255, 255, 0.6);
 }
 
-/* Info Window (Kakao Map) */
+/* 카카오맵 인포윈도우 스타일 */
 .info-window-container {
-    padding: 10px;
+    padding: var(--spacing-md);
     min-width: 200px;
+    color: var(--text-on-light);
+    background-color: var(--surface);
 }
 
 .info-window-name {
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-on-light);
+    font-size: var(--font-size-md);
 }
 
 .info-window-address {
-    font-size: 12px;
-    color: #666;
+    font-size: var(--font-size-xs);
+    color: var(--text-on-light-muted);
+    margin-bottom: 3px;
 }
 
 .info-window-phone {
-    font-size: 12px;
-    color: #666;
+    font-size: var(--font-size-xs);
+    color: var(--text-on-light-muted);
     margin-top: 3px;
 }
 
