@@ -124,7 +124,7 @@ export function toggleLoadingIndicator(indicator, show) {
     indicator.style.display = show ? 'flex' : 'none';
 }
 
-// 위치 입력 글자수 카운터 설정
+// 위치 입력 글자 수 카운터 설정
 export function setupLocationCharCounter(locationInput, locationCounter, options = {}) {
     const { maxLength = 26 } = options;
     
@@ -133,13 +133,29 @@ export function setupLocationCharCounter(locationInput, locationCounter, options
     locationCounter.textContent = locationInput.value.length;
     
     locationInput.addEventListener('input', () => {
-        // 최대 길이 제한
         if (locationInput.value.length > maxLength) {
             locationInput.value = locationInput.value.substring(0, maxLength);
         }
         
         const count = locationInput.value.length;
         locationCounter.textContent = count;
+    });
+}
+
+// 내용 입력 글자 수 카운터 설정
+export function setupContentCharCounter(contentInput, contentCounter, options = {}) {
+    const { maxLength = 5000 } = options;
+    
+    if (!contentInput || !contentCounter) return;
+    
+    contentCounter.textContent = `${contentInput.value.length}/${maxLength}`;
+    
+    contentInput.addEventListener('input', () => {
+        if (contentInput.value.length > maxLength) {
+            contentInput.value = contentInput.value.substring(0, maxLength);
+        }
+        
+        contentCounter.textContent = `${contentInput.value.length}/${maxLength}`;
     });
 }
 
